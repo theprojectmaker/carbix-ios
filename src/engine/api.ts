@@ -6,7 +6,7 @@ import type { Car, CatalogEntry, Catch, Profile } from './types';
 export const API_ORIGIN = 'https://motordex.pages.dev';
 /** The website page that does Google sign-in in Safari and hands the account back with carbix://signed-in?code=... */
 export const GOOGLE_SIGNIN_URL = API_ORIGIN + '/app-signin.html';
-export const ICON_V = 11;
+export const ICON_V = 12;
 
 export const iconURL = (c: Pick<CatalogEntry, 'n' | 'make' | 'model' | 'years'>) =>
   `${API_ORIGIN}/api/icon?n=${c.n}&make=${encodeURIComponent(c.make)}&model=${encodeURIComponent(c.model)}` +
