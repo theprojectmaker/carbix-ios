@@ -12,6 +12,7 @@ import { fonts } from '@/theme/theme';
 const LOCK = '#5dff9b';
 const SCAN = '#4ab4ff';
 const ARM = 28;
+const CHIPS = ['GRILLE', 'BADGE', 'HEADLIGHTS', 'WHEELS', 'BODY LINES'];
 
 function Corner({ c, l, t, w, h, lockP, breath }: { c: 'tl' | 'tr' | 'bl' | 'br'; l: SharedValue<number>; t: SharedValue<number>; w: SharedValue<number>; h: SharedValue<number>; lockP: SharedValue<number>; breath: SharedValue<number> }) {
   const style = useAnimatedStyle(() => {
@@ -44,6 +45,8 @@ export function ScanSweep({ haptics = true, box = null, aspect = 0 }: { haptics?
   const sweep = useSharedValue(0);
   const lockP = useSharedValue(0);
   const breath = useSharedValue(0);
+  const ringP = useSharedValue(0);
+  const [stage, setStage] = useState(0); // how many readout chips have finished
   const fl = useSharedValue(0), ft = useSharedValue(0), fw = useSharedValue(0), fh = useSharedValue(0);
 
   const target: Rect | null = useMemo(() => {
@@ -60,7 +63,9 @@ export function ScanSweep({ haptics = true, box = null, aspect = 0 }: { haptics?
     sweep.set(withRepeat(withTiming(1, { duration: 1250, easing: Easing.inOut(Easing.sin) }), -1, true));
     play('scan');
     const ticks = [420, 840, 1260, 1680].map((ms, i) => setTimeout(() => play(i % 2 ? 'ping1' : 'ping0'), ms));
-    return () => ticks.forEach(clearTimeout);
+    // the readout: one chip finishes every half second, each with a light tap
+    const chips = CHIPS.map((_, i) => setTimeout(() => { setStage(i + 1); if (haptics) Haptics.selectionAsync().catch(() => {}); }, 500 + i * 520));
+    return () => { ticks.forEach(clearTimeout); chips.forEach(clearTimeout); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [W, H]);
 
@@ -78,6 +83,8 @@ export function ScanSweep({ haptics = true, box = null, aspect = 0 }: { haptics?
       lockP.set(withTiming(1, { duration: 160 }));
       breath.set(withRepeat(withTiming(1, { duration: 800, easing: Easing.inOut(Easing.sin) }), -1, true));
       play('lock');
+      ringP.set(0);
+      ringP.set(withTiming(1, { duration: 650, easing: Easing.out(Easing.cubic) }));
       if (haptics) Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
     }, box ? 420 : 1100);
     return () => clearTimeout(id);
@@ -86,6 +93,10 @@ export function ScanSweep({ haptics = true, box = null, aspect = 0 }: { haptics?
 
   const onLayout = (e: LayoutChangeEvent) => setSize({ W: e.nativeEvent.layout.width, H: e.nativeEvent.layout.height });
   const bar = useAnimatedStyle(() => ({ transform: [{ translateY: sweep.get() * Math.max(0, H - 4) }] }));
+  const ring = useAnimatedStyle(() => ({
+    opacity: 0.9 * (1 - ringP.get()),
+    transform: [{ translateX: fl.get() + fw.get() / 2 - 45 }, { translateY: ft.get() + fh.get() / 2 - 45 }, { scale: 0.5 + ringP.get() * 3.4 }],
+  }));
   const tag = useAnimatedStyle(() => ({ transform: [{ translateX: fl.get() }, { translateY: Math.max(2, ft.get() - 26) }] }));
 
   return (
@@ -102,6 +113,19 @@ export function ScanSweep({ haptics = true, box = null, aspect = 0 }: { haptics?
 
       {W ? (
         <>
+          <Animated.View pointerEvents="none" style={[{ position: 'absolute', left: 0, top: 0, width: 90, height: 90, borderWidth: 4, borderColor: LOCK }, ring]} />
+          <View style={{ position: 'absolute', left: 12, bottom: '14%', gap: 3 }}>
+            {CHIPS.map((c, i) => {
+              const ok = stage > i;
+              return (
+                <View key={c} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: 'rgba(8,10,16,.72)', paddingHorizontal: 8, paddingVertical: 1 }}>
+                  <View style={{ width: 8, height: 8, backgroundColor: ok ? LOCK : SCAN, opacity: ok ? 1 : 0.5 }} />
+                  <Text style={{ fontFamily: fonts.display, fontSize: 15, letterSpacing: 1, color: ok ? LOCK : SCAN }}>{c}</Text>
+                  <Text style={{ fontFamily: fonts.display, fontSize: 15, color: ok ? LOCK : '#7f8ca6' }}>{ok ? 'OK' : '...'}</Text>
+                </View>
+              );
+            })}
+          </View>
           {(['tl', 'tr', 'bl', 'br'] as const).map((c) => <Corner key={c} c={c} l={fl} t={ft} w={fw} h={fh} lockP={lockP} breath={breath} />)}
           <Animated.View style={[{ position: 'absolute', left: 0, top: 0 }, tag]}>
             <View style={{ backgroundColor: locked ? LOCK : 'rgba(8,10,16,.72)', paddingHorizontal: 8, paddingVertical: 1 }}>

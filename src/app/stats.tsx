@@ -5,7 +5,7 @@ import { ScrollView, Text, View } from 'react-native';
 import { Screen } from '@/components/screen';
 import { Btn, PText, Sprite } from '@/components/ui';
 import { CATALOG, catalogMatch } from '@/engine/data';
-import { dateKeyET } from '@/engine/store';
+import { SHINY_HARD_PITY, SHINY_SOFT_PITY, dateKeyET, shinyChance } from '@/engine/store';
 import type { Rarity } from '@/engine/types';
 import { catchXP, TIER_COLOR } from '@/engine/xp';
 import { useGame } from '@/state/game';
@@ -88,6 +88,22 @@ export default function Stats() {
           <Big label="DAYS SPOTTING" value={String(s.days)} />
           <Big label="PER ACTIVE DAY" value={s.days ? (g.garage.length / s.days).toFixed(1) : '0'} />
         </View>
+
+        <Panel title="SHINY HUNT">
+          {(() => {
+            const pity = (g.profile.shinyPity as number) || 0;
+            const chance = Math.round(shinyChance(pity) * 100);
+            return (
+              <>
+                <View style={{ height: 14, backgroundColor: '#0a0d14', borderWidth: 2, borderColor: '#10141f' }}>
+                  <View style={{ width: `${Math.min(100, Math.round((pity / SHINY_HARD_PITY) * 100))}%`, height: '100%', backgroundColor: '#FFD84D' }} />
+                </View>
+                <Text style={{ fontFamily: fonts.utilityBold, fontSize: 15, color: palette.wht }}>{pity} CATCHES SINCE YOUR LAST SHINY  -  NEXT ONE IS {chance < 3 ? '1 IN 50' : `${chance}%`}</Text>
+                <Text style={{ fontFamily: fonts.utility, fontSize: 13, color: palette.lcdDim }}>THE ODDS CLIMB AFTER {SHINY_SOFT_PITY} MISSES. CATCH {SHINY_HARD_PITY} WITHOUT ONE AND THE NEXT IS A GUARANTEED SHINY.</Text>
+              </>
+            );
+          })()}
+        </Panel>
 
         <Panel title="LAST 12 WEEKS">
           <View style={{ flexDirection: 'row', gap: 3, flexWrap: 'wrap' }}>

@@ -147,6 +147,22 @@ export function dexBitsDecode(b64: string): Set<number> {
 /** Roughly 1 in 50 catches is shiny (web: 1/50, doubled during Chrome Hour). */
 export const shinyRoll = (odds = 50, rnd = Math.random) => rnd() * odds < 1;
 
+/** SHINY HUNT: the app's pity system. Every miss makes the next shiny a little likelier, and the 120th catch since the
+ *  last shiny is guaranteed. The chance stays at the base 1 in 50 until the hunt passes 60 catches, then climbs. */
+export const SHINY_BASE = 1 / 50;
+export const SHINY_SOFT_PITY = 60;
+export const SHINY_HARD_PITY = 120;
+export function shinyChance(pity: number): number {
+  if (pity + 1 >= SHINY_HARD_PITY) return 1;
+  if (pity < SHINY_SOFT_PITY) return SHINY_BASE;
+  return Math.min(1, SHINY_BASE + (pity - SHINY_SOFT_PITY + 1) * 0.03);
+}
+/** One catch's roll: returns whether it is shiny and the new count of catches since the last shiny. */
+export function shinyRollPity(pity: number, rnd = Math.random): { shiny: boolean; pity: number } {
+  const shiny = rnd() < shinyChance(pity);
+  return { shiny, pity: shiny ? 0 : pity + 1 };
+}
+
 /** Backup files written by the web app carry app:"motordex" plus the two stores. */
 export function parseBackup(text: string): { garage: Catch[]; profile: Profile } | null {
   const j = parseJSON<Record<string, unknown> | null>(text, null);

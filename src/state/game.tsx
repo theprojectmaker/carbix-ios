@@ -7,7 +7,7 @@ import { iconURL, mergeCloud, pullGarage, pushGarage, pushPublicRow, recheckScan
 import { publicRow, withRollovers } from '@/engine/publish';
 import { catalogMatch, CATALOG, fixStats, GRAIL_NS } from '@/engine/data';
 import {
-  dateKeyET as todayKey, KEYS, loadAll, markDay, normalizeGarage, newProfile, normalizeProfile, saveAll, shinyRoll, streak, totalXp,
+  dateKeyET as todayKey, KEYS, loadAll, markDay, normalizeGarage, newProfile, normalizeProfile, saveAll, shinyRollPity, streak, totalXp,
 } from '@/engine/store';
 import type { Car, Catch, Profile } from '@/engine/types';
 import { googleSignInCode } from '@/lib/google-signin';
@@ -288,12 +288,14 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
 
   const addCatch = useCallback((car: Car, photo: string | null, geo?: { lat: number; lng: number } | null) => {
     const now = Date.now();
-    const entry: Catch = { id: now, ts: now, car, photo, geo: geo ?? null, shiny: shinyRoll() };
+    const roll = shinyRollPity(((latest.current.profile.shinyPity as number) || 0));
+    const entry: Catch = { id: now, ts: now, car, photo, geo: geo ?? null, shiny: roll.shiny };
     const p0 = latest.current.profile;
     const nextGarage = [entry, ...latest.current.garage];
     const np: Profile = { ...latest.current.profile, days: [...latest.current.profile.days] };
     const firstToday = !np.days.includes(todayKey());
     markDay(np);
+    np.shinyPity = roll.pity;
     const combo = nextCombo(np.combo as { ts: number; n: number } | undefined, now);
     np.combo = combo;
     const hitN = catalogMatch(car);

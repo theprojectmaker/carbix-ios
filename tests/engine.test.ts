@@ -149,3 +149,36 @@ test('higher or lower: rounds never tie, XP is capped at 60 a day', () => {
   assert.equal(total, 60);
   assert.equal(p.hiloBest, 40);
 });
+
+import { shinyChance, shinyRollPity, SHINY_HARD_PITY } from '../src/engine/store';
+import { battleDeal, battleRound, finishBattle, BATTLE_STATS } from '../src/engine/games';
+
+test('shiny hunt: base odds, climbing soft pity, guaranteed at the hard pity', () => {
+  assert.equal(shinyChance(0), 1 / 50);
+  assert.equal(shinyChance(59), 1 / 50);
+  assert.ok(shinyChance(70) > shinyChance(60));
+  assert.equal(shinyChance(SHINY_HARD_PITY - 1), 1);
+  assert.equal(shinyRollPity(SHINY_HARD_PITY - 1, () => 0.999).shiny, true);
+  assert.deepEqual(shinyRollPity(5, () => 0.999), { shiny: false, pity: 6 });
+  assert.deepEqual(shinyRollPity(40, () => 0), { shiny: true, pity: 0 });
+});
+
+test('card battle: a deal has five cards a side and five stats; 0-60 is won by the lower number', () => {
+  const b = battleDeal([]);
+  assert.equal(b.mine.length, 5);
+  assert.equal(b.theirs.length, 5);
+  assert.equal(b.stats.length, 5);
+  const [a, c] = b.mine;
+  for (const k of ['hp', 'top', 'zts', 'value'] as const) {
+    const va = BATTLE_STATS[k].get(a)!, vc = BATTLE_STATS[k].get(c)!;
+    const r = battleRound(k, a, c);
+    if (va === vc) assert.equal(r, 0);
+    else assert.equal(r, (BATTLE_STATS[k].lowerWins ? va < vc : va > vc) ? 1 : -1);
+  }
+  let p = newProfile();
+  let paid = 0;
+  for (let i = 0; i < 5; i++) { const f = finishBattle(p, true, '2026-12-03'); p = f.profile; paid += f.xp; }
+  assert.equal(paid, 60); // only the first three wins a day pay
+  assert.equal(p.battleStreak, 5);
+  assert.equal(finishBattle(p, false, '2026-12-03').profile.battleStreak, 0);
+});

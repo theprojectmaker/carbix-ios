@@ -229,6 +229,7 @@ export default function Home() {
               <View style={{ flexDirection: 'row', gap: 10 }}>
                 <GameTile title="BINGO" sub={`${bingo.done.filter(Boolean).length}/9 - ${bingo.lines.length} LINES`} done={bingo.full} onPress={() => router.push('/bingo')} />
                 <GameTile title="HI-LO" sub={hiloBest ? `BEST ${hiloBest}` : 'HIGHER OR LOWER'} done={false} onPress={() => router.push('/hilo')} />
+                <GameTile title="BATTLE" sub={g.profile.battleDay === today && ((g.profile.battleWins as number) || 0) >= 3 ? '3 WINS TODAY' : 'CARD DUEL'} done={g.profile.battleDay === today && ((g.profile.battleWins as number) || 0) >= 3} onPress={() => router.push('/battle')} />
               </View>
             </Panel>
           </>

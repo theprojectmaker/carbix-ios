@@ -150,3 +150,70 @@ export function hiloCorrect(profileIn: Profile, streak: number, day = dateKeyET(
   p.hiloBest = Math.max((p.hiloBest as number) || 0, streak);
   return { profile: p, xp };
 }
+
+/* =====================  CARD BATTLE  ===================== */
+export type BattleStat = 'hp' | 'top' | 'zts' | 'value';
+export const BATTLE_STATS: Record<BattleStat, { label: string; unit: string; lowerWins?: boolean; get: (c: CatalogEntry) => number | null }> = {
+  hp: { label: 'POWER', unit: ' HP', get: (c) => (c.hp && c.hp > 0 ? c.hp : null) },
+  top: { label: 'TOP SPEED', unit: ' MPH', get: (c) => (c.top && c.top > 0 ? c.top : null) },
+  zts: { label: '0-60 (QUICKEST WINS)', unit: ' S', lowerWins: true, get: (c) => { const v = parseFloat(String(c.zts ?? '')); return v > 0 ? v : null; } },
+  value: { label: 'VALUE', unit: '', get: (c) => (c.low && c.high ? Math.round((c.low + c.high) / 2) : null) },
+};
+const BATTLE_POOL = CATALOG.filter((c) => (['hp', 'top', 'zts', 'value'] as BattleStat[]).every((k) => BATTLE_STATS[k].get(c) !== null));
+export const BATTLE_WINS_PAID_PER_DAY = 3;
+export const BATTLE_WIN_XP = 20;
+
+function shuffled<T>(arr: T[], rng: () => number): T[] {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+export type Battle = { mine: CatalogEntry[]; theirs: CatalogEntry[]; stats: BattleStat[] };
+
+/** Five of your cars against five of a rival's of about the same tier, over five random stats. Short garages are topped up with commons. */
+export function battleDeal(owned: CatalogEntry[], rng: () => number = Math.random): Battle {
+  const usable = owned.filter((c) => BATTLE_POOL.some((p) => p.n === c.n));
+  const mine = shuffled(usable, rng).slice(0, 5);
+  const commons = shuffled(BATTLE_POOL.filter((c) => (RTIER[c.rarity] ?? 0) <= 1 && !mine.some((m) => m.n === c.n)), rng);
+  while (mine.length < 5) mine.push(commons.pop() as CatalogEntry);
+  const avg = mine.reduce((a, c) => a + (RTIER[c.rarity] ?? 0), 0) / mine.length;
+  const near = BATTLE_POOL.filter((c) => Math.abs((RTIER[c.rarity] ?? 0) - avg) <= 1 && !mine.some((m) => m.n === c.n));
+  const theirs = shuffled(near.length >= 5 ? near : BATTLE_POOL, rng).slice(0, 5);
+  const all: BattleStat[] = ['hp', 'top', 'zts', 'value'];
+  const stats: BattleStat[] = [];
+  const bag = shuffled(all, rng);
+  for (let i = 0; i < 5; i++) stats.push(i < 4 ? bag[i] : all[Math.floor(rng() * 4)]);
+  return { mine, theirs, stats: shuffled(stats, rng) };
+}
+
+/** 1 = you win the round, -1 = they do, 0 = a draw. */
+export function battleRound(stat: BattleStat, mine: CatalogEntry, theirs: CatalogEntry): 1 | -1 | 0 {
+  const d = BATTLE_STATS[stat];
+  const a = d.get(mine) ?? 0;
+  const b = d.get(theirs) ?? 0;
+  if (a === b) return 0;
+  return (d.lowerWins ? a < b : a > b) ? 1 : -1;
+}
+
+/** Win a battle (3 rounds of 5) for 20 XP, the first 3 wins of the day. Streak and best are remembered. */
+export function finishBattle(profileIn: Profile, won: boolean, day = dateKeyET()): { profile: Profile; xp: number } {
+  const p = { ...profileIn } as Profile;
+  const wins = p.battleDay === day ? ((p.battleWins as number) || 0) : 0;
+  p.battleDay = day;
+  let xp = 0;
+  if (won) {
+    p.battleStreak = ((p.battleStreak as number) || 0) + 1;
+    p.battleBest = Math.max((p.battleBest as number) || 0, p.battleStreak as number);
+    if (wins < BATTLE_WINS_PAID_PER_DAY) xp = BATTLE_WIN_XP;
+    p.battleWins = wins + 1;
+  } else {
+    p.battleStreak = 0;
+    p.battleWins = wins;
+  }
+  p.bonusXP = (p.bonusXP || 0) + xp;
+  return { profile: p, xp };
+}
