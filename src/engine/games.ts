@@ -217,3 +217,30 @@ export function finishBattle(profileIn: Profile, won: boolean, day = dateKeyET()
   p.bonusXP = (p.bonusXP || 0) + xp;
   return { profile: p, xp };
 }
+
+/* =====================  BRAND CHASE  ===================== */
+export type BrandChase = { make: string; have: number; total: number; missing: CatalogEntry[] };
+
+/** The brand you are closest to finishing: most of its cars caught, but not all. Ties go to the bigger set. */
+export function brandChase(caught: ReadonlySet<number>, catalog: readonly CatalogEntry[] = CATALOG): BrandChase | null {
+  const by = new Map<string, CatalogEntry[]>();
+  for (const e of catalog) {
+    const l = by.get(e.make);
+    if (l) l.push(e); else by.set(e.make, [e]);
+  }
+  let best: BrandChase | null = null;
+  let bestScore = -1;
+  for (const [make, list] of by) {
+    if (list.length < 3) continue;
+    const have = list.filter((e) => caught.has(e.n)).length;
+    if (have === 0 || have === list.length) continue;
+    const score = have / list.length + list.length / 1e4;
+    if (score > bestScore) {
+      bestScore = score;
+      const rank = (e: CatalogEntry) => RTIER[e.rarity] ?? 0;
+      const missing = list.filter((e) => !caught.has(e.n)).sort((a, b) => rank(a) - rank(b)).slice(0, 4);
+      best = { make, have, total: list.length, missing };
+    }
+  }
+  return best;
+}

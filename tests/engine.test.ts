@@ -195,3 +195,14 @@ test('shiny hour: one hour a day, same for everyone, doubles the base odds', () 
   assert.equal(shinyChance(0, 2), SHINY_BASE * 2);
   assert.equal(shinyChance(0), SHINY_BASE);
 });
+
+import { brandChase } from '../src/engine/games';
+test('brand chase: picks the brand closest to done and lists what is missing', () => {
+  const mk = (n: number, make: string): never => ({ n, make, model: 'M' + n, rarity: 'common' }) as never;
+  const cat = [mk(1, 'A'), mk(2, 'A'), mk(3, 'A'), mk(4, 'A'), mk(5, 'B'), mk(6, 'B'), mk(7, 'B')];
+  assert.equal(brandChase(new Set(), cat), null);
+  const r = brandChase(new Set([1, 2, 3, 5]), cat)!;
+  assert.equal(r.make, 'A');
+  assert.deepEqual(r.missing.map((e) => e.n), [4]);
+  assert.equal(brandChase(new Set([1, 2, 3, 4, 5, 6, 7]), cat), null); // nothing left to chase
+});

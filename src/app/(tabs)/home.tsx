@@ -11,7 +11,7 @@ import { cotd, evalChallenges, SPOT_HEX, spotlightColor } from '@/engine/daily';
 import { CATALOG, CATALOG_BY_N, catalogMatch } from '@/engine/data';
 import { currentSeason, SEASON_EVENT_NAMES } from '@/engine/quests';
 import { LiveBanner } from '@/components/live-banner';
-import { bingoState } from '@/engine/games';
+import { bingoState, brandChase } from '@/engine/games';
 import { dateKeyET } from '@/engine/store';
 import { RANKS, TIER_COLOR, xpForLevel } from '@/engine/xp';
 import { loadFeed, visiblePosts, type FeedPost } from '@/lib/feed';
@@ -86,6 +86,7 @@ export default function Home() {
   const spinDone = g.profile.spinDay === today;
   const shadowDone = g.profile.shadowDay === today;
   const bingo = bingoState(g.garage, today);
+  const chase = useMemo(() => brandChase(g.caughtNs), [g.caughtNs]);
   const hiloBest = (g.profile.hiloBest as number) || 0;
 
   // what your friends caught lately
@@ -242,6 +243,26 @@ export default function Home() {
             </Text>
           </Panel>
         )}
+
+        {chase ? (
+          <Panel title="BRAND CHASE" action="GARAGE" onAction={() => router.navigate('/bix')}>
+            <Text style={{ fontFamily: fonts.display, fontSize: 19, color: palette.wht }}>
+              {chase.make.toUpperCase()}  <Text style={{ color: palette.gold }}>{chase.have}/{chase.total}</Text>
+            </Text>
+            <Bar value={chase.have / chase.total} color={palette.green} />
+            <Text style={{ fontFamily: fonts.utility, fontSize: 13, color: palette.lcdDim }}>
+              {chase.total - chase.have} MORE TO FINISH THE SET. NEXT UP:
+            </Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
+              {chase.missing.map((e) => (
+                <View key={e.n} style={{ width: 96, backgroundColor: '#161c2c', borderWidth: 2, borderColor: '#10141f', borderTopWidth: 5, borderTopColor: TIER_COLOR[e.rarity], alignItems: 'center', padding: 4 }}>
+                  <Sprite entry={e} size={76} />
+                  <Text numberOfLines={1} style={{ fontFamily: fonts.display, fontSize: 12, color: palette.wht }}>{e.model.toUpperCase()}</Text>
+                </View>
+              ))}
+            </ScrollView>
+          </Panel>
+        ) : null}
 
         {/* friends */}
         <Panel title="FRIENDS" action="FEED" onAction={() => router.navigate('/social')}>
