@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { AppState } from 'react-native';
 
 import {
   friendAction, friendsGet, liveCatch, liveCreate, liveGet, liveJoin, liveLeave, raceCreate, raceGet, raceJoin, raceScore, raceStart,
@@ -52,6 +53,8 @@ export function RaceProvider({ children }: { children: React.ReactNode }) {
   const liveRef = useRef('');
   const [invites, setInvites] = useState<RaceInvite[]>([]);
   const seenInv = useRef(new Set<string>());
+  const knownFriends = useRef<Set<string> | null>(null);
+  const toldReq = useRef(new Set<string>());
 
   // friends' race invites: check on open and every 25 s
   useEffect(() => {
@@ -60,6 +63,18 @@ export function RaceProvider({ children }: { children: React.ReactNode }) {
       const st = await friendsGet(g.profile.token);
       if (!live || !st) return;
       setInvites(st.invites);
+      // someone accepted you (or added you back): say so, once
+      const now = new Set(st.friends.map((f) => f.toLowerCase()));
+      if (knownFriends.current) {
+        for (const f of st.friends) {
+          if (!knownFriends.current.has(f.toLowerCase())) {
+            g.notify(`${f.toUpperCase()} ADDED YOU BACK`);
+            addNotice({ key: 'fnew:' + f, kind: 'friend', title: `${f.toUpperCase()} IS NOW YOUR FRIEND`, body: 'THEY ADDED YOU BACK.', route: '/friends' });
+          }
+        }
+      }
+      knownFriends.current = now;
+      for (const r of st.incoming) if (!toldReq.current.has(r.name)) { toldReq.current.add(r.name); g.notify(`${r.name.toUpperCase()} WANTS TO BE YOUR FRIEND`); }
       for (const r of st.incoming) addNotice({ key: 'freq:' + r.name, kind: 'friend', title: `${r.name.toUpperCase()} WANTS TO BE YOUR FRIEND`, body: 'ACCEPT IN FRIENDS.', route: '/friends' });
       for (const i of st.invites) {
         const k = i.from + i.code;
@@ -71,8 +86,10 @@ export function RaceProvider({ children }: { children: React.ReactNode }) {
       }
     };
     poll();
-    const id = setInterval(poll, 25000);
-    return () => { live = false; clearInterval(id); };
+    const id = setInterval(poll, 10000);
+    // coming back to the app checks straight away instead of waiting for the next tick
+    const sub = AppState.addEventListener('change', (st) => { if (st === 'active') poll(); });
+    return () => { live = false; clearInterval(id); sub.remove(); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [g.profile.token]);
 

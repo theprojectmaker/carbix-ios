@@ -37,8 +37,10 @@ export default function Friends() {
 
   useEffect(() => {
     let live = true;
-    friendsGet(g.profile.token).then((s) => { if (live) setState(s); });
-    return () => { live = false; };
+    const tick = () => friendsGet(g.profile.token).then((s) => { if (live && s) setState(s); });
+    tick();
+    const id = setInterval(tick, 6000); // requests show up here within seconds, no need to reopen
+    return () => { live = false; clearInterval(id); };
   }, [g.profile.token]);
 
   async function send() {

@@ -152,14 +152,14 @@ export const shinyRoll = (odds = 50, rnd = Math.random) => rnd() * odds < 1;
 export const SHINY_BASE = 1 / 50;
 export const SHINY_SOFT_PITY = 60;
 export const SHINY_HARD_PITY = 120;
-export function shinyChance(pity: number): number {
+export function shinyChance(pity: number, boost = 1): number {
   if (pity + 1 >= SHINY_HARD_PITY) return 1;
-  if (pity < SHINY_SOFT_PITY) return SHINY_BASE;
-  return Math.min(1, SHINY_BASE + (pity - SHINY_SOFT_PITY + 1) * 0.03);
+  if (pity < SHINY_SOFT_PITY) return Math.min(1, SHINY_BASE * boost);
+  return Math.min(1, SHINY_BASE * boost + (pity - SHINY_SOFT_PITY + 1) * 0.03);
 }
 /** One catch's roll: returns whether it is shiny and the new count of catches since the last shiny. */
-export function shinyRollPity(pity: number, rnd = Math.random): { shiny: boolean; pity: number } {
-  const shiny = rnd() < shinyChance(pity);
+export function shinyRollPity(pity: number, rnd = Math.random, boost = 1): { shiny: boolean; pity: number } {
+  const shiny = rnd() < shinyChance(pity, boost);
   return { shiny, pity: shiny ? 0 : pity + 1 };
 }
 
@@ -174,4 +174,23 @@ export function parseBackup(text: string): { garage: Catch[]; profile: Profile }
   const p = src.profile ?? (src['motordex.profile'] as unknown);
   const profile = normalizeProfile(typeof p === 'string' ? parseJSON(p, null) : (p as Partial<Profile> | null));
   return { garage, profile };
+}
+
+/** SHINY HOUR: one hour a day, the same for everyone, when the shiny odds are doubled. It starts between 10am and 5pm Eastern. */
+export const SHINY_HOUR_BOOST = 2;
+export function shinyHourOn(utcDay: string): { startTs: number; endTs: number } {
+  let h = 2166136261;
+  const seed = 'shinyhour:' + utcDay;
+  for (let i = 0; i < seed.length; i++) h = Math.imul(h ^ seed.charCodeAt(i), 16777619);
+  const hour = 15 + ((h >>> 0) % 8); // 15:00 to 22:00 UTC
+  const startTs = Date.parse(utcDay + 'T00:00:00Z') + hour * 3600e3;
+  return { startTs, endTs: startTs + 3600e3 };
+}
+/** The Shiny Hour on now, or the next one to come. */
+export function shinyHour(now = Date.now()): { live: boolean; startTs: number; endTs: number } {
+  const today = new Date(now).toISOString().slice(0, 10);
+  const w = shinyHourOn(today);
+  if (now < w.endTs) return { live: now >= w.startTs, ...w };
+  const next = shinyHourOn(new Date(Date.parse(today + 'T00:00:00Z') + 86400e3).toISOString().slice(0, 10));
+  return { live: false, ...next };
 }

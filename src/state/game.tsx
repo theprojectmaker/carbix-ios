@@ -7,7 +7,7 @@ import { iconURL, mergeCloud, pullGarage, pushGarage, pushPublicRow, recheckScan
 import { publicRow, withRollovers } from '@/engine/publish';
 import { catalogMatch, CATALOG, fixStats, GRAIL_NS } from '@/engine/data';
 import {
-  dateKeyET as todayKey, KEYS, loadAll, markDay, normalizeGarage, newProfile, normalizeProfile, saveAll, shinyRollPity, streak, totalXp,
+  dateKeyET as todayKey, KEYS, loadAll, markDay, normalizeGarage, newProfile, normalizeProfile, saveAll, shinyHour, shinyRollPity, SHINY_HOUR_BOOST, streak, totalXp,
 } from '@/engine/store';
 import type { Car, Catch, Profile } from '@/engine/types';
 import { googleSignInCode } from '@/lib/google-signin';
@@ -288,7 +288,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
 
   const addCatch = useCallback((car: Car, photo: string | null, geo?: { lat: number; lng: number } | null) => {
     const now = Date.now();
-    const roll = shinyRollPity(((latest.current.profile.shinyPity as number) || 0));
+    const roll = shinyRollPity(((latest.current.profile.shinyPity as number) || 0), Math.random, shinyHour(now).live ? SHINY_HOUR_BOOST : 1);
     const entry: Catch = { id: now, ts: now, car, photo, geo: geo ?? null, shiny: roll.shiny };
     const p0 = latest.current.profile;
     const nextGarage = [entry, ...latest.current.garage];

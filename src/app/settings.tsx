@@ -8,6 +8,7 @@ import * as WebBrowser from 'expo-web-browser';
 import React, { useEffect, useState } from 'react';
 import { Alert, ScrollView, Switch, Text, TextInput, View } from 'react-native';
 
+import { GlobalCatchCounter } from '@/components/global-counter';
 import { Screen } from '@/components/screen';
 import { Btn, Chip, PText } from '@/components/ui';
 import { redeemLinkCode } from '@/engine/api';
@@ -135,6 +136,8 @@ export default function Settings() {
     <Screen edges={['top', 'bottom']}>
       <ScrollView contentContainerStyle={{ padding: 14, gap: 14, paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
         <PText style={{ fontSize: 44, lineHeight: 46, color: t.red }}>SETTINGS</PText>
+
+        <GlobalCatchCounter />
 
         <Section title="YOU" hint="THIS NAME SHOWS ON THE FEED AND LEADERBOARD.">
           <TextInput value={name} onChangeText={setName} autoCapitalize="none" autoCorrect={false} maxLength={16} style={input} />

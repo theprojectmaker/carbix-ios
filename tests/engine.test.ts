@@ -182,3 +182,16 @@ test('card battle: a deal has five cards a side and five stats; 0-60 is won by t
   assert.equal(p.battleStreak, 5);
   assert.equal(finishBattle(p, false, '2026-12-03').profile.battleStreak, 0);
 });
+
+import { shinyHour, shinyHourOn, SHINY_BASE } from '../src/engine/store';
+test('shiny hour: one hour a day, same for everyone, doubles the base odds', () => {
+  const w = shinyHourOn('2026-12-03');
+  assert.equal(w.endTs - w.startTs, 3600e3);
+  const h = new Date(w.startTs).getUTCHours();
+  assert.ok(h >= 15 && h <= 22);
+  assert.equal(shinyHour(w.startTs + 60e3).live, true);
+  assert.equal(shinyHour(w.endTs + 60e3).live, false);
+  assert.ok(shinyHour(w.endTs + 60e3).startTs > w.endTs); // the next one is tomorrow's
+  assert.equal(shinyChance(0, 2), SHINY_BASE * 2);
+  assert.equal(shinyChance(0), SHINY_BASE);
+});

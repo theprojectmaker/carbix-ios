@@ -2,6 +2,7 @@ import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 
 import { API_ORIGIN } from '@/engine/api';
+import { shinyHour } from '@/engine/store';
 
 /**
  * Notifications: a daily nudge to go spotting, a warning when a streak is about to end (both scheduled on the
@@ -60,6 +61,16 @@ export async function planLocalNotifications(prefs: NotifyPrefs, state: { streak
         trigger: { type: Notifications.SchedulableTriggerInputTypes.DAILY, hour: prefs.nudgeHour, minute: prefs.nudgeMinute },
       });
     }
+    if (prefs.nudge) {
+      // SHINY HOUR: a heads-up when the hour starts (the next one to come, today or tomorrow)
+      const sh = shinyHour();
+      if (!sh.live && sh.startTs > Date.now() + 60000) {
+        await Notifications.scheduleNotificationAsync({
+          content: { title: 'SHINY HOUR IS LIVE', body: 'Shiny odds are doubled for the next hour. Go spotting.', sound: 'default', data: { route: '/' } },
+          trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: new Date(sh.startTs) },
+        });
+      }
+    }
     if (prefs.streak && state.streak >= 2 && !state.caughtToday) {
       const at = new Date();
       at.setHours(19, 30, 0, 0);
@@ -88,7 +99,7 @@ export async function registerPush(accountToken: string, prefs: NotifyPrefs): Pr
     const r = await fetch(API_ORIGIN + '/api/push-subscribe', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ token: accountToken, action: 'subscribe', expo: t.data, prefs: { friendrare: prefs.friends }, build: 'native' }),
+      body: JSON.stringify({ token: accountToken, action: 'subscribe', expo: t.data, prefs: { friendrare: prefs.friends, friend: prefs.friends }, build: 'native' }),
     });
     const j = await r.json();
     return !!j?.ok;
@@ -102,7 +113,7 @@ export async function updatePushPrefs(accountToken: string, prefs: NotifyPrefs) 
     await fetch(API_ORIGIN + '/api/push-subscribe', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ token: accountToken, action: 'prefs', prefs: { friendrare: prefs.friends } }),
+      body: JSON.stringify({ token: accountToken, action: 'prefs', prefs: { friendrare: prefs.friends, friend: prefs.friends } }),
     });
   } catch {
     /* next launch re-registers */

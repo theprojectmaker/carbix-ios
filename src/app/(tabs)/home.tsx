@@ -10,6 +10,7 @@ import { Bar, Btn, PText, Sprite } from '@/components/ui';
 import { cotd, evalChallenges, SPOT_HEX, spotlightColor } from '@/engine/daily';
 import { CATALOG, CATALOG_BY_N, catalogMatch } from '@/engine/data';
 import { currentSeason, SEASON_EVENT_NAMES } from '@/engine/quests';
+import { LiveBanner } from '@/components/live-banner';
 import { bingoState } from '@/engine/games';
 import { dateKeyET } from '@/engine/store';
 import { RANKS, TIER_COLOR, xpForLevel } from '@/engine/xp';
@@ -102,6 +103,7 @@ export default function Home() {
   return (
     <Screen edges={[]}>
       <ScrollView contentContainerStyle={{ padding: 14, paddingBottom: 30, gap: 14 }}>
+        <LiveBanner />
         {/* race invites outrank everything */}
         {race.invites.length ? (
           <Pressable onPress={() => { play('tab'); router.push('/race'); }} accessibilityRole="button">
