@@ -7,6 +7,7 @@ import {
 } from '@/engine/api';
 import type { Car } from '@/engine/types';
 import { catchXP } from '@/engine/xp';
+import { addNotice } from '@/lib/inbox';
 import { useGame } from '@/state/game';
 
 const KEY = 'motordex.native.racecode';
@@ -59,11 +60,13 @@ export function RaceProvider({ children }: { children: React.ReactNode }) {
       const st = await friendsGet(g.profile.token);
       if (!live || !st) return;
       setInvites(st.invites);
+      for (const r of st.incoming) addNotice({ key: 'freq:' + r.name, kind: 'friend', title: `${r.name.toUpperCase()} WANTS TO BE YOUR FRIEND`, body: 'ACCEPT IN FRIENDS.', route: '/friends' });
       for (const i of st.invites) {
         const k = i.from + i.code;
         if (!seenInv.current.has(k)) {
           seenInv.current.add(k);
           g.notify(`${i.from.toUpperCase()} INVITED YOU TO A RACE`);
+          addNotice({ key: 'inv:' + i.from + i.code, kind: 'race', title: `${i.from.toUpperCase()} INVITED YOU TO A RACE`, body: `CODE ${i.code}. OPEN RACE TO JOIN.`, route: '/race' });
         }
       }
     };

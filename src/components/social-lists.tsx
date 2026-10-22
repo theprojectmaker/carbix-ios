@@ -2,7 +2,8 @@ import { router } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
 import { FlatList, RefreshControl, Text, View } from 'react-native';
 
-import { fetchLeaderboard } from '@/engine/api';
+import { Btn } from '@/components/ui';
+import { fetchLeaderboard, friendAction, friendsGet } from '@/engine/api';
 import { levelFor, rankFor } from '@/engine/xp';
 import { isBlocked, isSelf, reportUser, withBlocked } from '@/lib/moderation';
 import { useGame } from '@/state/game';
@@ -30,10 +31,24 @@ const Empty = ({ text }: { text: string }) => (
 
 type Row = { name?: string; displayName?: string; xp?: number; caught?: number; dexCount?: number; streak?: number };
 
-/** Top spotters by XP. */
+const norm = (s?: string) => String(s ?? '').replace(/^@+/, '').toLowerCase();
+
+/** Top spotters by XP, each with an ADD key so making friends is one tap. */
 export function RankList() {
   const gm = useGame();
   const [rows, setRows] = useState<Row[]>([]);
+  const [friends, setFriends] = useState<string[]>([]);
+  const [sent, setSent] = useState<string[]>([]);
+  const myName = norm(gm.profile.name);
+
+  async function add(name: string) {
+    if (myName === 'spotter') { gm.notify('PICK A USERNAME FIRST (SETTINGS, YOU)'); return; }
+    setSent((l) => [...l, norm(name)]);
+    const j = await friendAction(gm.profile.token, gm.profile.name, { action: 'request', target: name });
+    if (j.becameFriends) { setFriends((l) => [...l, norm(name)]); gm.notify(`YOU AND ${String(j.name || name).toUpperCase()} ARE NOW FRIENDS`); }
+    else if (j.ok) gm.notify(`REQUEST SENT TO ${String(j.name || name).toUpperCase()}`);
+    else { setSent((l) => l.filter((n) => n !== norm(name))); gm.notify(String(j.error || 'COULD NOT SEND THAT').toUpperCase()); }
+  }
   const [busy, setBusy] = useState(true);
   const [tick, setTick] = useState(0);
   const load = useCallback(() => setTick((n) => n + 1), []);
@@ -41,13 +56,14 @@ export function RankList() {
   useEffect(() => {
     let live = true;
     (async () => {
-      const r = (await fetchLeaderboard()) as Row[];
+      const [r, fr] = await Promise.all([fetchLeaderboard() as Promise<Row[]>, friendsGet(gm.profile.token)]);
       if (!live) return;
+      if (fr) { setFriends(fr.friends.map(norm)); setSent(fr.outgoing.map(norm)); }
       setRows([...r].sort((a, b) => (b.xp ?? 0) - (a.xp ?? 0)).slice(0, 50));
       setBusy(false);
     })();
     return () => { live = false; };
-  }, [tick]);
+  }, [tick, gm.profile.token]);
 
   return (
     <View style={{ flex: 1 }}>
@@ -70,7 +86,14 @@ export function RankList() {
                 <Text style={{ fontFamily: fonts.utility, fontSize: 9, color: palette.lcdDim }}>LV.{lv} {rankFor(lv)}  -  {item.dexCount ?? item.caught ?? 0} IN THE BIX</Text>
                 {item.name ? <ModRow name={item.name} what="leaderboard name" /> : null}
               </View>
-              <Text style={{ fontFamily: fonts.display, fontSize: 22, color: palette.gold }}>{(item.xp ?? 0).toLocaleString()}</Text>
+              <View style={{ alignItems: 'flex-end', gap: 4 }}>
+                <Text style={{ fontFamily: fonts.display, fontSize: 22, color: palette.gold }}>{(item.xp ?? 0).toLocaleString()}</Text>
+                {item.name && !isSelf(gm.profile, item.name) && norm(item.name) !== 'spotter' ? (
+                  friends.includes(norm(item.name)) ? <Text style={{ fontFamily: fonts.utilityBold, fontSize: 8.5, color: palette.green }}>FRIEND</Text>
+                  : sent.includes(norm(item.name)) ? <Text style={{ fontFamily: fonts.utilityBold, fontSize: 8.5, color: palette.lcdDim }}>SENT</Text>
+                  : <Btn small tone="red" label="ADD" onPress={() => add(String(item.name))} />
+                ) : null}
+              </View>
             </View>
           );
         }}

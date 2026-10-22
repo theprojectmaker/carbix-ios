@@ -1,3 +1,4 @@
+import * as Haptics from 'expo-haptics';
 import { Image } from 'expo-image';
 import React, { memo, useEffect, useMemo, useState } from 'react';
 import { LayoutChangeEvent, StyleSheet, Text, View } from 'react-native';
@@ -35,7 +36,13 @@ const seg = (t: number, a: number, b: number) => {
 };
 const ease = (x: number) => {
   'worklet';
-  return 1 - Math.pow(1 - x, 3);
+  return 1 - Math.pow(1 - x, 4);
+};
+/** eases out with a small overshoot, for things that land on a target */
+const settle = (x: number) => {
+  'worklet';
+  const c = 1.3;
+  return 1 + (c + 1) * Math.pow(x - 1, 3) + c * Math.pow(x - 1, 2);
 };
 /** 1 between a and b, ramping in and out over `f` ms. */
 const win = (t: number, a: number, b: number, f = 120) => {
@@ -92,7 +99,7 @@ const Shot = memo(function Shot({ uri }: { uri: string }) {
  * confidence count-up and checklist, IDENTIFIED with a push-in and the car's silhouette, stat read-outs that count up,
  * then the card skeleton "minting" with your photo flying into its picture slot.
  */
-export function IdentifyReveal({ shot, car, onDone }: { shot: string; car: Car; onDone: () => void }) {
+export function IdentifyReveal({ shot, car, onDone, haptics = true }: { shot: string; car: Car; onDone: () => void; haptics?: boolean }) {
   const rc = RARC[car.rarity] ?? RARC.Common;
   const [size, setSize] = useState({ W: 0, H: 0 });
   const t = useSharedValue(0);
@@ -141,12 +148,14 @@ export function IdentifyReveal({ shot, car, onDone }: { shot: string; car: Car; 
     const at = (ms: number, fn: () => void) => timers.push(setTimeout(fn, ms));
     checks.forEach((_, i) => at(260 + 170 * i, () => play('click')));
     if (conf >= 96) at(700, () => play('ping2'));
-    at(T.found, () => playCaught(car.rarity));
-    stats.forEach((_, i) => at(statAt(i), () => { play('click'); play('ping0'); }));
+    const tap = (style: Haptics.ImpactFeedbackStyle) => { if (haptics) Haptics.impactAsync(style).catch(() => {}); };
+    at(600, () => tap(Haptics.ImpactFeedbackStyle.Light));
+    at(T.found, () => { playCaught(car.rarity); tap(Haptics.ImpactFeedbackStyle.Heavy); });
+    stats.forEach((_, i) => at(statAt(i), () => { play('click'); play('ping0'); if (haptics) Haptics.selectionAsync().catch(() => {}); }));
     if ((RT[car.rarity] ?? 0) >= 3) at(T.found + 150, () => play('rev'));
-    at(T.mint, () => play('tab'));
+    at(T.mint, () => { play('tab'); tap(Haptics.ImpactFeedbackStyle.Light); });
     at(T.fly - 20, () => play('swipe'));
-    at(T.fly + 520, () => play('click'));
+    at(T.fly + 520, () => { play('click'); tap(Haptics.ImpactFeedbackStyle.Medium); });
     at(T.total, onDone);
     return () => timers.forEach(clearTimeout);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -163,7 +172,7 @@ export function IdentifyReveal({ shot, car, onDone }: { shot: string; car: Car; 
   const gl = (W - gw) / 2;
   const gt = (H - gh) / 2;
   const frameStyle = useAnimatedStyle(() => {
-    const p = ease(seg(t.get(), 0, 600));
+    const p = settle(seg(t.get(), 0, 650));
     return {
       left: gl + (box.left - gl) * p, top: gt + (box.top - gt) * p,
       width: gw + (box.w - gw) * p, height: gh + (box.h - gh) * p,
@@ -184,7 +193,7 @@ export function IdentifyReveal({ shot, car, onDone }: { shot: string; car: Car; 
   const slotH = cardW * (7 / 16);
   const slotTop = cardTop + 6 + 36 + 6;
   const flyStyle = useAnimatedStyle(() => {
-    const p = ease(seg(t.get(), T.fly, T.fly + 520));
+    const p = settle(seg(t.get(), T.fly, T.fly + 520));
     return {
       left: interpolate(p, [0, 1], [0, cardLeft + 6]), top: interpolate(p, [0, 1], [0, slotTop]),
       width: interpolate(p, [0, 1], [W, cardW - 12]), height: interpolate(p, [0, 1], [H, slotH]), opacity: seg(t.get(), T.fly - 1, T.fly),

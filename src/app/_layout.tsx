@@ -12,6 +12,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Image } from 'expo-image';
 
 import { GameProvider, useGame } from '@/state/game';
+import { loadInbox } from '@/lib/inbox';
 import { preloadSfx } from '@/lib/sfx';
 import { RaceProvider } from '@/state/race';
 import { PText } from '@/components/ui';
@@ -30,6 +31,7 @@ function Shell() {
     if (fontsLoaded && ready) {
       SplashScreen.hideAsync().catch(() => {});
       preloadSfx();
+      loadInbox();
     }
   }, [fontsLoaded, ready]);
   // Expo Go is killed by iOS well before a real app would be; hand decoded images back whenever we leave the foreground
@@ -63,6 +65,7 @@ function Shell() {
         <Stack.Screen name="trophies" options={{ presentation: 'modal' }} />
         <Stack.Screen name="clubs" options={{ presentation: 'modal' }} />
         <Stack.Screen name="post/[id]" options={{ presentation: 'modal' }} />
+        <Stack.Screen name="notifications" options={{ presentation: 'modal' }} />
         <Stack.Screen name="season" options={{ presentation: 'modal' }} />
         <Stack.Screen name="race" options={{ presentation: 'modal' }} />
       </Stack>

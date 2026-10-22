@@ -66,6 +66,12 @@ export default function Friends() {
       <ScrollView contentContainerStyle={{ padding: 14, gap: 12, paddingBottom: 30 }} keyboardShouldPersistTaps="handled">
         <PText style={{ fontSize: 44, lineHeight: 46, color: t.red }}>FRIENDS</PText>
 
+        {g.profile.username === 'spotter' ? (
+          <Panel title="PICK A USERNAME FIRST">
+            <Text style={{ fontFamily: fonts.utility, fontSize: 9.5, color: palette.lcdDim, lineHeight: 14 }}>FRIENDS FIND EACH OTHER BY USERNAME. YOURS IS STILL THE DEFAULT ONE.</Text>
+            <Btn small tone="red" label="SET MY USERNAME" onPress={() => router.push('/settings')} />
+          </Panel>
+        ) : null}
         <Panel title="ADD A FRIEND">
           <TextInput
             value={name}
@@ -79,7 +85,7 @@ export default function Friends() {
           />
           <Btn tone="red" label="SEND REQUEST" disabled={busy || !name.trim()} onPress={send} />
           {note ? <Text style={{ fontFamily: fonts.utilityBold, fontSize: 9.5, color: palette.gold }}>{note}</Text> : null}
-          <Text style={{ fontFamily: fonts.utility, fontSize: 9, color: palette.lcdDim }}>THEY HAVE TO ACCEPT BEFORE YOU ARE FRIENDS.</Text>
+          <Text style={{ fontFamily: fonts.utility, fontSize: 9, color: palette.lcdDim }}>THEY HAVE TO ACCEPT BEFORE YOU ARE FRIENDS. YOU CAN ALSO TAP ADD NEXT TO ANYONE ON THE LEADERBOARD.</Text>
         </Panel>
 
         {state && state.incoming.length ? (
@@ -118,7 +124,10 @@ export default function Friends() {
           ) : null}
         </Panel>
 
-        <Btn tone="plain" label="CLOSE" onPress={() => router.back()} />
+        <View style={{ flexDirection: 'row', gap: 8 }}>
+          <Btn small style={{ flex: 1 }} tone="navy" label="REFRESH" disabled={busy} onPress={() => { play('click'); load(); }} />
+          <Btn small style={{ flex: 1 }} tone="plain" label="CLOSE" onPress={() => router.back()} />
+        </View>
       </ScrollView>
     </Screen>
   );

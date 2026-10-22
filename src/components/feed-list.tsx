@@ -40,7 +40,7 @@ export function FeedList() {
 
   useEffect(() => {
     let live = true;
-    loadFeed(gm.profile.token, tick > 0).then((s) => {
+    loadFeed(gm.profile.token, tick > 0, gm.profile.name).then((s) => {
       if (!live) return;
       setPosts(s.posts);
       setFriends(s.friends);
@@ -48,7 +48,7 @@ export function FeedList() {
       setBusy(false);
     });
     return () => { live = false; };
-  }, [tick, gm.profile.token]);
+  }, [tick, gm.profile.token, gm.profile.name]);
 
   const shown = visiblePosts(posts, friends, gm.profile.name, (n) => isBlocked(gm.profile, n))
     .filter((p) => only === 'all' || isSelf(gm.profile, p.name));

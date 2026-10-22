@@ -11,6 +11,7 @@ import {
 } from '@/engine/store';
 import type { Car, Catch, Profile } from '@/engine/types';
 import { googleSignInCode } from '@/lib/google-signin';
+import { addNotice } from '@/lib/inbox';
 import { play, setSfxVolume, setSilentMute } from '@/lib/sfx';
 import { catchBonuses, evalChallenges, nextCombo } from '@/engine/daily';
 import { trophyCheck } from '@/engine/extras';
@@ -104,9 +105,13 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       setProfile(q.profile);
       setReady(true);
       if (loaded.profile.googleLinked) {
-        const r = await pullGarage(loaded.profile.token);
+        const r = await pullGarage(loaded.profile.token, true);
         if (r.ok && r.data) {
           const m = mergeCloud(loaded.garage, loaded.profile, r.data);
+          if (r.name && (!m.profile.username || m.profile.username === 'spotter')) {
+            const nm = String(r.name).replace(/[^A-Za-z0-9_]/g, '').slice(0, 16);
+            if (nm) m.profile = { ...m.profile, username: nm, displayName: nm, name: '@' + nm };
+          }
           latest.current = { garage: m.garage, profile: m.profile };
           setGarage(m.garage);
           setProfile(m.profile);
@@ -198,6 +203,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       if (a?.key !== b?.key || c !== d) setProfile(rolled);
       // The server keeps the HIGHER of old and new numbers, so one inflated push (an old merge, a bad import) sticks forever.
       // reset:true tells it this push is deliberate. Done once after this update, and any time RECALCULATE MY SCORE is pressed.
+      if (gg.length === 0 && (!rolled.username || rolled.username === 'spotter')) return;
       const reset = gg.length > 0 && rolled.scoreFix !== 'v2';
       pushPublicRow({ ...publicRow(gg, rolled), ...(reset ? { reset: true } : {}) })
         .then((ok) => {
@@ -260,8 +266,14 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     setProfile(r.profile);
     const lines = [...bonuses.filter((b) => b.label !== 'SHINY').map((b) => b.label), ...ch.won.map((c) => c.label + ' +' + c.xp + ' XP'), ...tr.events];
     if (entry.shiny) lines.unshift('SHINY - +17 XP, +5 ORBS');
-    if (levelFor(totalXp(nextGarage, r.profile)) > levelFor(totalXp(latest.current.garage.slice(1), p0))) play('levelup');
+    const lvNow = levelFor(totalXp(nextGarage, r.profile));
+    const leveled = lvNow > levelFor(totalXp(latest.current.garage.slice(1), p0));
+    if (leveled) play('levelup');
     else if (r.events.some((e) => e.type === 'complete') || ch.won.length) play('streak');
+    if (leveled) addNotice({ kind: 'level', title: `LEVEL ${lvNow}: ${rankFor(lvNow)}`, body: 'KEEP CATCHING TO CLIMB THE RANKS.', route: '/home' });
+    for (const e of r.events) if (e.type === 'complete') addNotice({ kind: 'quest', title: `QUEST ${e.step} COMPLETE`, body: `+${e.xp} XP, +${e.orbs} ORBS. THE NEXT QUEST IS OPEN.`, route: '/season' });
+    for (const ev of tr.events) addNotice({ kind: 'trophy', title: ev, route: '/trophies' });
+    for (const c of ch.won) addNotice({ kind: 'daily', title: `DAILY DONE: ${c.label}`, body: `+${c.xp} XP`, route: '/home' });
     if (lines.length) say([...lines.map((l) => ({ type: 'chapter', label: l }) as QuestEvent), ...r.events]);
     else say(r.events);
     return entry;
@@ -347,6 +359,9 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     latest.current = { garage: m.garage, profile: linked };
     setGarage(m.garage);
     setProfile(linked);
+    // on disk right now, not after the debounce: a crash or a quick close must not lose the sign-in
+    saveAll(AsyncStorage, m.garage, linked).catch(() => {});
+    addNotice({ kind: 'info', title: `SIGNED IN AS ${linked.name.toUpperCase()}`, body: `${m.garage.length} CARS IN YOUR GARAGE. YOUR PROGRESS SAVES TO THIS ACCOUNT.`, route: '/settings' });
     return { ok: true, added: m.garage.length - before };
     } catch {
       return { ok: false, added: 0 };

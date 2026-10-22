@@ -4,11 +4,12 @@ import { Pressable, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { play } from '@/lib/sfx';
+import { useInbox } from '@/lib/inbox';
 import { useGame } from '@/state/game';
 import { useRace } from '@/state/race';
 import { fonts, palette } from '@/theme/theme';
 import { Plate } from './plate';
-import { RaceIcon, SeasonIcon } from './pixel-icons';
+import { BellIcon, RaceIcon, SeasonIcon } from './pixel-icons';
 
 const INK = '#141C27';
 
@@ -17,6 +18,7 @@ export function AppHeader() {
   const insets = useSafeAreaInsets();
   const g = useGame();
   const invites = useRace().invites.length;
+  const unread = useInbox().unread;
   return (
     <View
       style={{
@@ -36,6 +38,7 @@ export function AppHeader() {
       </Pressable>
       <HBtn dot={invites > 0} icon={<RaceIcon />} a11y={invites ? `Races, ${invites} invite` : 'Races'} onPress={() => router.push('/race')} />
       <HBtn icon={<SeasonIcon />} a11y="Quests and shop" onPress={() => router.push('/season')} />
+      <HBtn dot={unread > 0} icon={<BellIcon />} a11y={unread ? `Inbox, ${unread} new` : 'Inbox'} onPress={() => router.push('/notifications')} />
     </View>
   );
 }
@@ -44,7 +47,7 @@ function HBtn({ icon, onPress, a11y, dot }: { icon: React.ReactNode; onPress: ()
   return (
     <Pressable onPress={() => { play('click'); onPress(); }} accessibilityRole="button" accessibilityLabel={a11y}>
       {({ pressed }) => (
-        <Plate color={palette.navyDk} depth={2} pressed={pressed} style={{ width: 46, height: 44, alignItems: 'center', justifyContent: 'center' }}>
+        <Plate color={palette.navyDk} depth={2} pressed={pressed} style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}>
           {icon}
           {dot ? <View style={{ position: 'absolute', top: 3, right: 3, width: 14, height: 14, borderRadius: 7, backgroundColor: palette.gold, borderWidth: 3, borderColor: INK }} /> : null}
         </Plate>

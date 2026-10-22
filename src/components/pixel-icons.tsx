@@ -45,3 +45,15 @@ export function SeasonIcon({ size = 26 }: { size?: number }) {
   ];
   return <Icon size={size} px={px} />;
 }
+
+/** A bell with a clapper, 16x16 pixel grid, for the inbox. */
+export function BellIcon({ size = 26 }: { size?: number }) {
+  const px: Px[] = [
+    [7, 1, 2, 1, INK], // top knob
+    [6, 2, 4, 1, INK], [5, 3, 6, 1, '#F2D36B'], [4, 4, 8, 5, '#C9A227'], [5, 4, 2, 4, '#F2D36B'], // body + highlight
+    [4, 3, 1, 1, INK], [11, 3, 1, 1, INK], [3, 4, 1, 5, INK], [12, 4, 1, 5, INK], // sides
+    [2, 9, 12, 1, INK], [3, 10, 10, 1, INK], // rim
+    [6, 11, 4, 1, INK], [7, 12, 2, 1, '#E4E7EC'], [7, 13, 2, 1, INK], // clapper
+  ];
+  return <Icon size={size} px={px} />;
+}

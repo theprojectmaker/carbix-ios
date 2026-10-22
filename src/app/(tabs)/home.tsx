@@ -84,7 +84,7 @@ export default function Home() {
   // what your friends caught lately
   useEffect(() => {
     let live = true;
-    loadFeed(g.profile.token).then((s) => {
+    loadFeed(g.profile.token, false, g.profile.name).then((s) => {
       if (!live) return;
       const mine = g.profile.name;
       const them = visiblePosts(s.posts, s.friends, mine, (n) => isBlocked(g.profile, n)).filter((p) => String(p.name ?? '').replace(/^@/, '').toLowerCase() !== mine.replace(/^@/, '').toLowerCase());

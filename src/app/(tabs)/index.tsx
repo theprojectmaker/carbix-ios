@@ -278,7 +278,7 @@ export default function Scan() {
         {shot ? (
           <>
             <Image source={{ uri: shot }} style={StyleSheet.absoluteFill} contentFit="cover" />
-            {reveal ? <IdentifyReveal shot={shot} car={reveal.car} onDone={finishReveal} /> : <ScanSweep />}
+            {reveal ? <IdentifyReveal shot={shot} car={reveal.car} onDone={finishReveal} haptics={g.settings.haptics} /> : <ScanSweep haptics={g.settings.haptics} />}
           </>
         ) : null}
         <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: '#fff', opacity: flash, zIndex: 20 }]} />
