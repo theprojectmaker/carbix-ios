@@ -135,6 +135,7 @@ export default function Settings() {
         <Section title="CAMERA">
           <Toggle label="COOL MODE" sub="SMALLER PHOTOS AND NO BACKGROUND WORK, SO THE PHONE STAYS COOL." value={g.settings.cool} onChange={(v) => g.setSettings({ cool: v })} />
           <Toggle label="HAPTICS" sub="A BUZZ WHEN YOU CATCH A CAR." value={g.settings.haptics} onChange={(v) => g.setSettings({ haptics: v })} />
+          <Toggle label="POST CATCHES TO THE FEED" sub="YOUR NEW CATCHES, WITH THE PHOTO, SHOW UP IN YOUR FRIENDS' FEED. TURN OFF TO KEEP THEM PRIVATE." value={g.settings.feedShare !== false} onChange={(v) => g.setSettings({ feedShare: v })} />
           <Toggle label="CALL YOUR SHOT" sub="GUESS THE BRAND BEFORE EACH SCAN, JUST FOR A STREAK." value={g.settings.callshot} onChange={(v) => g.setSettings({ callshot: v })} />
         </Section>
 
@@ -160,6 +161,7 @@ export default function Settings() {
           <TextInput value={code} onChangeText={(s) => setCode(s.toUpperCase())} placeholder="ABC123" placeholderTextColor="#7f8ca6" autoCapitalize="characters" autoCorrect={false} maxLength={8} style={{ ...input, letterSpacing: 4 }} />
           <Btn small tone="red" label="USE CODE" onPress={link} />
           {g.syncState ? <Text style={{ fontFamily: fonts.utility, fontSize: 9, color: palette.lcdDim }}>CLOUD: {g.syncState}</Text> : null}
+          <Btn small tone="navy" label="RECALCULATE MY SCORE" onPress={() => { g.recalcScore(); setStatus('SCORE RECALCULATED FROM YOUR GARAGE. THE LEADERBOARD UPDATES IN A MOMENT.'); }} />
           <View style={{ flexDirection: 'row', gap: 8 }}>
             <Btn small style={{ flex: 1 }} tone="plain" label="EXPORT" onPress={exportBackup} />
             <Btn small style={{ flex: 1 }} tone="plain" label="RESTORE" onPress={importBackup} />

@@ -62,7 +62,7 @@ function Shell() {
         <Stack.Screen name="spin" options={{ presentation: 'modal' }} />
         <Stack.Screen name="trophies" options={{ presentation: 'modal' }} />
         <Stack.Screen name="clubs" options={{ presentation: 'modal' }} />
-        <Stack.Screen name="league" options={{ presentation: 'modal' }} />
+        <Stack.Screen name="post/[id]" options={{ presentation: 'modal' }} />
         <Stack.Screen name="season" options={{ presentation: 'modal' }} />
         <Stack.Screen name="race" options={{ presentation: 'modal' }} />
       </Stack>

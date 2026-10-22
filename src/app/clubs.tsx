@@ -22,7 +22,8 @@ function Panel({ title, children }: { title: string; children: React.ReactNode }
 }
 
 /** Clubs: teams of up to 20 spotters racing on combined season XP. */
-export default function Clubs() {
+/** The clubs UI, usable as a screen or as a section of the leaderboard. */
+export function ClubsView({ embedded }: { embedded?: boolean }) {
   const t = useTheme();
   const g = useGame();
   const club = g.profile.club as { code: string; name: string } | undefined;
@@ -102,9 +103,8 @@ export default function Clubs() {
   ).sort((a, b) => b.xp - a.xp).slice(0, 25);
 
   return (
-    <Screen edges={['top', 'bottom']}>
       <ScrollView contentContainerStyle={{ padding: 14, gap: 12, paddingBottom: 30 }} keyboardShouldPersistTaps="handled">
-        <PText style={{ fontSize: 44, lineHeight: 46, color: t.red }}>CLUBS</PText>
+        {embedded ? null : <PText style={{ fontSize: 44, lineHeight: 46, color: t.red }}>CLUBS</PText>}
 
         {club ? (
           <Panel title={club.name}>
@@ -147,8 +147,15 @@ export default function Clubs() {
           )}
           <Btn small tone="plain" label="REFRESH" onPress={load} />
         </Panel>
-        <Btn tone="plain" label="CLOSE" onPress={() => router.back()} />
+        {embedded ? null : <Btn tone="plain" label="CLOSE" onPress={() => router.back()} />}
       </ScrollView>
+  );
+}
+
+export default function Clubs() {
+  return (
+    <Screen edges={['top', 'bottom']}>
+      <ClubsView />
     </Screen>
   );
 }

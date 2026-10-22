@@ -96,10 +96,10 @@ export async function redeemLinkCode(code: string): Promise<{ ok: true; token: s
   }
 }
 
-export async function pullGarage(token: string): Promise<{ ok: boolean; data: Json | null }> {
+export async function pullGarage(token: string, withName = false): Promise<{ ok: boolean; data: Json | null; name?: string | null }> {
   try {
-    const j = await getJSON('/api/garage?token=' + encodeURIComponent(token));
-    return { ok: !!j.ok, data: j.ok ? (j.data ?? null) : null };
+    const j = await getJSON('/api/garage?token=' + encodeURIComponent(token) + (withName ? '&name=1' : ''));
+    return { ok: !!j.ok, data: j.ok ? (j.data ?? null) : null, name: j.name ?? null };
   } catch {
     return { ok: false, data: null };
   }

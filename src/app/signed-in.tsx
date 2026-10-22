@@ -49,7 +49,7 @@ export default function SignedIn() {
   }, [code]);
 
   return (
-    <Screen edges={['top', 'bottom']}>
+    <Screen edges={[]}>
       <View style={{ flex: 1, padding: 24, justifyContent: 'center', gap: 16 }}>
         <PText style={{ fontSize: 44, lineHeight: 46, color: t.red }}>GOOGLE</PText>
         <Text style={{ fontFamily: fonts.display, fontSize: 24, color: bad ? palette.red : palette.gold }}>{msg}</Text>

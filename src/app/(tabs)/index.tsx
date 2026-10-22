@@ -18,6 +18,7 @@ import { identify, research } from '@/engine/api';
 import { stampCatchContext } from '@/engine/context';
 import type { Car } from '@/engine/types';
 import { catalogMatch, fixStats } from '@/engine/data';
+import { postCatch } from '@/lib/feed';
 import { play, playCaught } from '@/lib/sfx';
 import { useGame } from '@/state/game';
 import { useRace } from '@/state/race';
@@ -129,6 +130,7 @@ export default function Scan() {
     const geo = await geoOnce();
     const entry = g.addCatch(car, thumb, geo);
     race.shareCatch(car, thumb);
+    if (g.settings.feedShare !== false) postCatch(g.profile.name, car, thumb, entry.ts, !!entry.shiny).catch(() => {});
     if (race.live) race.scoreCatch(car, geo).then((m) => { if (m) g.notify(m); });
     if (g.settings.haptics) Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
     return entry.id;

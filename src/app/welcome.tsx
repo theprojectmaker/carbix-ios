@@ -1,6 +1,7 @@
 import { router } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import React, { useState } from 'react';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 
 import { Screen } from '@/components/screen';
@@ -22,6 +23,7 @@ const input = {
 export default function Welcome() {
   const t = useTheme();
   const g = useGame();
+  const insets = useSafeAreaInsets();
   const [mode, setMode] = useState<'create' | 'login'>('create');
   const [user, setUser] = useState('');
   const [pass, setPass] = useState('');
@@ -101,9 +103,9 @@ export default function Welcome() {
   const label = { fontFamily: fonts.utilityBold, fontSize: 10, color: palette.lcdDim, letterSpacing: 1.5 } as const;
 
   return (
-    <Screen edges={['top', 'bottom']}>
+    <Screen edges={[]}>
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        <ScrollView contentContainerStyle={{ padding: 16, gap: 14, paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
+        <ScrollView contentContainerStyle={{ padding: 16, paddingTop: (insets.top || 50) + 10, gap: 14, paddingBottom: (insets.bottom || 18) + 30 }} keyboardShouldPersistTaps="handled">
           <View>
             <Text style={{ fontFamily: fonts.display, fontSize: 52, lineHeight: 54, color: t.red }}>CARBIX</Text>
             <Text style={{ fontFamily: fonts.utilityBold, fontSize: 11, color: t.muted, letterSpacing: 1.5 }}>SPOT REAL CARS. FILL YOUR BIX.</Text>

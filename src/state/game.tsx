@@ -19,9 +19,9 @@ import { currentSeason } from '@/engine/quests';
 import { wearIcon } from '@/lib/appicon';
 import { levelFor, rankFor, xpForLevel } from '@/engine/xp';
 
-export type Settings = { cool: boolean; sfx: number; haptics: boolean; theme: 'light' | 'dark'; callshot: boolean; silentMute: boolean };
+export type Settings = { cool: boolean; sfx: number; haptics: boolean; theme: 'light' | 'dark'; callshot: boolean; silentMute: boolean; feedShare: boolean };
 const SETTINGS_KEY = 'motordex.native.settings';
-const DEFAULT_SETTINGS: Settings = { cool: true, sfx: 1, haptics: true, theme: 'light', callshot: false, silentMute: true };
+const DEFAULT_SETTINGS: Settings = { cool: true, sfx: 1, haptics: true, theme: 'light', callshot: false, silentMute: true, feedShare: true };
 
 type Game = {
   ready: boolean;
@@ -51,6 +51,7 @@ type Game = {
   patchProfile: (fn: (p: Profile) => Profile) => void;
   restore: (garage: Catch[], profile: Profile) => void;
   linkAccount: (token: string) => Promise<{ ok: boolean; added: number }>;
+  recalcScore: () => void;
   googleSignIn: () => Promise<{ ok: boolean; error?: string }>;
   syncState: string;
 };
@@ -176,7 +177,18 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       const c = (rolled.weekBase as { key: string } | undefined)?.key;
       const d = (pp.weekBase as { key: string } | undefined)?.key;
       if (a?.key !== b?.key || c !== d) setProfile(rolled);
-      pushPublicRow(publicRow(gg, rolled)).catch(() => {});
+      // The server keeps the HIGHER of old and new numbers, so one inflated push (an old merge, a bad import) sticks forever.
+      // reset:true tells it this push is deliberate. Done once after this update, and any time RECALCULATE MY SCORE is pressed.
+      const reset = gg.length > 0 && rolled.scoreFix !== 'v2';
+      pushPublicRow({ ...publicRow(gg, rolled), ...(reset ? { reset: true } : {}) })
+        .then((ok) => {
+          if (ok && reset) {
+            const np = { ...latest.current.profile, scoreFix: 'v2' };
+            latest.current = { ...latest.current, profile: np };
+            setProfile(np);
+          }
+        })
+        .catch(() => {});
     }, 2500);
   }, []);
 
@@ -269,6 +281,12 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     return on;
   }, []);
 
+  const recalcScore = useCallback(() => {
+    const np = { ...latest.current.profile, scoreFix: '' };
+    latest.current = { ...latest.current, profile: np };
+    setProfile(np);
+  }, []);
+
   const patchProfile = useCallback((fn: (p: Profile) => Profile) => {
     const next = fn(latest.current.profile);
     latest.current = { ...latest.current, profile: next };
@@ -285,7 +303,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
 
   const linkAccount = useCallback(async (token: string) => {
     try {
-    const r = await pullGarage(token);
+    const r = await pullGarage(token, true);
     if (!r.ok) return { ok: false, added: 0 };
     const before = latest.current.garage.length;
     // Signing in means BECOMING that account: start from a clean slate and take the cloud save as is. Merging it into
@@ -301,7 +319,12 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     const m = { garage: normalizeGarage(merged.garage), profile: merged.profile };
     // the ref must hold the linked account BEFORE anything else reads it (the sign-in screens call patchProfile right after);
     // otherwise the old local profile gets written back over the account that was just linked
-    const linked = { ...m.profile, token, googleLinked: true };
+    let linked = { ...m.profile, token, googleLinked: true, scoreFix: '' };
+    // a save pushed by a brand-new device can carry the placeholder name; the public profile row knows the real one
+    if (r.name && (!linked.username || linked.username === 'spotter')) {
+      const nm = String(r.name).replace(/[^A-Za-z0-9_]/g, '').slice(0, 16);
+      if (nm) linked = { ...linked, username: nm, displayName: nm, name: '@' + nm };
+    }
     latest.current = { garage: m.garage, profile: linked };
     setGarage(m.garage);
     setProfile(linked);
@@ -340,9 +363,9 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       ready, garage, profile, settings, xp, level, rank: rankFor(level),
       nextLevelXp: xpForLevel(level + 1), prevLevelXp: xpForLevel(level),
       streak: streak(profile), bixPct: CATALOG.length ? (caught.size / CATALOG.length) * 100 : 0,
-      toast, notify: flash, shopBuy, shopEquip, iconBuy, iconWear, quests: () => questsView(garage, profile), caughtNs: caught, addCatch, removeCatch, setSettings, setUsername, toggleStar, patchProfile, restore, linkAccount, googleSignIn, syncState,
+      toast, notify: flash, shopBuy, shopEquip, iconBuy, iconWear, quests: () => questsView(garage, profile), caughtNs: caught, addCatch, removeCatch, setSettings, setUsername, toggleStar, patchProfile, restore, linkAccount, recalcScore, googleSignIn, syncState,
     };
-  }, [ready, garage, profile, settings, toast, flash, shopBuy, shopEquip, iconBuy, iconWear, addCatch, removeCatch, setSettings, setUsername, toggleStar, patchProfile, restore, linkAccount, googleSignIn, syncState]);
+  }, [ready, garage, profile, settings, toast, flash, shopBuy, shopEquip, iconBuy, iconWear, addCatch, removeCatch, setSettings, setUsername, toggleStar, patchProfile, restore, linkAccount, recalcScore, googleSignIn, syncState]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
