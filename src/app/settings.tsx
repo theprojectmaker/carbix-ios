@@ -6,11 +6,11 @@ import { router } from 'expo-router';
 import * as Sharing from 'expo-sharing';
 import * as WebBrowser from 'expo-web-browser';
 import React, { useState } from 'react';
-import { Alert, ScrollView, Switch, Text, TextInput, View } from 'react-native';
+import { Alert, Linking, ScrollView, Switch, Text, TextInput, View } from 'react-native';
 
 import { Screen } from '@/components/screen';
 import { Btn, Chip, PText } from '@/components/ui';
-import { redeemLinkCode } from '@/engine/api';
+import { GOOGLE_SIGNIN_URL, redeemLinkCode } from '@/engine/api';
 import { TITLES } from '@/engine/extras';
 import { dateKeyET, KEYS, normalizeProfile, parseBackup } from '@/engine/store';
 import { blockedList, reportUser, withUnblocked } from '@/lib/moderation';
@@ -138,12 +138,13 @@ export default function Settings() {
           <Toggle label="CALL YOUR SHOT" sub="GUESS THE BRAND BEFORE EACH SCAN, JUST FOR A STREAK." value={g.settings.callshot} onChange={(v) => g.setSettings({ callshot: v })} />
         </Section>
 
-        <Section title="SOUND" hint="PLAYS EVEN WITH THE SILENT SWITCH ON.">
+        <Section title="SOUND" hint={g.settings.silentMute !== false ? "THE SILENT SWITCH MUTES GAME SOUNDS." : "PLAYS EVEN WITH THE SILENT SWITCH ON."}>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
             {VOLUMES.map(([label, v]) => (
               <Chip key={label} label={label} on={g.settings.sfx === v} onPress={() => { g.setSettings({ sfx: v }); setTimeout(() => play('caught-rare'), 120); }} />
             ))}
           </View>
+          <Toggle label="MUTE WITH SILENT SWITCH" sub="WHEN YOUR PHONE IS ON SILENT, GAME SOUNDS STAY QUIET TOO." value={g.settings.silentMute !== false} onChange={(v) => g.setSettings({ silentMute: v })} />
           <Btn small tone="navy" label="TEST SOUND" onPress={() => play('levelup')} />
         </Section>
 
@@ -152,8 +153,9 @@ export default function Settings() {
         </Section>
 
         <Section title="ACCOUNT AND BACKUP" hint="MOVE YOUR GARAGE BETWEEN PHONES, OR KEEP A COPY.">
+          <Btn tone="red" label={g.profile.googleLinked ? 'SIGN IN WITH GOOGLE AGAIN' : 'SIGN IN WITH GOOGLE'} onPress={() => Linking.openURL(GOOGLE_SIGNIN_URL)} />
           <Text style={{ fontFamily: fonts.utility, fontSize: 9.5, color: palette.lcdDim }}>
-            ON THE WEBSITE: SETTINGS, ACCOUNT, LINK A DEVICE. TYPE THE 6-CHARACTER CODE HERE.
+            OPENS SAFARI. WHEN YOU ARE SIGNED IN IT SENDS YOU BACK HERE AND YOUR WHOLE GARAGE COMES WITH YOU. NO CODE NEEDED. IF IT DOES NOT COME BACK, TYPE THE CODE IT SHOWS:
           </Text>
           <TextInput value={code} onChangeText={(s) => setCode(s.toUpperCase())} placeholder="ABC123" placeholderTextColor="#7f8ca6" autoCapitalize="characters" autoCorrect={false} maxLength={8} style={{ ...input, letterSpacing: 4 }} />
           <Btn small tone="red" label="USE CODE" onPress={link} />

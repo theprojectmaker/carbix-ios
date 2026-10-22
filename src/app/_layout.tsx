@@ -54,6 +54,7 @@ function Shell() {
         <Stack.Screen name="badges" options={{ presentation: 'modal' }} />
         <Stack.Screen name="friends" options={{ presentation: 'modal' }} />
         <Stack.Screen name="duel/[name]" options={{ presentation: 'modal' }} />
+        <Stack.Screen name="signed-in" options={{ presentation: 'fullScreenModal', gestureEnabled: false, animation: 'fade' }} />
         <Stack.Screen name="profile/[name]" options={{ presentation: 'modal' }} />
         <Stack.Screen name="poster" options={{ presentation: 'modal' }} />
         <Stack.Screen name="exam" options={{ presentation: 'modal' }} />

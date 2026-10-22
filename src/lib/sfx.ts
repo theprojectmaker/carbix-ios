@@ -39,15 +39,22 @@ let players: AudioPlayer[] | null = null;
 let next = 0;
 let volume = 1;
 let ready = false;
+let silentMute = true;
 
 function init() {
   if (ready) return;
   ready = true;
-  setAudioModeAsync({ playsInSilentMode: true, interruptionMode: 'mixWithOthers', shouldPlayInBackground: false }).catch(() => {});
+  setAudioModeAsync({ playsInSilentMode: !silentMute, interruptionMode: 'mixWithOthers', shouldPlayInBackground: false }).catch(() => {});
 }
 
 export function setSfxVolume(v: number) {
   volume = v;
+}
+
+/** true: the phone's silent switch (alerts off) also mutes the game sounds. */
+export function setSilentMute(on: boolean) {
+  silentMute = on;
+  setAudioModeAsync({ playsInSilentMode: !on, interruptionMode: 'mixWithOthers', shouldPlayInBackground: false }).catch(() => {});
 }
 
 function pool(): AudioPlayer[] {

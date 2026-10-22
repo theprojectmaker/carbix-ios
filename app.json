@@ -65,7 +65,28 @@
       "expo-audio",
       "expo-font",
       "expo-status-bar",
-      "expo-asset"
+      "expo-asset",
+      [
+        "expo-alternate-app-icons",
+        [
+          {
+            "name": "Maple",
+            "ios": "./assets/appicons/icon1.png"
+          },
+          {
+            "name": "Pumpkin",
+            "ios": "./assets/appicons/icon2.png"
+          },
+          {
+            "name": "Hayride",
+            "ios": "./assets/appicons/icon3.png"
+          },
+          {
+            "name": "Frost",
+            "ios": "./assets/appicons/icon4.png"
+          }
+        ]
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

@@ -1,3 +1,4 @@
+import { Image } from 'expo-image';
 import { router, useLocalSearchParams } from 'expo-router';
 import React, { useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
@@ -7,6 +8,7 @@ import { PinArt } from '@/components/map-pin';
 import { SeasonGlyph, ShopIcon } from '@/components/shop-icons';
 import { Btn, Chip, PText } from '@/components/ui';
 import { chaptersFor, currentSeason, SEASON_EVENT_NAMES, type Quest } from '@/engine/quests';
+import { SEASON_APP_ICONS, iconEquipped, iconOwned, ownedKey } from '@/engine/appicons';
 import { effectEntries, mapPinEntries } from '@/engine/shop';
 import { play } from '@/lib/sfx';
 import { useGame } from '@/state/game';
@@ -148,12 +150,54 @@ function QuestsView() {
   );
 }
 
+/** Home-screen icon packs, one per season. This season's pack can be bought; anything you own can be switched to. */
+function IconShelf() {
+  const g = useGame();
+  const key = currentSeason().key;
+  const worn = iconEquipped(g.profile);
+  const packs = Object.entries(SEASON_APP_ICONS)
+    .map(([sk, list]) => [sk, list.filter((i) => sk === key || iconOwned(g.profile, sk, i.id))] as const)
+    .filter(([, list]) => list.length);
+  return (
+    <View style={{ gap: 10 }}>
+      <Text style={{ fontFamily: fonts.utility, fontSize: 9.5, color: palette.lcdDim }}>
+        THESE CHANGE THE REAL ICON ON YOUR HOME SCREEN. EACH SEASON&apos;S PACK IS ONLY FOR SALE WHILE THAT SEASON LASTS; WHAT YOU BUY IS YOURS FOREVER.
+      </Text>
+      {packs.map(([sk, list]) => (
+        <View key={sk} style={{ gap: 8 }}>
+          <Text style={{ fontFamily: fonts.display, fontSize: 20, color: palette.wht }}>{sk === key ? 'THIS SEASON' : 'YOURS FROM ' + sk}</Text>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
+            {list.map((i) => {
+              const owned = iconOwned(g.profile, sk, i.id);
+              const on = worn === ownedKey(sk, i.id);
+              return (
+                <View key={i.id} style={{ width: '47.5%', backgroundColor: palette.panel, borderWidth: 3, borderColor: on ? palette.gold : INK, padding: 10, gap: 6, alignItems: 'center' }}>
+                  <Image source={{ uri: i.thumb }} style={{ width: 76, height: 76, borderRadius: 17, borderWidth: 2, borderColor: INK }} contentFit="cover" cachePolicy="memory-disk" />
+                  <Text style={{ fontFamily: fonts.display, fontSize: 17, color: '#fff', textAlign: 'center' }}>{i.name}</Text>
+                  {on ? (
+                    <Text style={{ fontFamily: fonts.utilityBold, fontSize: 10, color: palette.green }}>ON YOUR HOME SCREEN</Text>
+                  ) : owned ? (
+                    <Btn small tone="gold" label="USE ICON" onPress={() => g.iconWear(ownedKey(sk, i.id))} />
+                  ) : (
+                    <Btn small tone="red" label={`BUY  ${i.price} ORBS`} onPress={() => { if (g.iconBuy(sk, i.id)) play('caught-rare'); else play('error'); }} />
+                  )}
+                </View>
+              );
+            })}
+          </View>
+        </View>
+      ))}
+      {worn ? <Btn small tone="plain" label="BACK TO THE DEFAULT ICON" onPress={() => g.iconWear(null)} /> : null}
+    </View>
+  );
+}
+
 function ShopView() {
   const g = useGame();
   const season = currentSeason();
-  const [cat, setCat] = useState<'pins' | 'fx'>('pins');
+  const [cat, setCat] = useState<'pins' | 'fx' | 'icons'>('pins');
   const orbs = (g.profile.orbs as number) || 0;
-  const items = (cat === 'pins' ? mapPinEntries(g.profile, season.event) : effectEntries(g.profile, season.event)).sort(
+  const items = cat === 'icons' ? [] : (cat === 'pins' ? mapPinEntries(g.profile, season.event) : effectEntries(g.profile, season.event)).sort(
     (a, b) => (a.owned === b.owned ? 0 : a.owned ? -1 : 1) || a.price - b.price,
   );
 
@@ -169,7 +213,9 @@ function ShopView() {
       <View style={{ flexDirection: 'row' }}>
         <Chip label="MAP PINS" on={cat === 'pins'} onPress={() => setCat('pins')} />
         <Chip label="CATCH EFFECTS" on={cat === 'fx'} onPress={() => setCat('fx')} />
+        <Chip label="APP ICONS" on={cat === 'icons'} onPress={() => setCat('icons')} />
       </View>
+      {cat === 'icons' ? <IconShelf /> : null}
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
         {items.map((e) => (
           <View key={e.track + e.id} style={{ width: '47.5%', backgroundColor: palette.panel, borderWidth: 3, borderColor: e.equipped ? palette.gold : INK, padding: 10, gap: 6, alignItems: 'center' }}>

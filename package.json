@@ -47,7 +47,8 @@
     "react-native-screens": "~4.26.0",
     "react-native-svg": "15.15.4",
     "react-native-web": "~0.21.0",
-    "react-native-worklets": "0.10.1"
+    "react-native-worklets": "0.10.1",
+    "expo-alternate-app-icons": "^8.0.0"
   },
   "devDependencies": {
     "@types/node": "^24.19.2",
@@ -63,7 +64,7 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "lint": "expo lint",
-    "test": "tsx --test tests/engine.test.ts tests/quests.test.ts tests/shop.test.ts tests/daily.test.ts tests/badges.test.ts tests/extras.test.ts tests/account.test.ts tests/friends.test.ts",
+    "test": "tsx --test tests/engine.test.ts tests/quests.test.ts tests/shop.test.ts tests/daily.test.ts tests/badges.test.ts tests/extras.test.ts tests/account.test.ts tests/friends.test.ts tests/appicons.test.ts",
     "typecheck": "tsc --noEmit"
   },
   "private": true

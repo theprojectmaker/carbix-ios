@@ -2,6 +2,8 @@ import type { Car, CatalogEntry, Catch, Profile } from './types';
 
 /** The live Carbix backend (domain kept as motordex.pages.dev; Pages projects can't be renamed). */
 export const API_ORIGIN = 'https://motordex.pages.dev';
+/** The website page that does Google sign-in in Safari and hands the account back with carbix://signed-in?code=... */
+export const GOOGLE_SIGNIN_URL = API_ORIGIN + '/app-signin.html';
 export const ICON_V = 8;
 
 export const iconURL = (c: Pick<CatalogEntry, 'n' | 'make' | 'model' | 'years'>) =>
@@ -142,6 +144,35 @@ export function mergeCloud(garage: Catch[], profile: Profile, d: Json): { garage
       if (!cos[track] && p.cosmetics[track]) cos[track] = p.cosmetics[track];
     }
     out.cosmetics = cos;
+  }
+  // the rest of what the web's pullCloud carries, so a signed-in account comes over complete
+  if (p.consumables) {
+    const c = { ...((out.consumables as Json) || {}) };
+    for (const k of Object.keys(p.consumables)) if (Number(p.consumables[k]) > Number(c[k] || 0)) c[k] = Number(p.consumables[k]);
+    out.consumables = c as Profile["consumables"];
+  }
+  if (p.questOverrides) {
+    const q = { ...((out.questOverrides as Json) || {}) };
+    for (const sk of Object.keys(p.questOverrides)) q[sk] = Object.assign({}, p.questOverrides[sk], q[sk] || {});
+    out.questOverrides = q;
+  }
+  if (p.nativeIcons) {
+    const n = (out.nativeIcons as Json) || { owned: [], equipped: null };
+    out.nativeIcons = { owned: [...new Set([...(n.owned || []), ...(p.nativeIcons.owned || [])])], equipped: n.equipped || p.nativeIcons.equipped || null };
+  }
+  if (p.examDay && (!out.examDay || p.examDay > out.examDay)) { out.examDay = p.examDay; out.examLast = Number(p.examLast) || 0; }
+  if (p.spinDay && (!out.spinDay || p.spinDay > out.spinDay)) { out.spinDay = p.spinDay; out.spinLast = Number(p.spinLast) || 0; }
+  if (p.shieldWeek && (!out.shieldWeek || p.shieldWeek > out.shieldWeek)) out.shieldWeek = p.shieldWeek;
+  if (p.chapterBadges) out.chapterBadges = [...new Set([...((out.chapterBadges as string[]) || []), ...p.chapterBadges])];
+  if (p.summerTitlesOwned) out.summerTitlesOwned = [...new Set([...((out.summerTitlesOwned as string[]) || []), ...p.summerTitlesOwned])];
+  if (p.comingSoon) {
+    const cs = { mapPin: [], deckBack: [], catchEffect: [], ...((out.comingSoon as Json) || {}) } as Json;
+    for (const kind of ['mapPin', 'deckBack', 'catchEffect']) {
+      const have = cs[kind] || [];
+      const seen = new Set(have.map((x: Json) => x.id));
+      cs[kind] = have.concat((p.comingSoon[kind] || []).filter((x: Json) => !seen.has(x.id)));
+    }
+    out.comingSoon = cs;
   }
   return { garage: g2, profile: out };
 }

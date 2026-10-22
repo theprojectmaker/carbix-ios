@@ -1,11 +1,11 @@
 import { router } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import React, { useState } from 'react';
-import { KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { Linking, KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 
 import { Screen } from '@/components/screen';
 import { Btn } from '@/components/ui';
-import { accountAuth, redeemLinkCode, usernameAvailable } from '@/engine/api';
+import { accountAuth, GOOGLE_SIGNIN_URL, redeemLinkCode, usernameAvailable } from '@/engine/api';
 import { play } from '@/lib/sfx';
 import { useGame } from '@/state/game';
 import { fonts, palette, useTheme } from '@/theme/theme';
@@ -137,15 +137,17 @@ export default function Welcome() {
           <View style={{ backgroundColor: palette.panel, borderWidth: 3, borderColor: INK, padding: 14, gap: 10 }}>
             <Text style={{ fontFamily: fonts.display, fontSize: 22, color: palette.wht }}><Text style={{ color: palette.red }}>» </Text>CONNECT GOOGLE</Text>
             <Text style={{ fontFamily: fonts.utility, fontSize: 9.5, color: palette.lcdDim }}>
-              ALREADY PLAY ON THE WEBSITE WITH GOOGLE? OPEN IT, GO TO SETTINGS, ACCOUNT, LINK A DEVICE, AND TYPE THE 6-CHARACTER CODE HERE. YOUR GARAGE COMES OVER.
+              ALREADY PLAY WITH GOOGLE? SIGN IN AND YOUR WHOLE GARAGE, LEVEL AND NAME COME OVER. IT OPENS SAFARI AND BRINGS YOU BACK HERE BY ITSELF.
             </Text>
+            <Btn tone="red" label="SIGN IN WITH GOOGLE" onPress={() => { if (!agree) return setMsg('PLEASE AGREE TO THE TERMS TO CONTINUE.'); Linking.openURL(GOOGLE_SIGNIN_URL); }} />
+            <Text style={{ fontFamily: fonts.utility, fontSize: 9, color: palette.lcdDim }}>DID NOT COME BACK? TYPE THE CODE SAFARI SHOWED:</Text>
             {showCode ? (
               <>
                 <TextInput value={code} onChangeText={(s) => setCode(s.toUpperCase())} placeholder="ABC123" placeholderTextColor="#7f8ca6" autoCapitalize="characters" autoCorrect={false} maxLength={8} style={{ ...input, letterSpacing: 4 }} />
                 <Btn tone="navy" label={busy ? 'ONE MOMENT...' : 'CONNECT'} disabled={busy} onPress={connectGoogle} />
               </>
             ) : (
-              <Btn tone="navy" label="CONNECT GOOGLE" onPress={() => setShowCode(true)} />
+              <Btn tone="navy" label="I HAVE A CODE" onPress={() => setShowCode(true)} />
             )}
           </View>
         </ScrollView>

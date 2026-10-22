@@ -168,7 +168,7 @@ export default function Garage() {
             ) : null}
           </View>
           {stats.best ? (
-            <View style={{ position: 'absolute', left: 0, right: 0, bottom: 14, alignItems: 'center' }}>
+            <View style={{ position: 'absolute', left: 0, right: 0, bottom: -14, alignItems: 'center' }}>
               <Sprite entry={stats.best} size={Math.min(300, roomW - 40)} shadow />
             </View>
           ) : null}

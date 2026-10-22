@@ -114,7 +114,9 @@ export default function MapTab() {
     }
     if (drag.due(Date.now())) {
       const v = drag.getView();
-      v?.getCamera().then((cam) => cam && v.setCamera({ ...cam, zoom: z })).catch(() => {});
+      // Apple Maps ignores camera `zoom` (that is Google-only), so zoom by setting the visible span around the current centre
+      const lon = 360 / Math.pow(2, z);
+      v?.getCamera().then((cam) => cam && v.animateToRegion({ latitude: cam.center.latitude, longitude: cam.center.longitude, latitudeDelta: lon * 1.3, longitudeDelta: lon }, 60)).catch(() => {});
     }
   }, [haptics]);
 
@@ -129,7 +131,7 @@ export default function MapTab() {
   const thumbY = (1 - (zoomV - MIN_Z) / (MAX_Z - MIN_Z)) * TRACK;
 
   return (
-    <Screen edges={[]} plain>
+    <Screen edges={[]}>
       <View style={{ paddingHorizontal: 14, paddingTop: 10, paddingBottom: 8, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
         <PText style={{ fontSize: 48, lineHeight: 50 }}>MAP</PText>
         <Text style={{ fontFamily: fonts.display, fontSize: 18, color: t.muted }}>{pins.length} {pins.length === 1 ? 'PIN' : 'PINS'}</Text>

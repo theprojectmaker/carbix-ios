@@ -5,19 +5,22 @@ import { mergeCloud, pullGarage, pushGarage, pushPublicRow } from '@/engine/api'
 import { publicRow, withRollovers } from '@/engine/publish';
 import { catalogMatch, CATALOG } from '@/engine/data';
 import {
-  dateKeyET as todayKey, KEYS, loadAll, markDay, normalizeGarage, normalizeProfile, saveAll, shinyRoll, streak, totalXp,
+  dateKeyET as todayKey, KEYS, loadAll, markDay, normalizeGarage, newProfile, normalizeProfile, saveAll, shinyRoll, streak, totalXp,
 } from '@/engine/store';
 import type { Car, Catch, Profile } from '@/engine/types';
-import { play, setSfxVolume } from '@/lib/sfx';
+import { play, setSfxVolume, setSilentMute } from '@/lib/sfx';
 import { catchBonuses, evalChallenges, nextCombo } from '@/engine/daily';
 import { trophyCheck } from '@/engine/extras';
 import { advanceQuests, type QuestEvent } from '@/engine/quests';
+import { buyIcon, equipIcon } from '@/engine/appicons';
 import { buyItem, equipItem, type Track } from '@/engine/shop';
+import { currentSeason } from '@/engine/quests';
+import { wearIcon } from '@/lib/appicon';
 import { levelFor, rankFor, xpForLevel } from '@/engine/xp';
 
-export type Settings = { cool: boolean; sfx: number; haptics: boolean; theme: 'light' | 'dark'; callshot: boolean };
+export type Settings = { cool: boolean; sfx: number; haptics: boolean; theme: 'light' | 'dark'; callshot: boolean; silentMute: boolean };
 const SETTINGS_KEY = 'motordex.native.settings';
-const DEFAULT_SETTINGS: Settings = { cool: true, sfx: 1, haptics: true, theme: 'light', callshot: false };
+const DEFAULT_SETTINGS: Settings = { cool: true, sfx: 1, haptics: true, theme: 'light', callshot: false, silentMute: true };
 
 type Game = {
   ready: boolean;
@@ -36,6 +39,8 @@ type Game = {
   notify: (msg: string) => void;
   shopBuy: (track: Track, id: string) => boolean;
   shopEquip: (track: Track, id: string) => void;
+  iconBuy: (seasonKey: string, id: string) => boolean;
+  iconWear: (owned: string | null) => void;
   quests: () => ReturnType<typeof questsView>;
   addCatch: (car: Car, photo: string | null, geo?: { lat: number; lng: number } | null) => Catch;
   removeCatch: (id: number) => void;
@@ -108,6 +113,10 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     setSfxVolume(settings.sfx);
   }, [settings.sfx]);
 
+  useEffect(() => {
+    setSilentMute(settings.silentMute !== false);
+  }, [settings.silentMute]);
+
   const flash = useCallback((msg: string) => {
     setToast(msg);
     if (toastTimer.current) clearTimeout(toastTimer.current);
@@ -131,6 +140,25 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       setProfile(r.profile);
     }
     flash(r.message);
+  }, [flash]);
+
+  const iconWear = useCallback((owned: string | null) => {
+    const r = equipIcon(latest.current.profile, owned);
+    if (!r.ok) { flash(r.message); return; }
+    latest.current = { ...latest.current, profile: r.profile };
+    setProfile(r.profile);
+    wearIcon(owned ? owned.split('::')[1] : null).then((ok) => flash(ok ? r.message : r.message + ' — SHOWS ON YOUR HOME SCREEN IN THE INSTALLED APP'));
+  }, [flash]);
+
+  const iconBuy = useCallback((seasonKey: string, id: string) => {
+    const r = buyIcon(latest.current.profile, seasonKey, currentSeason().key, id);
+    if (r.ok) {
+      latest.current = { ...latest.current, profile: r.profile };
+      setProfile(r.profile);
+      wearIcon(id).then(() => {});
+    }
+    flash(r.message);
+    return r.ok;
   }, [flash]);
 
   // publish the public leaderboard row (numbers only) shortly after anything changes
@@ -245,11 +273,19 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const linkAccount = useCallback(async (token: string) => {
-    const base = { ...latest.current.profile, token, googleLinked: true, lastCloudSave: 0 };
     const r = await pullGarage(token);
     if (!r.ok) return { ok: false, added: 0 };
     const before = latest.current.garage.length;
-    const m = r.data ? mergeCloud(latest.current.garage, base, r.data) : { garage: latest.current.garage, profile: base };
+    // Signing in means BECOMING that account: start from a clean slate and take the cloud save as is. Merging it into
+    // whatever this phone had (test scans, a placeholder "spotter") is what inflated XP and kept the wrong name.
+    // The old local copy is kept under one key in case it is ever wanted back.
+    const hasCloud = !!(r.data && Array.isArray((r.data as { garage?: unknown }).garage));
+    if (hasCloud && latest.current.garage.length) {
+      AsyncStorage.setItem('motordex.native.prelink', JSON.stringify({ at: Date.now(), garage: latest.current.garage, profile: latest.current.profile })).catch(() => {});
+    }
+    const fresh = normalizeProfile({ ...newProfile(), token, googleLinked: true, lastCloudSave: 0, onboarded: true, termsAccepted: latest.current.profile.termsAccepted });
+    const base = hasCloud ? fresh : { ...latest.current.profile, token, googleLinked: true, lastCloudSave: 0 };
+    const m = r.data ? mergeCloud(hasCloud ? [] : latest.current.garage, base, r.data) : { garage: latest.current.garage, profile: base };
     setGarage(m.garage);
     setProfile({ ...m.profile, token, googleLinked: true });
     return { ok: true, added: m.garage.length - before };
@@ -267,9 +303,9 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       ready, garage, profile, settings, xp, level, rank: rankFor(level),
       nextLevelXp: xpForLevel(level + 1), prevLevelXp: xpForLevel(level),
       streak: streak(profile), bixPct: CATALOG.length ? (caught.size / CATALOG.length) * 100 : 0,
-      toast, notify: flash, shopBuy, shopEquip, quests: () => questsView(garage, profile), caughtNs: caught, addCatch, removeCatch, setSettings, setUsername, toggleStar, patchProfile, restore, linkAccount, syncState,
+      toast, notify: flash, shopBuy, shopEquip, iconBuy, iconWear, quests: () => questsView(garage, profile), caughtNs: caught, addCatch, removeCatch, setSettings, setUsername, toggleStar, patchProfile, restore, linkAccount, syncState,
     };
-  }, [ready, garage, profile, settings, toast, flash, shopBuy, shopEquip, addCatch, removeCatch, setSettings, setUsername, toggleStar, patchProfile, restore, linkAccount, syncState]);
+  }, [ready, garage, profile, settings, toast, flash, shopBuy, shopEquip, iconBuy, iconWear, addCatch, removeCatch, setSettings, setUsername, toggleStar, patchProfile, restore, linkAccount, syncState]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
