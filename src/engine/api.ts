@@ -1,3 +1,5 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 import type { Car, CatalogEntry, Catch, Profile } from './types';
 
 /** The live Carbix backend (domain kept as motordex.pages.dev; Pages projects can't be renamed). */
@@ -61,13 +63,36 @@ export async function research(make: string, model: string, years?: string): Pro
   }
 }
 
+const LAST_LINK = 'motordex.native.lastlink';
+const cleanCode = (c: string) => c.toUpperCase().replace(/[^A-Z0-9]/g, '');
+
+/** Codes are single-use. If this phone already spent this very code in the last 10 minutes (a deep link and a typed code can
+ *  both fire), hand back the same account instead of "already used". */
 export async function redeemLinkCode(code: string): Promise<{ ok: true; token: string } | { ok: false; error: string }> {
+  const c = cleanCode(code);
+  if (c.length !== 6) return { ok: false, error: 'Enter the 6-character code (letters and numbers).' };
   try {
-    const j = await postJSON('/api/link', { action: 'redeem', code: code.trim() }, 20000);
-    if (j.ok && j.token) return { ok: true, token: String(j.token) };
-    return { ok: false, error: String(j.error || "That code didn't work.") };
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const j = await postJSON('/api/link', { action: 'redeem', code: c }, 20000);
+      if (j.ok && j.token) {
+        AsyncStorage.setItem(LAST_LINK, JSON.stringify({ c, token: String(j.token), at: Date.now() })).catch(() => {});
+        return { ok: true, token: String(j.token) };
+      }
+      try {
+        const last = JSON.parse((await AsyncStorage.getItem(LAST_LINK)) || 'null') as { c: string; token: string; at: number } | null;
+        if (last && last.c === c && Date.now() - last.at < 10 * 60 * 1000) return { ok: true, token: last.token };
+      } catch {
+        /* no memo */
+      }
+      if (attempt === 0 && String(j.error || '').toLowerCase().includes('expired')) {
+        await new Promise((r) => setTimeout(r, 1500));
+        continue;
+      }
+      return { ok: false, error: String(j.error || "That code didn't work.") };
+    }
+    return { ok: false, error: 'Code expired or already used. Get a fresh one.' };
   } catch {
-    return { ok: false, error: 'Network error — try again.' };
+    return { ok: false, error: 'No connection. Check your internet and try again.' };
   }
 }
 

@@ -1,13 +1,14 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
-import { mergeCloud, pullGarage, pushGarage, pushPublicRow } from '@/engine/api';
+import { mergeCloud, pullGarage, pushGarage, pushPublicRow, redeemLinkCode } from '@/engine/api';
 import { publicRow, withRollovers } from '@/engine/publish';
 import { catalogMatch, CATALOG } from '@/engine/data';
 import {
   dateKeyET as todayKey, KEYS, loadAll, markDay, normalizeGarage, newProfile, normalizeProfile, saveAll, shinyRoll, streak, totalXp,
 } from '@/engine/store';
 import type { Car, Catch, Profile } from '@/engine/types';
+import { googleSignInCode } from '@/lib/google-signin';
 import { play, setSfxVolume, setSilentMute } from '@/lib/sfx';
 import { catchBonuses, evalChallenges, nextCombo } from '@/engine/daily';
 import { trophyCheck } from '@/engine/extras';
@@ -50,6 +51,7 @@ type Game = {
   patchProfile: (fn: (p: Profile) => Profile) => void;
   restore: (garage: Catch[], profile: Profile) => void;
   linkAccount: (token: string) => Promise<{ ok: boolean; added: number }>;
+  googleSignIn: () => Promise<{ ok: boolean; error?: string }>;
   syncState: string;
 };
 
@@ -282,6 +284,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const linkAccount = useCallback(async (token: string) => {
+    try {
     const r = await pullGarage(token);
     if (!r.ok) return { ok: false, added: 0 };
     const before = latest.current.garage.length;
@@ -294,7 +297,8 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     }
     const fresh = normalizeProfile({ ...newProfile(), token, googleLinked: true, lastCloudSave: 0, onboarded: true, termsAccepted: latest.current.profile.termsAccepted });
     const base = hasCloud ? fresh : { ...latest.current.profile, token, googleLinked: true, lastCloudSave: 0 };
-    const m = r.data ? mergeCloud(hasCloud ? [] : latest.current.garage, base, r.data) : { garage: latest.current.garage, profile: base };
+    const merged = r.data ? mergeCloud(hasCloud ? [] : latest.current.garage, base, r.data) : { garage: latest.current.garage, profile: base };
+    const m = { garage: normalizeGarage(merged.garage), profile: merged.profile };
     // the ref must hold the linked account BEFORE anything else reads it (the sign-in screens call patchProfile right after);
     // otherwise the old local profile gets written back over the account that was just linked
     const linked = { ...m.profile, token, googleLinked: true };
@@ -302,7 +306,27 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     setGarage(m.garage);
     setProfile(linked);
     return { ok: true, added: m.garage.length - before };
+    } catch {
+      return { ok: false, added: 0 };
+    }
   }, []);
+
+  /** Google sign-in in a pop-up sheet; no code to type. Returns an on-screen error message if anything fails. */
+  const googleSignIn = useCallback(async (): Promise<{ ok: boolean; error?: string }> => {
+    try {
+      const s = await googleSignInCode();
+      if (!s.ok) return { ok: false, error: s.error };
+      const r = await redeemLinkCode(s.code);
+      if (!r.ok) return { ok: false, error: r.error.toUpperCase() };
+      const res = await linkAccount(r.token);
+      if (!res.ok) return { ok: false, error: 'SIGNED IN, BUT YOUR GARAGE DID NOT DOWNLOAD. CHECK YOUR CONNECTION AND TRY AGAIN.' };
+      patchProfile((p) => ({ ...p, onboarded: true, googleLinked: true, termsAccepted: p.termsAccepted || new Date().toISOString() }));
+      play('levelup');
+      return { ok: true };
+    } catch {
+      return { ok: false, error: 'SOMETHING WENT WRONG SIGNING IN. TRY AGAIN.' };
+    }
+  }, [linkAccount, patchProfile]);
 
   const value = useMemo<Game>(() => {
     const xp = totalXp(garage, profile);
@@ -316,9 +340,9 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       ready, garage, profile, settings, xp, level, rank: rankFor(level),
       nextLevelXp: xpForLevel(level + 1), prevLevelXp: xpForLevel(level),
       streak: streak(profile), bixPct: CATALOG.length ? (caught.size / CATALOG.length) * 100 : 0,
-      toast, notify: flash, shopBuy, shopEquip, iconBuy, iconWear, quests: () => questsView(garage, profile), caughtNs: caught, addCatch, removeCatch, setSettings, setUsername, toggleStar, patchProfile, restore, linkAccount, syncState,
+      toast, notify: flash, shopBuy, shopEquip, iconBuy, iconWear, quests: () => questsView(garage, profile), caughtNs: caught, addCatch, removeCatch, setSettings, setUsername, toggleStar, patchProfile, restore, linkAccount, googleSignIn, syncState,
     };
-  }, [ready, garage, profile, settings, toast, flash, shopBuy, shopEquip, iconBuy, iconWear, addCatch, removeCatch, setSettings, setUsername, toggleStar, patchProfile, restore, linkAccount, syncState]);
+  }, [ready, garage, profile, settings, toast, flash, shopBuy, shopEquip, iconBuy, iconWear, addCatch, removeCatch, setSettings, setUsername, toggleStar, patchProfile, restore, linkAccount, googleSignIn, syncState]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

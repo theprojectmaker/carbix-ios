@@ -6,11 +6,11 @@ import { router } from 'expo-router';
 import * as Sharing from 'expo-sharing';
 import * as WebBrowser from 'expo-web-browser';
 import React, { useState } from 'react';
-import { Alert, Linking, ScrollView, Switch, Text, TextInput, View } from 'react-native';
+import { Alert, ScrollView, Switch, Text, TextInput, View } from 'react-native';
 
 import { Screen } from '@/components/screen';
 import { Btn, Chip, PText } from '@/components/ui';
-import { GOOGLE_SIGNIN_URL, redeemLinkCode } from '@/engine/api';
+import { redeemLinkCode } from '@/engine/api';
 import { TITLES } from '@/engine/extras';
 import { dateKeyET, KEYS, normalizeProfile, parseBackup } from '@/engine/store';
 import { blockedList, reportUser, withUnblocked } from '@/lib/moderation';
@@ -153,9 +153,9 @@ export default function Settings() {
         </Section>
 
         <Section title="ACCOUNT AND BACKUP" hint="MOVE YOUR GARAGE BETWEEN PHONES, OR KEEP A COPY.">
-          <Btn tone="red" label={g.profile.googleLinked ? 'SIGN IN WITH GOOGLE AGAIN' : 'SIGN IN WITH GOOGLE'} onPress={() => Linking.openURL(GOOGLE_SIGNIN_URL)} />
+          <Btn tone="red" label={g.profile.googleLinked ? 'SIGN IN WITH GOOGLE AGAIN' : 'SIGN IN WITH GOOGLE'} onPress={async () => { setStatus('OPENING GOOGLE...'); const r = await g.googleSignIn(); setStatus(r.ok ? 'SIGNED IN. YOUR GARAGE IS HERE.' : (r.error ?? 'COULD NOT SIGN IN.')); }} />
           <Text style={{ fontFamily: fonts.utility, fontSize: 9.5, color: palette.lcdDim }}>
-            OPENS SAFARI. WHEN YOU ARE SIGNED IN IT SENDS YOU BACK HERE AND YOUR WHOLE GARAGE COMES WITH YOU. NO CODE NEEDED. IF IT DOES NOT COME BACK, TYPE THE CODE IT SHOWS:
+            A SIGN-IN SHEET POPS UP OVER THE APP. WHEN YOU ARE DONE IT CLOSES BY ITSELF AND YOUR WHOLE GARAGE COMES WITH YOU. NO CODE NEEDED. OR TYPE A CODE FROM THE WEBSITE (SETTINGS, ACCOUNT, LINK A DEVICE):
           </Text>
           <TextInput value={code} onChangeText={(s) => setCode(s.toUpperCase())} placeholder="ABC123" placeholderTextColor="#7f8ca6" autoCapitalize="characters" autoCorrect={false} maxLength={8} style={{ ...input, letterSpacing: 4 }} />
           <Btn small tone="red" label="USE CODE" onPress={link} />

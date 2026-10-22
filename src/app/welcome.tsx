@@ -1,11 +1,11 @@
 import { router } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import React, { useState } from 'react';
-import { Linking, KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 
 import { Screen } from '@/components/screen';
 import { Btn } from '@/components/ui';
-import { accountAuth, GOOGLE_SIGNIN_URL, redeemLinkCode, usernameAvailable } from '@/engine/api';
+import { accountAuth, redeemLinkCode, usernameAvailable } from '@/engine/api';
 import { play } from '@/lib/sfx';
 import { useGame } from '@/state/game';
 import { fonts, palette, useTheme } from '@/theme/theme';
@@ -75,6 +75,16 @@ export default function Welcome() {
     done({ accountUser: clean });
   }
 
+  async function googleSignIn() {
+    setMsg('');
+    if (!agree) return setMsg('PLEASE AGREE TO THE TERMS TO CONTINUE.');
+    setBusy(true);
+    const r = await g.googleSignIn();
+    setBusy(false);
+    if (!r.ok) return setMsg(r.error ?? 'COULD NOT SIGN IN.');
+    router.replace('/');
+  }
+
   async function connectGoogle() {
     setMsg('');
     if (!agree) return setMsg('PLEASE AGREE TO THE TERMS TO CONTINUE.');
@@ -139,7 +149,7 @@ export default function Welcome() {
             <Text style={{ fontFamily: fonts.utility, fontSize: 9.5, color: palette.lcdDim }}>
               ALREADY PLAY WITH GOOGLE? SIGN IN AND YOUR WHOLE GARAGE, LEVEL AND NAME COME OVER. IT OPENS SAFARI AND BRINGS YOU BACK HERE BY ITSELF.
             </Text>
-            <Btn tone="red" label="SIGN IN WITH GOOGLE" onPress={() => { if (!agree) return setMsg('PLEASE AGREE TO THE TERMS TO CONTINUE.'); Linking.openURL(GOOGLE_SIGNIN_URL); }} />
+            <Btn tone="red" label={busy ? 'ONE MOMENT...' : 'SIGN IN WITH GOOGLE'} disabled={busy} onPress={googleSignIn} />
             <Text style={{ fontFamily: fonts.utility, fontSize: 9, color: palette.lcdDim }}>DID NOT COME BACK? TYPE THE CODE SAFARI SHOWED:</Text>
             {showCode ? (
               <>
