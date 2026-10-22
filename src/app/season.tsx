@@ -155,6 +155,16 @@ function IconShelf() {
   const g = useGame();
   const key = currentSeason().key;
   const worn = iconEquipped(g.profile);
+  const [note, setNote] = useState('');
+  const [working, setWorking] = useState(false);
+  const run = async (p: Promise<{ ok: boolean; message: string }>) => {
+    setWorking(true);
+    setNote('WORKING...');
+    const r = await p;
+    setWorking(false);
+    setNote(r.message);
+    play(r.ok ? 'caught-rare' : 'error');
+  };
   const packs = Object.entries(SEASON_APP_ICONS)
     .map(([sk, list]) => [sk, list.filter((i) => sk === key || iconOwned(g.profile, sk, i.id))] as const)
     .filter(([, list]) => list.length);
@@ -163,6 +173,11 @@ function IconShelf() {
       <Text style={{ fontFamily: fonts.utility, fontSize: 9.5, color: palette.lcdDim }}>
         THESE CHANGE THE REAL ICON ON YOUR HOME SCREEN. EACH SEASON&apos;S PACK IS ONLY FOR SALE WHILE THAT SEASON LASTS; WHAT YOU BUY IS YOURS FOREVER.
       </Text>
+      {note ? (
+        <View style={{ backgroundColor: palette.panel, borderWidth: 3, borderColor: palette.gold, padding: 10 }}>
+          <Text style={{ fontFamily: fonts.utilityBold, fontSize: 10.5, color: palette.gold, lineHeight: 15 }}>{note}</Text>
+        </View>
+      ) : null}
       {packs.map(([sk, list]) => (
         <View key={sk} style={{ gap: 8 }}>
           <Text style={{ fontFamily: fonts.display, fontSize: 20, color: palette.wht }}>{sk === key ? 'THIS SEASON' : 'YOURS FROM ' + sk}</Text>
@@ -177,9 +192,9 @@ function IconShelf() {
                   {on ? (
                     <Text style={{ fontFamily: fonts.utilityBold, fontSize: 10, color: palette.green }}>ON YOUR HOME SCREEN</Text>
                   ) : owned ? (
-                    <Btn small tone="gold" label="USE ICON" onPress={() => g.iconWear(ownedKey(sk, i.id))} />
+                    <Btn small tone="gold" label="USE ICON" disabled={working} onPress={() => run(g.iconWear(ownedKey(sk, i.id)))} />
                   ) : (
-                    <Btn small tone="red" label={`BUY  ${i.price} ORBS`} onPress={() => { if (g.iconBuy(sk, i.id)) play('caught-rare'); else play('error'); }} />
+                    <Btn small tone="red" label={`BUY  ${i.price} ORBS`} disabled={working} onPress={() => run(g.iconBuy(sk, i.id))} />
                   )}
                 </View>
               );
@@ -187,7 +202,7 @@ function IconShelf() {
           </View>
         </View>
       ))}
-      {worn ? <Btn small tone="plain" label="BACK TO THE DEFAULT ICON" onPress={() => g.iconWear(null)} /> : null}
+      {worn ? <Btn small tone="plain" label="BACK TO THE DEFAULT ICON" disabled={working} onPress={() => run(g.iconWear(null))} /> : null}
     </View>
   );
 }

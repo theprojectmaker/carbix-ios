@@ -40,8 +40,8 @@ type Game = {
   notify: (msg: string) => void;
   shopBuy: (track: Track, id: string) => boolean;
   shopEquip: (track: Track, id: string) => void;
-  iconBuy: (seasonKey: string, id: string) => boolean;
-  iconWear: (owned: string | null) => void;
+  iconBuy: (seasonKey: string, id: string) => Promise<{ ok: boolean; message: string }>;
+  iconWear: (owned: string | null) => Promise<{ ok: boolean; message: string }>;
   quests: () => ReturnType<typeof questsView>;
   addCatch: (car: Car, photo: string | null, geo?: { lat: number; lng: number } | null) => Catch;
   removeCatch: (id: number) => void;
@@ -146,24 +146,29 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     flash(r.message);
   }, [flash]);
 
-  const iconWear = useCallback((owned: string | null) => {
+  /** Both icon calls RETURN what happened so the shop can print it on its own screen (the shop is a pop-up and hides toasts). */
+  const iconWear = useCallback(async (owned: string | null) => {
     const r = equipIcon(latest.current.profile, owned);
-    if (!r.ok) { flash(r.message); return; }
+    if (!r.ok) return { ok: false, message: r.message };
     latest.current = { ...latest.current, profile: r.profile };
     setProfile(r.profile);
-    wearIcon(owned ? owned.split('::')[1] : null).then((w) => flash(w.ok ? 'HOME SCREEN ICON: ' + w.detail : 'SAVED, BUT THE HOME SCREEN DID NOT CHANGE: ' + w.detail));
-  }, [flash]);
+    const w = await wearIcon(owned ? owned.split('::')[1] : null);
+    return w.ok
+      ? { ok: true, message: 'HOME SCREEN ICON IS NOW ' + w.detail }
+      : { ok: false, message: 'SAVED, BUT THE HOME SCREEN DID NOT CHANGE. ' + w.detail };
+  }, []);
 
-  const iconBuy = useCallback((seasonKey: string, id: string) => {
+  const iconBuy = useCallback(async (seasonKey: string, id: string) => {
     const r = buyIcon(latest.current.profile, seasonKey, currentSeason().key, id);
-    if (r.ok) {
-      latest.current = { ...latest.current, profile: r.profile };
-      setProfile(r.profile);
-      wearIcon(id).then((w) => flash(w.ok ? r.message + ' — HOME SCREEN ICON: ' + w.detail : r.message + ', BUT THE HOME SCREEN DID NOT CHANGE: ' + w.detail));
-    }
-    flash(r.message);
-    return r.ok;
-  }, [flash]);
+    if (!r.ok) return { ok: false, message: r.message };
+    latest.current = { ...latest.current, profile: r.profile };
+    setProfile(r.profile);
+    const w = await wearIcon(id);
+    return {
+      ok: true,
+      message: w.ok ? r.message + '. HOME SCREEN ICON IS NOW ' + w.detail : r.message + ', BUT THE HOME SCREEN DID NOT CHANGE. ' + w.detail,
+    };
+  }, []);
 
   // publish the public leaderboard row (numbers only) shortly after anything changes
   const pubTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
