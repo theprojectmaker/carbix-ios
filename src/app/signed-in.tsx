@@ -5,9 +5,14 @@ import { Text, View } from 'react-native';
 import { Screen } from '@/components/screen';
 import { Btn, PText } from '@/components/ui';
 import { redeemLinkCode } from '@/engine/api';
+
 import { play } from '@/lib/sfx';
 import { useGame } from '@/state/game';
 import { fonts, palette, useTheme } from '@/theme/theme';
+
+type Outcome = { ok: true } | { ok: false; error: string };
+/** A code is single-use, and the deep link can mount this screen twice; every mount shares one attempt per code. */
+const attempts = new Map<string, Promise<Outcome>>();
 
 /** carbix://signed-in?code=XXXXXX — where the website's Google sign-in hands you back to the app. */
 export default function SignedIn() {
@@ -21,12 +26,20 @@ export default function SignedIn() {
     let live = true;
     (async () => {
       if (!code) { setBad(true); setMsg('NO SIGN-IN CODE CAME BACK. TRY AGAIN.'); return; }
-      const r = await redeemLinkCode(String(code));
+      const key = String(code);
+      let p = attempts.get(key);
+      if (!p) {
+        p = (async (): Promise<Outcome> => {
+          const r = await redeemLinkCode(key);
+          if (!r.ok) return { ok: false, error: r.error.toUpperCase() };
+          const res = await g.linkAccount(r.token);
+          return res.ok ? { ok: true } : { ok: false, error: 'SIGNED IN, BUT THE GARAGE DID NOT DOWNLOAD. TRY AGAIN.' };
+        })();
+        attempts.set(key, p);
+      }
+      const out = await p;
       if (!live) return;
-      if (!r.ok) { setBad(true); setMsg(r.error.toUpperCase()); return; }
-      const res = await g.linkAccount(r.token);
-      if (!live) return;
-      if (!res.ok) { setBad(true); setMsg('SIGNED IN, BUT THE GARAGE DID NOT DOWNLOAD. TRY AGAIN.'); return; }
+      if (!out.ok) { attempts.delete(key); setBad(true); setMsg(out.error); return; }
       g.patchProfile((p) => ({ ...p, onboarded: true, googleLinked: true, termsAccepted: p.termsAccepted || new Date().toISOString() }));
       play('levelup');
       router.replace('/');

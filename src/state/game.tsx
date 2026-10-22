@@ -102,6 +102,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         const r = await pullGarage(loaded.profile.token);
         if (r.ok && r.data) {
           const m = mergeCloud(loaded.garage, loaded.profile, r.data);
+          latest.current = { garage: m.garage, profile: m.profile };
           setGarage(m.garage);
           setProfile(m.profile);
         }
@@ -249,14 +250,19 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   const setUsername = useCallback((name: string) => {
     const clean = name.replace(/^@/, '').replace(/[^A-Za-z0-9_]/g, '').slice(0, 16);
     if (!clean) return;
-    setProfile((p) => ({ ...p, username: clean, displayName: clean, name: '@' + clean }));
+    // update the ref in the same breath: patchProfile reads it, and a stale copy used to wipe the new name
+    const next = { ...latest.current.profile, username: clean, displayName: clean, name: '@' + clean };
+    latest.current = { ...latest.current, profile: next };
+    setProfile(next);
   }, []);
 
   const toggleStar = useCallback((n: number) => {
     const cur = ((latest.current.profile.stars as number[]) || []);
     const on = !cur.includes(n);
     const next = on ? [...cur, n] : cur.filter((x) => x !== n);
-    setProfile((p) => ({ ...p, stars: next }));
+    const withStars = { ...latest.current.profile, stars: next };
+    latest.current = { ...latest.current, profile: withStars };
+    setProfile(withStars);
     play(on ? 'star-on' : 'star-off');
     return on;
   }, []);
@@ -268,8 +274,11 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const restore = useCallback((g: Catch[], p: Profile) => {
-    setGarage(normalizeGarage(g));
-    setProfile(normalizeProfile(p));
+    const ng = normalizeGarage(g);
+    const np = normalizeProfile(p);
+    latest.current = { garage: ng, profile: np };
+    setGarage(ng);
+    setProfile(np);
   }, []);
 
   const linkAccount = useCallback(async (token: string) => {
@@ -286,8 +295,12 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     const fresh = normalizeProfile({ ...newProfile(), token, googleLinked: true, lastCloudSave: 0, onboarded: true, termsAccepted: latest.current.profile.termsAccepted });
     const base = hasCloud ? fresh : { ...latest.current.profile, token, googleLinked: true, lastCloudSave: 0 };
     const m = r.data ? mergeCloud(hasCloud ? [] : latest.current.garage, base, r.data) : { garage: latest.current.garage, profile: base };
+    // the ref must hold the linked account BEFORE anything else reads it (the sign-in screens call patchProfile right after);
+    // otherwise the old local profile gets written back over the account that was just linked
+    const linked = { ...m.profile, token, googleLinked: true };
+    latest.current = { garage: m.garage, profile: linked };
     setGarage(m.garage);
-    setProfile({ ...m.profile, token, googleLinked: true });
+    setProfile(linked);
     return { ok: true, added: m.garage.length - before };
   }, []);
 

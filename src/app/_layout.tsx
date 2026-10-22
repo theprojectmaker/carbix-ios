@@ -3,7 +3,7 @@ import { PixelifySans_400Regular } from '@expo-google-fonts/pixelify-sans';
 import { PressStart2P_400Regular } from '@expo-google-fonts/press-start-2p';
 import { Silkscreen_400Regular, Silkscreen_700Bold } from '@expo-google-fonts/silkscreen';
 import { useFonts } from 'expo-font';
-import { Redirect, Stack } from 'expo-router';
+import { Redirect, Stack, usePathname } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import React, { useEffect } from 'react';
@@ -22,6 +22,7 @@ SplashScreen.preventAutoHideAsync().catch(() => {});
 function Shell() {
   const t = useTheme();
   const { ready, toast, profile, garage } = useGame();
+  const pathname = usePathname();
   const [fontsLoaded] = useFonts({
     Jersey25_400Regular, PixelifySans_400Regular, PressStart2P_400Regular, Silkscreen_400Regular, Silkscreen_700Bold,
   });
@@ -65,7 +66,7 @@ function Shell() {
         <Stack.Screen name="season" options={{ presentation: 'modal' }} />
         <Stack.Screen name="race" options={{ presentation: 'modal' }} />
       </Stack>
-      {needsWelcome ? <Redirect href="/welcome" /> : null}
+      {needsWelcome && pathname !== '/signed-in' ? <Redirect href="/welcome" /> : null}
       {toast ? (
         <View pointerEvents="none" style={{ position: 'absolute', top: 54, left: 12, right: 12, backgroundColor: t.gold, borderWidth: 3, borderColor: t.panel, padding: 10 }}>
           <PText style={{ color: t.panel, fontSize: 17 }}>{toast}</PText>
