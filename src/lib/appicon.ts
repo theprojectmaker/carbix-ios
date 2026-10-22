@@ -17,18 +17,30 @@ function mod(): Mod | null {
 
 export const canSwitchIcon = () => !!mod()?.supportsAlternateIcons;
 
-/** Asks iOS for the icon, then asks iOS which icon it now has, and says exactly what happened. */
+const wait = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
+
+/**
+ * Asks iOS for the icon, then asks iOS which icon it now has, and says exactly what happened.
+ * iOS answers "resource temporarily unavailable" when it is busy (a screen is still sliding in, the app only just became
+ * active, another icon change is finishing). That passes, so wait a beat before the first try and retry a few times.
+ */
 export async function wearIcon(id: string | null): Promise<{ ok: boolean; detail: string }> {
   const m = mod();
   if (!m) return { ok: false, detail: 'THE ICON PART IS NOT IN THIS BUILD' };
   if (!m.supportsAlternateIcons) return { ok: false, detail: 'THIS BUILD HAS NO ALTERNATE ICONS INSTALLED' };
   const name = id ? id.charAt(0).toUpperCase() + id.slice(1) : null;
-  try {
-    await m.setAlternateAppIcon(name);
-    const now = m.getAppIconName ? m.getAppIconName() : name;
-    if ((now ?? null) === name) return { ok: true, detail: name ? name.toUpperCase() : 'DEFAULT ICON' };
-    return { ok: false, detail: `IOS KEPT ${now ? String(now).toUpperCase() : 'THE DEFAULT ICON'}` };
-  } catch (e) {
-    return { ok: false, detail: String((e as { message?: string })?.message ?? e).replace(/\s+/g, ' ').slice(0, 90).toUpperCase() };
+  let last = '';
+  for (let attempt = 0; attempt < 4; attempt++) {
+    await wait(attempt === 0 ? 350 : 900 * attempt);
+    try {
+      await m.setAlternateAppIcon(name);
+      const now = m.getAppIconName ? m.getAppIconName() : name;
+      if ((now ?? null) === name) return { ok: true, detail: name ? name.toUpperCase() : 'DEFAULT ICON' };
+      last = `IOS KEPT ${now ? String(now).toUpperCase() : 'THE DEFAULT ICON'}`;
+    } catch (e) {
+      last = String((e as { message?: string })?.message ?? e).replace(/\s+/g, ' ').slice(0, 90).toUpperCase();
+      if (!/TEMPORARILY|UNAVAILABLE|BUSY|RESOURCE/.test(last)) break;
+    }
   }
+  return { ok: false, detail: last };
 }
