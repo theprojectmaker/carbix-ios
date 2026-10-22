@@ -150,7 +150,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     if (!r.ok) { flash(r.message); return; }
     latest.current = { ...latest.current, profile: r.profile };
     setProfile(r.profile);
-    wearIcon(owned ? owned.split('::')[1] : null).then((ok) => flash(ok ? r.message : r.message + ' — SHOWS ON YOUR HOME SCREEN IN THE INSTALLED APP'));
+    wearIcon(owned ? owned.split('::')[1] : null).then((w) => flash(w.ok ? 'HOME SCREEN ICON: ' + w.detail : 'SAVED, BUT THE HOME SCREEN DID NOT CHANGE: ' + w.detail));
   }, [flash]);
 
   const iconBuy = useCallback((seasonKey: string, id: string) => {
@@ -158,7 +158,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     if (r.ok) {
       latest.current = { ...latest.current, profile: r.profile };
       setProfile(r.profile);
-      wearIcon(id).then(() => {});
+      wearIcon(id).then((w) => flash(w.ok ? r.message + ' — HOME SCREEN ICON: ' + w.detail : r.message + ', BUT THE HOME SCREEN DID NOT CHANGE: ' + w.detail));
     }
     flash(r.message);
     return r.ok;
