@@ -1,4 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Alert } from 'react-native';
+import { router } from 'expo-router';
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
 import { mergeCloud, pullGarage, pushGarage, pushPublicRow, redeemLinkCode } from '@/engine/api';
@@ -146,29 +148,41 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     flash(r.message);
   }, [flash]);
 
-  /** Both icon calls RETURN what happened so the shop can print it on its own screen (the shop is a pop-up and hides toasts). */
+  /**
+   * iOS refuses an icon change ("resource temporarily unavailable") while a pop-up screen is open over the app, so the
+   * shop closes first, the app settles, and only then is the icon requested. A failure is shown as a system alert, which
+   * sits above every screen.
+   */
+  const switchIcon = useCallback((name: string | null) => {
+    try {
+      router.dismissAll();
+    } catch {
+      /* nothing to close */
+    }
+    setTimeout(() => {
+      wearIcon(name).then((w) => {
+        if (!w.ok) Alert.alert('The home screen icon did not change', w.detail + '\n\nYour choice is saved. Try again in a moment, or after closing and reopening Carbix.');
+      });
+    }, 900);
+  }, []);
+
   const iconWear = useCallback(async (owned: string | null) => {
     const r = equipIcon(latest.current.profile, owned);
     if (!r.ok) return { ok: false, message: r.message };
     latest.current = { ...latest.current, profile: r.profile };
     setProfile(r.profile);
-    const w = await wearIcon(owned ? owned.split('::')[1] : null);
-    return w.ok
-      ? { ok: true, message: 'HOME SCREEN ICON IS NOW ' + w.detail }
-      : { ok: false, message: 'SAVED, BUT THE HOME SCREEN DID NOT CHANGE. ' + w.detail };
-  }, []);
+    switchIcon(owned ? owned.split('::')[1] : null);
+    return { ok: true, message: 'SWITCHING YOUR HOME SCREEN ICON...' };
+  }, [switchIcon]);
 
   const iconBuy = useCallback(async (seasonKey: string, id: string) => {
     const r = buyIcon(latest.current.profile, seasonKey, currentSeason().key, id);
     if (!r.ok) return { ok: false, message: r.message };
     latest.current = { ...latest.current, profile: r.profile };
     setProfile(r.profile);
-    const w = await wearIcon(id);
-    return {
-      ok: true,
-      message: w.ok ? r.message + '. HOME SCREEN ICON IS NOW ' + w.detail : r.message + ', BUT THE HOME SCREEN DID NOT CHANGE. ' + w.detail,
-    };
-  }, []);
+    switchIcon(id);
+    return { ok: true, message: r.message + '. SWITCHING YOUR HOME SCREEN ICON...' };
+  }, [switchIcon]);
 
   // publish the public leaderboard row (numbers only) shortly after anything changes
   const pubTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
