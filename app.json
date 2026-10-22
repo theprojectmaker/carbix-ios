@@ -86,7 +86,8 @@
             "ios": "./assets/appicons/icon4.png"
           }
         ]
-      ]
+      ],
+      "./plugins/with-alt-icon-fix.js"
     ],
     "experiments": {
       "typedRoutes": true,
