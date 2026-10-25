@@ -27,7 +27,7 @@ import { fonts, useTheme } from '@/theme/theme';
 type Phase = 'idle' | 'reading' | 'error';
 
 /** Cool mode shrinks the frame we ship to the server (the phone-heat fix from the web app). */
-const MAX_W = { cool: 768, full: 1024 };
+const MAX_W = { cool: 1024, full: 1280 }; // what the website sends; the AI needs the grille and badges, not a thumbnail
 const FIELD_TIPS = ['READY TO SCAN', 'HOLD STILL A BEAT', 'PARKED CARS = EASY', 'FILL THE FRAME WITH THE CAR'];
 const CALL_BRANDS = ['Toyota', 'Honda', 'Ford', 'Chevrolet', 'BMW', 'Mercedes', 'Nissan', 'Hyundai', 'Jeep', 'Subaru', 'Audi', 'Kia', 'Lexus', 'Dodge', 'Volkswagen'];
 const newPicks = () => [...CALL_BRANDS].sort(() => Math.random() - 0.5).slice(0, 5);
@@ -89,7 +89,7 @@ export default function Scan() {
   /** The one and only decode of a camera/library original: a small JPEG file everything else is derived from. */
   async function shrink(rawUri: string): Promise<string> {
     try {
-      const small = await ImageManipulator.manipulateAsync(rawUri, [{ resize: { width: g.settings.cool ? MAX_W.cool : MAX_W.full } }], { compress: 0.75, format: ImageManipulator.SaveFormat.JPEG });
+      const small = await ImageManipulator.manipulateAsync(rawUri, [{ resize: { width: g.settings.cool ? MAX_W.cool : MAX_W.full } }], { compress: 0.82, format: ImageManipulator.SaveFormat.JPEG });
       return small.uri;
     } catch {
       return rawUri;
