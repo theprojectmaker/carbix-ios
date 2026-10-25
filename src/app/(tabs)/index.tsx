@@ -129,6 +129,8 @@ export default function Scan() {
   async function commit(car: Car, thumb: string): Promise<number> {
     const geo = await geoOnce();
     const entry = g.addCatch(car, thumb, geo);
+    const scanId = (car as { scanId?: string }).scanId;
+    if (scanId) g.secondLook(entry.id, String(scanId));
     race.shareCatch(car, thumb);
     if (g.settings.feedShare !== false) postCatch(g.profile.name, car, thumb, entry.ts, !!entry.shiny).catch(() => {});
     if (race.live) race.scoreCatch(car, geo).then((m) => { if (m) g.notify(m); });

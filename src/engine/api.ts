@@ -54,6 +54,16 @@ export async function identify(imageBase64: string, mimeType = 'image/jpeg'): Pr
   }
 }
 
+/** The scan's second look: the slow, strong models' verdict, written by the server a minute or two after the scan. */
+export async function recheckScan(scanId: string): Promise<Json | null> {
+  try {
+    const j = await getJSON('/api/identify?recheck=' + encodeURIComponent(scanId), 15000);
+    return j.ok ? j : null;
+  } catch {
+    return null;
+  }
+}
+
 export async function research(make: string, model: string, years?: string): Promise<Json | null> {
   try {
     const j = await postJSON('/api/research', { make, model, years });

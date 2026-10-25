@@ -3,9 +3,9 @@ import { Alert } from 'react-native';
 import { router } from 'expo-router';
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
-import { mergeCloud, pullGarage, pushGarage, pushPublicRow, redeemLinkCode } from '@/engine/api';
+import { mergeCloud, pullGarage, pushGarage, pushPublicRow, recheckScan, redeemLinkCode } from '@/engine/api';
 import { publicRow, withRollovers } from '@/engine/publish';
-import { catalogMatch, CATALOG } from '@/engine/data';
+import { catalogMatch, CATALOG, fixStats } from '@/engine/data';
 import {
   dateKeyET as todayKey, KEYS, loadAll, markDay, normalizeGarage, newProfile, normalizeProfile, saveAll, shinyRoll, streak, totalXp,
 } from '@/engine/store';
@@ -48,6 +48,8 @@ type Game = {
   quests: () => ReturnType<typeof questsView>;
   addCatch: (car: Car, photo: string | null, geo?: { lat: number; lng: number } | null) => Catch;
   removeCatch: (id: number) => void;
+  /** Keeps asking the server about a scan's second look and corrects the catch if a better-supported car emerges. */
+  secondLook: (entryId: number, scanId: string) => void;
   setSettings: (s: Partial<Settings>) => void;
   setUsername: (name: string) => void;
   toggleStar: (n: number) => boolean;
@@ -279,6 +281,34 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     return entry;
   }, [say]);
 
+  const secondLook = useCallback((entryId: number, scanId: string) => {
+    let tries = 0;
+    const tick = async () => {
+      tries++;
+      const j = await recheckScan(scanId);
+      if (!j) { if (tries < 10) setTimeout(tick, 15000); return; }
+      if (!j.done) { if (tries < 10) setTimeout(tick, 12000); return; }
+      if (!j.changed || !j.make || !j.model) return;
+      const entry = latest.current.garage.find((x) => x.id === entryId);
+      if (!entry) return; // discarded meanwhile
+      const car: Car = { ...entry.car, make: String(j.make), model: String(j.model), yearRange: String(j.yearRange || entry.car.yearRange || ''),
+        trim: String(j.trim || entry.car.trim || 'STANDARD'), rarity: (j.rarity || entry.car.rarity) as Car['rarity'], engine: String(j.engine || ''),
+        horsepower: Number(j.horsepower) || 0, topSpeedMph: Number(j.topSpeedMph) || 0, zeroToSixty: String(j.zeroToSixty || ''),
+        class: String(j.class || entry.car.class || ''), country: String(j.country || entry.car.country || ''),
+        confidence: Number(j.confidence) || entry.car.confidence, secondLook: true } as Car;
+      fixStats(car);
+      const nextGarage = latest.current.garage.map((x) => (x.id === entryId ? { ...x, car } : x));
+      latest.current = { ...latest.current, garage: nextGarage };
+      setGarage(nextGarage);
+      play('ping2');
+      flash(`SECOND LOOK: IT IS A ${String(j.make).toUpperCase()} ${String(j.model).toUpperCase()}`);
+      addNotice({ kind: 'info', title: `SECOND LOOK: ${String(j.make).toUpperCase()} ${String(j.model).toUpperCase()}`,
+        body: `THE SLOWER, STRONGER AI DISAGREED WITH THE QUICK ANSWER (${String(entry.car.make).toUpperCase()} ${String(entry.car.model).toUpperCase()}) AND THE CATCH WAS CORRECTED.`,
+        route: '/card/' + entryId });
+    };
+    setTimeout(tick, 20000);
+  }, [flash]);
+
   const removeCatch = useCallback((id: number) => {
     play('trash');
     setGarage((g) => g.filter((c) => c.id !== id));
@@ -397,9 +427,9 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       ready, garage, profile, settings, xp, level, rank: rankFor(level),
       nextLevelXp: xpForLevel(level + 1), prevLevelXp: xpForLevel(level),
       streak: streak(profile), bixPct: CATALOG.length ? (caught.size / CATALOG.length) * 100 : 0,
-      toast, notify: flash, shopBuy, shopEquip, iconBuy, iconWear, quests: () => questsView(garage, profile), caughtNs: caught, addCatch, removeCatch, setSettings, setUsername, toggleStar, patchProfile, restore, linkAccount, recalcScore, googleSignIn, syncState,
+      toast, notify: flash, shopBuy, shopEquip, iconBuy, iconWear, quests: () => questsView(garage, profile), caughtNs: caught, addCatch, removeCatch, secondLook, setSettings, setUsername, toggleStar, patchProfile, restore, linkAccount, recalcScore, googleSignIn, syncState,
     };
-  }, [ready, garage, profile, settings, toast, flash, shopBuy, shopEquip, iconBuy, iconWear, addCatch, removeCatch, setSettings, setUsername, toggleStar, patchProfile, restore, linkAccount, recalcScore, googleSignIn, syncState]);
+  }, [ready, garage, profile, settings, toast, flash, shopBuy, shopEquip, iconBuy, iconWear, addCatch, removeCatch, secondLook, setSettings, setUsername, toggleStar, patchProfile, restore, linkAccount, recalcScore, googleSignIn, syncState]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
