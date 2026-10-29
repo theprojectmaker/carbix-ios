@@ -7,6 +7,7 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import type { Car, Rarity } from '@/engine/types';
+import type { Box } from '@/lib/car-finder';
 import { play, playCaught } from '@/lib/sfx';
 import { fonts } from '@/theme/theme';
 
@@ -62,10 +63,10 @@ function Count({ t, from, dur, value, unit, style, color }: { t: SharedValue<num
   const dec = (value.match(/.(d+)/)?.[1] ?? '').length;
   const [txt, setTxt] = useState('0' + unit);
   useAnimatedReaction(
-    () => Math.round(ease(seg(t.get(), from, from + dur)) * 24),
+    () => Math.round(ease(seg(t.get(), from, from + dur)) * 12),
     (step, prev) => {
       if (step === prev) return;
-      const p = step / 24;
+      const p = step / 12;
       const out = p >= 1 || !Number.isFinite(num) ? value + unit : (num * p).toFixed(dec) + tail + unit;
       runOnJS(setTxt)(out);
     },
@@ -99,7 +100,7 @@ const Shot = memo(function Shot({ uri }: { uri: string }) {
  * confidence count-up and checklist, IDENTIFIED with a push-in and the car's silhouette, stat read-outs that count up,
  * then the card skeleton "minting" with your photo flying into its picture slot.
  */
-export function IdentifyReveal({ shot, car, onDone, haptics = true }: { shot: string; car: Car; onDone: () => void; haptics?: boolean }) {
+export function IdentifyReveal({ shot, car, onDone, haptics = true, startBox = null }: { shot: string; car: Car; onDone: () => void; haptics?: boolean; startBox?: Box | null }) {
   const rc = RARC[car.rarity] ?? RARC.Common;
   const [size, setSize] = useState({ W: 0, H: 0 });
   const t = useSharedValue(0);
@@ -134,10 +135,10 @@ export function IdentifyReveal({ shot, car, onDone, haptics = true }: { shot: st
     if (W && b && b.w > 0.08 && b.h > 0.08 && b.x >= 0 && b.y >= 0) {
       return { left: b.x * W, top: b.y * H, w: Math.min(b.w, 1 - b.x) * W, h: Math.min(b.h, 1 - b.y) * H };
     }
+    if (W && startBox) return { left: startBox.x * W, top: startBox.y * H, w: startBox.w * W, h: startBox.h * H };
     return { left: W * 0.19, top: H * 0.3, w: W * 0.62, h: H * 0.4 };
-  }, [W, H, car.box]);
+  }, [W, H, car.box, startBox]);
 
-  const k = W ? Math.max(1, Math.min(2.2, Math.min(W / box.w, H / box.h) * 0.78)) : 1;
 
   // start once measured
   useEffect(() => {
@@ -163,14 +164,17 @@ export function IdentifyReveal({ shot, car, onDone, haptics = true }: { shot: st
 
   // ----- animated styles -----
   const zoomStyle = useAnimatedStyle(() => {
-    const s = 1 + (k - 1) * ease(seg(t.get(), T.found, T.found + 700));
-    return { transform: [{ scale: s }], transformOrigin: `${box.left + box.w / 2}px ${box.top + box.h / 2}px` } as never;
+    // a gentle push-in from the centre: scaling about a moving origin every frame is what looked jittery
+    const s = 1 + 0.045 * ease(seg(t.get(), T.found, T.found + 700));
+    return { transform: [{ scale: s }] };
   });
   // the lock-on frame starts as the generic frame the scan was showing, then its corners MORPH onto the car's own box
-  const gw = W * 0.78;
-  const gh = Math.min(H * 0.46, gw * 0.62);
-  const gl = (W - gw) / 2;
-  const gt = (H - gh) / 2;
+  // the frame starts exactly where the scan's lock frame was (on the car when the phone found it)
+  const pad = 0.06;
+  const gl = startBox ? Math.max(0, startBox.x - startBox.w * pad) * W : W * 0.11;
+  const gt = startBox ? Math.max(0, startBox.y - startBox.h * pad) * H : (H - Math.min(H * 0.46, W * 0.78 * 0.62)) / 2;
+  const gw = startBox ? Math.max(90, Math.min(W - gl, startBox.w * (1 + 2 * pad) * W)) : W * 0.78;
+  const gh = startBox ? Math.max(70, Math.min(H - gt, startBox.h * (1 + 2 * pad) * H)) : Math.min(H * 0.46, W * 0.78 * 0.62);
   const frameStyle = useAnimatedStyle(() => {
     const p = settle(seg(t.get(), 0, 650));
     return {

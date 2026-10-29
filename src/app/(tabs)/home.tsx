@@ -79,6 +79,8 @@ export default function Home() {
   const lic = g.profile.lic.replace(/^MDX-/, 'CBX-');
   const orbs = (g.profile.orbs as number) || 0;
   const examDone = g.profile.examDay === today;
+  const caughtToday = g.garage.some((c) => dateKeyET(new Date(c.ts)) === today);
+  const streakAtRisk = g.streak >= 2 && !caughtToday && new Date().getHours() >= 15;
   const spinDone = g.profile.spinDay === today;
 
   // what your friends caught lately
@@ -104,6 +106,18 @@ export default function Home() {
               <View style={{ flex: 1 }}>
                 <Text style={{ fontFamily: fonts.display, fontSize: 20, color: INK }}>{race.invites[0].from} INVITED YOU TO A RACE</Text>
                 <Text style={{ fontFamily: fonts.utilityBold, fontSize: 9, color: INK }}>TAP TO JOIN</Text>
+              </View>
+            </View>
+          </Pressable>
+        ) : null}
+
+        {streakAtRisk ? (
+          <Pressable onPress={() => { play('tab'); router.navigate('/'); }} accessibilityRole="button">
+            <View style={{ backgroundColor: palette.red, borderWidth: 3, borderColor: INK, padding: 12, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+              <Text style={{ fontFamily: fonts.display, fontSize: 30, color: '#fff' }}>{g.streak}</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontFamily: fonts.display, fontSize: 19, color: '#fff' }}>YOUR {g.streak}-DAY STREAK ENDS AT MIDNIGHT</Text>
+                <Text style={{ fontFamily: fonts.utilityBold, fontSize: 9, color: 'rgba(255,255,255,.85)' }}>ONE SCAN KEEPS IT. TAP TO SCAN.</Text>
               </View>
             </View>
           </Pressable>

@@ -108,13 +108,13 @@ export async function reactTo(id: string, kind: ReactKind): Promise<FeedPost | n
 }
 
 /** Shares a new catch (the small photo included) to the feed, the same way the website does. */
-export async function postCatch(name: string, car: Car, photo: string | null, ts: number, shiny: boolean): Promise<boolean> {
+export async function postCatch(name: string, car: Car, photo: string | null, ts: number, shiny: boolean, token?: string): Promise<boolean> {
   if (!photo || photo.length > 190_000) return false;
   try {
     const r = await fetch(API_ORIGIN + '/api/feed', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ name, make: car.make, model: car.model, rarity: car.rarity, photo, ts, shiny }),
+      body: JSON.stringify({ name, make: car.make, model: car.model, rarity: car.rarity, photo, ts, shiny, token }),
     });
     const j = await r.json();
     at = 0; // the feed changed; the next load is a fresh one

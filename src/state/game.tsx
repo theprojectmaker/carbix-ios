@@ -12,19 +12,22 @@ import {
 import type { Car, Catch, Profile } from '@/engine/types';
 import { googleSignInCode } from '@/lib/google-signin';
 import { addNotice } from '@/lib/inbox';
+import { DEFAULT_NOTIFY, planLocalNotifications, registerPush, type NotifyPrefs } from '@/lib/notify';
 import { play, setSfxVolume, setSilentMute } from '@/lib/sfx';
-import { catchBonuses, evalChallenges, nextCombo } from '@/engine/daily';
+import { catchBonuses, cotd, evalChallenges, nextCombo } from '@/engine/daily';
 import { trophyCheck } from '@/engine/extras';
 import { advanceQuests, type QuestEvent } from '@/engine/quests';
 import { buyIcon, equipIcon } from '@/engine/appicons';
 import { buyItem, equipItem, type Track } from '@/engine/shop';
 import { currentSeason } from '@/engine/quests';
 import { wearIcon } from '@/lib/appicon';
-import { levelFor, rankFor, xpForLevel } from '@/engine/xp';
+import { catchXP as catchXPOf, levelFor, rankFor, xpForLevel } from '@/engine/xp';
 
-export type Settings = { cool: boolean; sfx: number; haptics: boolean; theme: 'light' | 'dark'; callshot: boolean; silentMute: boolean; feedShare: boolean };
+const TIER_RANK: Record<string, number> = { Common: 0, Uncommon: 1, Rare: 2, Epic: 3, Legendary: 4, Mythic: 5 };
+
+export type Settings = { cool: boolean; sfx: number; haptics: boolean; theme: 'light' | 'dark'; callshot: boolean; silentMute: boolean; feedShare: boolean; notify: NotifyPrefs };
 const SETTINGS_KEY = 'motordex.native.settings';
-const DEFAULT_SETTINGS: Settings = { cool: true, sfx: 1, haptics: true, theme: 'light', callshot: false, silentMute: true, feedShare: true };
+const DEFAULT_SETTINGS: Settings = { cool: true, sfx: 1, haptics: true, theme: 'light', callshot: false, silentMute: true, feedShare: true, notify: DEFAULT_NOTIFY };
 
 type Game = {
   ready: boolean;
@@ -57,6 +60,8 @@ type Game = {
   restore: (garage: Catch[], profile: Profile) => void;
   linkAccount: (token: string) => Promise<{ ok: boolean; added: number }>;
   recalcScore: () => void;
+  /** Re-plans the phone's scheduled notifications from the current settings and today's progress. */
+  replanNotifications: () => void;
   googleSignIn: () => Promise<{ ok: boolean; error?: string }>;
   syncState: string;
 };
@@ -88,6 +93,10 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     toastTimer.current = setTimeout(() => setToast(''), 3500);
   }, []);
   const latest = useRef({ garage, profile });
+  const settingsRef = useRef(settings);
+  useEffect(() => {
+    settingsRef.current = settings;
+  }, [settings]);
   useEffect(() => {
     latest.current = { garage, profile };
   }, [garage, profile]);
@@ -99,7 +108,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       const loaded = await loadAll(AsyncStorage);
       try {
         const s = JSON.parse((await AsyncStorage.getItem(SETTINGS_KEY)) || 'null');
-        if (s) setSettingsState({ ...DEFAULT_SETTINGS, ...s });
+        if (s) setSettingsState({ ...DEFAULT_SETTINGS, ...s, notify: { ...DEFAULT_NOTIFY, ...(s.notify || {}) } });
       } catch {}
       const q = advanceQuests(loaded.garage, loaded.profile);
       latest.current = { garage: loaded.garage, profile: q.profile };
@@ -125,6 +134,29 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     setSfxVolume(settings.sfx);
   }, [settings.sfx]);
+
+  // on launch: the push address for friends' catches, and the weekly recap (once per ISO week)
+  useEffect(() => {
+    if (!ready) return;
+    const { garage: gg, profile: pp } = latest.current;
+    if (pp.notifyOn) registerPush(pp.token, settingsRef.current.notify).catch(() => {});
+    const now = new Date();
+    const day = (now.getDay() + 6) % 7; // Monday = 0
+    const weekStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - day).getTime();
+    const weekKey = todayKey(new Date(weekStart));
+    if (pp.recapWeek !== weekKey && gg.length) {
+      const lastStart = weekStart - 7 * 86400000;
+      const last = gg.filter((c) => c.ts >= lastStart && c.ts < weekStart);
+      if (last.length) {
+        const xp = last.reduce((a, c) => a + catchXPOf(c.car), 0);
+        const best = [...last].sort((a, b) => (TIER_RANK[b.car.rarity] ?? 0) - (TIER_RANK[a.car.rarity] ?? 0))[0];
+        addNotice({ key: 'recap:' + weekKey, kind: 'info', title: `LAST WEEK: ${last.length} CATCH${last.length === 1 ? '' : 'ES'}, +${xp} XP`, body: `BEST CATCH: ${best.car.make.toUpperCase()} ${best.car.model.toUpperCase()} (${best.car.rarity.toUpperCase()}). NEW WEEK, NEW BOARD.`, route: '/bix' });
+      }
+      const np = { ...pp, recapWeek: weekKey };
+      latest.current = { ...latest.current, profile: np };
+      setProfile(np);
+    }
+  }, [ready]);
 
   useEffect(() => {
     setSilentMute(settings.silentMute !== false);
@@ -342,6 +374,22 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     return on;
   }, []);
 
+  const replanNotifications = useCallback(() => {
+    const { garage: gg, profile: pp } = latest.current;
+    const today = todayKey();
+    const caughtToday = gg.some((c) => todayKey(new Date(c.ts)) === today);
+    const car = cotd(CATALOG, today);
+    planLocalNotifications(settingsRef.current.notify, { streak: streak(pp), caughtToday, cotd: `${car.make} ${car.model}` }).catch(() => {});
+  }, []);
+
+  // scheduled notifications follow the garage and the notification settings
+  useEffect(() => {
+    if (!ready) return;
+    const id = setTimeout(replanNotifications, 1500);
+    return () => clearTimeout(id);
+  }, [ready, garage.length, settings.notify, replanNotifications]);
+
+
   const recalcScore = useCallback(() => {
     const np = { ...latest.current.profile, scoreFix: '' };
     latest.current = { ...latest.current, profile: np };
@@ -427,9 +475,9 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       ready, garage, profile, settings, xp, level, rank: rankFor(level),
       nextLevelXp: xpForLevel(level + 1), prevLevelXp: xpForLevel(level),
       streak: streak(profile), bixPct: CATALOG.length ? (caught.size / CATALOG.length) * 100 : 0,
-      toast, notify: flash, shopBuy, shopEquip, iconBuy, iconWear, quests: () => questsView(garage, profile), caughtNs: caught, addCatch, removeCatch, secondLook, setSettings, setUsername, toggleStar, patchProfile, restore, linkAccount, recalcScore, googleSignIn, syncState,
+      toast, notify: flash, shopBuy, shopEquip, iconBuy, iconWear, quests: () => questsView(garage, profile), caughtNs: caught, addCatch, removeCatch, secondLook, setSettings, setUsername, toggleStar, patchProfile, restore, linkAccount, recalcScore, replanNotifications, googleSignIn, syncState,
     };
-  }, [ready, garage, profile, settings, toast, flash, shopBuy, shopEquip, iconBuy, iconWear, addCatch, removeCatch, secondLook, setSettings, setUsername, toggleStar, patchProfile, restore, linkAccount, recalcScore, googleSignIn, syncState]);
+  }, [ready, garage, profile, settings, toast, flash, shopBuy, shopEquip, iconBuy, iconWear, addCatch, removeCatch, secondLook, setSettings, setUsername, toggleStar, patchProfile, restore, linkAccount, recalcScore, replanNotifications, googleSignIn, syncState]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

@@ -3,7 +3,7 @@ import { PixelifySans_400Regular } from '@expo-google-fonts/pixelify-sans';
 import { PressStart2P_400Regular } from '@expo-google-fonts/press-start-2p';
 import { Silkscreen_400Regular, Silkscreen_700Bold } from '@expo-google-fonts/silkscreen';
 import { useFonts } from 'expo-font';
-import { Redirect, Stack, usePathname } from 'expo-router';
+import { Redirect, Stack, router, usePathname } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import React, { useEffect } from 'react';
@@ -13,6 +13,7 @@ import { Image } from 'expo-image';
 
 import { GameProvider, useGame } from '@/state/game';
 import { loadInbox } from '@/lib/inbox';
+import { onNotificationTap, setupNotifications } from '@/lib/notify';
 import { preloadSfx } from '@/lib/sfx';
 import { RaceProvider } from '@/state/race';
 import { PText } from '@/components/ui';
@@ -32,6 +33,7 @@ function Shell() {
       SplashScreen.hideAsync().catch(() => {});
       preloadSfx();
       loadInbox();
+      setupNotifications();
     }
   }, [fontsLoaded, ready]);
   // Expo Go is killed by iOS well before a real app would be; hand decoded images back whenever we leave the foreground
@@ -41,9 +43,16 @@ function Shell() {
     const id = setInterval(() => { Image.clearMemoryCache().catch(() => {}); }, 4 * 60 * 1000);
     return () => { sub.remove(); clearInterval(id); };
   }, []);
-  if (!fontsLoaded || !ready) return null;
-  // first launch: sign up before anything else. People who already have a garage or a linked account skip it.
+  // a tapped notification opens what it is about
+  useEffect(() => onNotificationTap((route) => { try { router.push(route as never); } catch {} }), []);
+  // once, a little after sign-up: the notification ask, before the system prompt
   const needsWelcome = !profile.onboarded && garage.length === 0 && !profile.googleLinked;
+  useEffect(() => {
+    if (!ready || needsWelcome || profile.askedNotify || pathname === '/notify' || pathname === '/welcome' || pathname === '/signed-in') return;
+    const id = setTimeout(() => { try { router.push('/notify'); } catch {} }, 2500);
+    return () => clearTimeout(id);
+  }, [ready, needsWelcome, profile.askedNotify, pathname]);
+  if (!fontsLoaded || !ready) return null;
   return (
     <>
       <StatusBar style={t.dark ? 'light' : 'dark'} />
@@ -66,6 +75,7 @@ function Shell() {
         <Stack.Screen name="clubs" options={{ presentation: 'modal' }} />
         <Stack.Screen name="post/[id]" options={{ presentation: 'modal' }} />
         <Stack.Screen name="notifications" options={{ presentation: 'modal' }} />
+        <Stack.Screen name="notify" options={{ presentation: 'fullScreenModal', animation: 'fade' }} />
         <Stack.Screen name="season" options={{ presentation: 'modal' }} />
         <Stack.Screen name="race" options={{ presentation: 'modal' }} />
       </Stack>

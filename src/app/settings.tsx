@@ -5,7 +5,7 @@ import { File, Paths } from 'expo-file-system';
 import { router } from 'expo-router';
 import * as Sharing from 'expo-sharing';
 import * as WebBrowser from 'expo-web-browser';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Alert, ScrollView, Switch, Text, TextInput, View } from 'react-native';
 
 import { Screen } from '@/components/screen';
@@ -14,6 +14,7 @@ import { redeemLinkCode } from '@/engine/api';
 import { TITLES } from '@/engine/extras';
 import { dateKeyET, KEYS, normalizeProfile, parseBackup } from '@/engine/store';
 import { blockedList, reportUser, withUnblocked } from '@/lib/moderation';
+import { askNotify, notifyGranted, registerPush, updatePushPrefs } from '@/lib/notify';
 import { play } from '@/lib/sfx';
 import { useGame } from '@/state/game';
 import { fonts, palette, useTheme } from '@/theme/theme';
@@ -58,6 +59,18 @@ export default function Settings() {
   const [name, setName] = useState(g.profile.username);
   const [code, setCode] = useState('');
   const [status, setStatus] = useState('');
+  const [notifOk, setNotifOk] = useState<boolean | null>(null);
+  useEffect(() => {
+    let live = true;
+    notifyGranted().then((ok) => { if (live) setNotifOk(ok); });
+    return () => { live = false; };
+  }, []);
+  const nf = g.settings.notify;
+  const setNf = (patch: Partial<typeof nf>) => {
+    const next = { ...nf, ...patch };
+    g.setSettings({ notify: next });
+    if (patch.friends !== undefined) updatePushPrefs(g.profile.token, next).catch(() => {});
+  };
 
   async function link() {
     if (!code.trim()) return;
@@ -137,6 +150,27 @@ export default function Settings() {
           <Toggle label="HAPTICS" sub="A BUZZ WHEN YOU CATCH A CAR." value={g.settings.haptics} onChange={(v) => g.setSettings({ haptics: v })} />
           <Toggle label="POST CATCHES TO THE FEED" sub="YOUR NEW CATCHES, WITH THE PHOTO, SHOW UP IN YOUR FRIENDS' FEED. TURN OFF TO KEEP THEM PRIVATE." value={g.settings.feedShare !== false} onChange={(v) => g.setSettings({ feedShare: v })} />
           <Toggle label="CALL YOUR SHOT" sub="GUESS THE BRAND BEFORE EACH SCAN, JUST FOR A STREAK." value={g.settings.callshot} onChange={(v) => g.setSettings({ callshot: v })} />
+        </Section>
+
+        <Section title="NOTIFICATIONS" hint={notifOk ? "ON. A FEW A DAY AT MOST." : "OFF. TURN THEM ON TO GET NUDGES AND FRIENDS' BIG CATCHES."}>
+          {notifOk === false ? (
+            <Btn small tone="red" label="TURN ON NOTIFICATIONS" onPress={async () => {
+              const ok = await askNotify();
+              setNotifOk(ok);
+              if (ok) { registerPush(g.profile.token, nf).catch(() => {}); g.replanNotifications(); g.patchProfile((p) => ({ ...p, notifyOn: true, askedNotify: true })); setStatus('NOTIFICATIONS ARE ON.'); }
+              else setStatus('STILL OFF. ALLOW THEM FOR CARBIX IN THE IPHONE SETTINGS APP.');
+            }} />
+          ) : null}
+          <Toggle label="DAILY NUDGE" sub="ONE REMINDER A DAY WITH THE CAR OF THE DAY." value={nf.nudge} onChange={(v) => setNf({ nudge: v })} />
+          {nf.nudge ? (
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
+              {([['12:00 PM', 12, 0], ['3:30 PM', 15, 30], ['4:30 PM', 16, 30], ['6:00 PM', 18, 0]] as const).map(([label, h, m]) => (
+                <Chip key={label} label={label} on={nf.nudgeHour === h && nf.nudgeMinute === m} onPress={() => setNf({ nudgeHour: h, nudgeMinute: m })} />
+              ))}
+            </View>
+          ) : null}
+          <Toggle label="STREAK WARNING" sub="AN EVENING HEADS-UP WHEN YOUR STREAK IS ABOUT TO END." value={nf.streak} onChange={(v) => setNf({ streak: v })} />
+          <Toggle label="FRIENDS' BIG CATCHES" sub="WHEN A FRIEND CATCHES SOMETHING RARE OR BETTER." value={nf.friends} onChange={(v) => setNf({ friends: v })} />
         </Section>
 
         <Section title="SOUND" hint={g.settings.silentMute !== false ? "THE SILENT SWITCH MUTES GAME SOUNDS." : "PLAYS EVEN WITH THE SILENT SWITCH ON."}>

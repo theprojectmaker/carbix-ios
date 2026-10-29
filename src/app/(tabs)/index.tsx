@@ -18,6 +18,7 @@ import { identify, research } from '@/engine/api';
 import { stampCatchContext } from '@/engine/context';
 import type { Car } from '@/engine/types';
 import { catalogMatch, fixStats } from '@/engine/data';
+import { findCar, padBox, uncrop, type Box } from '@/lib/car-finder';
 import { postCatch } from '@/lib/feed';
 import { play, playCaught } from '@/lib/sfx';
 import { useGame } from '@/state/game';
@@ -69,6 +70,8 @@ export default function Scan() {
   const [shot, setShot] = useState<string | null>(null);
   const [flash] = useState(() => new Animated.Value(0));
   const [reveal, setReveal] = useState<{ car: Car; thumb: string } | null>(null);
+  // where the car is in the frozen shot, found on the phone before the AI answers; the lock frame sits on it
+  const [lock, setLock] = useState<Box | null>(null);
   const [zoomF, setZoomF] = useState(1);
   const pinch = useRef({ d: 0, z: 1 });
   const [callPicks, setCallPicks] = useState<string[]>(() => newPicks());
@@ -87,20 +90,35 @@ export default function Scan() {
   }
 
   /** The one and only decode of a camera/library original: a small JPEG file everything else is derived from. */
-  async function shrink(rawUri: string): Promise<string> {
+  async function shrink(rawUri: string): Promise<{ uri: string; width: number; height: number }> {
     try {
       const small = await ImageManipulator.manipulateAsync(rawUri, [{ resize: { width: g.settings.cool ? MAX_W.cool : MAX_W.full } }], { compress: 0.82, format: ImageManipulator.SaveFormat.JPEG });
-      return small.uri;
+      return { uri: small.uri, width: small.width, height: small.height };
     } catch {
-      return rawUri;
+      return { uri: rawUri, width: 0, height: 0 };
     }
   }
 
   /** Sends one photo for identification. Nothing is saved yet. */
-  async function analyse(uri: string): Promise<{ car?: Car; thumb?: string; error?: string }> {
+  async function analyse(uri: string, where: Box | null = null, dims: { width: number; height: number } | null = null): Promise<{ car?: Car; thumb?: string; error?: string }> {
     try {
-      // `uri` is already the small copy from shrink(); read it as a file, never re-decode the original
-      const b64 = await new File(uri).base64();
+      // When the phone found the car, the AI gets a crop around it (the car fills the picture, so grille and badges
+      // are bigger) instead of the whole frame. Its box comes back in crop space and is mapped to the full shot.
+      let crop: Box | null = null;
+      let b64: string;
+      const area = where ? where.w * where.h : 0;
+      if (where && dims && dims.width > 0 && area > 0.06 && area < 0.72) {
+        crop = padBox(where, 0.22);
+        const c = await ImageManipulator.manipulateAsync(uri, [{ crop: {
+          originX: Math.round(crop.x * dims.width), originY: Math.round(crop.y * dims.height),
+          width: Math.max(64, Math.round(crop.w * dims.width)), height: Math.max(64, Math.round(crop.h * dims.height)),
+        } }], { compress: 0.85, format: ImageManipulator.SaveFormat.JPEG, base64: true });
+        b64 = c.base64 ?? (await new File(uri).base64());
+        if (!c.base64) crop = null;
+      } else {
+        // `uri` is already the small copy from shrink(); read it as a file, never re-decode the original
+        b64 = await new File(uri).base64();
+      }
       const thumb = await ImageManipulator.manipulateAsync(uri, [{ resize: { width: 400 } }], {
         compress: 0.6, format: ImageManipulator.SaveFormat.JPEG, base64: true,
       });
@@ -109,6 +127,8 @@ export default function Scan() {
       const car = res.car;
       if (car.isCar === false) return { error: 'NO CAR FOUND IN THAT SHOT. TRY GETTING CLOSER' };
       if (car.screenCapture) return { error: 'THAT LOOKS LIKE A SCREEN. SCAN A REAL CAR' };
+      if (crop) car.box = car.box && car.box.w > 0 ? uncrop(car.box as Box, crop) : crop;
+      else if (!car.box && where) car.box = where;
       fixStats(car);
       stampCatchContext(car);
       if (!catalogMatch(car)) {
@@ -132,14 +152,15 @@ export default function Scan() {
     const scanId = (car as { scanId?: string }).scanId;
     if (scanId) g.secondLook(entry.id, String(scanId));
     race.shareCatch(car, thumb);
-    if (g.settings.feedShare !== false) postCatch(g.profile.name, car, thumb, entry.ts, !!entry.shiny).catch(() => {});
+    if (g.settings.feedShare !== false) postCatch(g.profile.name, car, thumb, entry.ts, !!entry.shiny, g.profile.token).catch(() => {});
     if (race.live) race.scoreCatch(car, geo).then((m) => { if (m) g.notify(m); });
     if (g.settings.haptics) Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
     return entry.id;
   }
 
   async function scanOne(uri: string): Promise<{ id?: number; error?: string }> {
-    const r = await analyse(await shrink(uri));
+    const small = await shrink(uri);
+    const r = await analyse(small.uri, await findCar(small.uri), small);
     if (!r.car || !r.thumb) return { error: r.error };
     playCaught(r.car.rarity);
     return { id: await commit(r.car, r.thumb) };
@@ -147,18 +168,21 @@ export default function Scan() {
 
   async function single(rawUri: string) {
     // a 12-megapixel photo decoded several times is what makes iOS kill the app; work from a small copy
-    const uri = await shrink(rawUri);
-    setShot(uri);
+    const small = await shrink(rawUri);
+    const where = await findCar(small.uri);
+    setLock(where);
+    setShot(small.uri);
     play('scan');
     setPhase('reading');
-    setStatus('READING THE CAR...');
-    const r = await analyse(uri);
+    setStatus(where ? 'LOCKED ON. READING THE CAR...' : 'READING THE CAR...');
+    const r = await analyse(small.uri, where, small);
     if (r.car && r.thumb) {
       // the real app's identify sequence plays on the frozen shot, then the catch is saved
       setReveal({ car: r.car, thumb: r.thumb });
       return;
     }
     setShot(null);
+    setLock(null);
     play('error');
     setPhase('error');
     setStatus(r.error ?? '');
@@ -192,6 +216,7 @@ export default function Scan() {
     const id = await commit(car, thumb);
     setReveal(null);
     setShot(null);
+    setLock(null);
     setPhase('idle');
     setStatus('');
     router.push({ pathname: '/caught/[id]', params: { id: String(id) } });
@@ -280,7 +305,7 @@ export default function Scan() {
         {shot ? (
           <>
             <Image source={{ uri: shot }} style={StyleSheet.absoluteFill} contentFit="cover" />
-            {reveal ? <IdentifyReveal shot={shot} car={reveal.car} onDone={finishReveal} haptics={g.settings.haptics} /> : <ScanSweep haptics={g.settings.haptics} />}
+            {reveal ? <IdentifyReveal shot={shot} car={reveal.car} onDone={finishReveal} haptics={g.settings.haptics} startBox={lock} /> : <ScanSweep haptics={g.settings.haptics} box={lock} />}
           </>
         ) : null}
         <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: '#fff', opacity: flash, zIndex: 20 }]} />

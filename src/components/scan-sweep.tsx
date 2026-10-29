@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { Animated, Easing, LayoutChangeEvent, StyleSheet, Text, View } from 'react-native';
 import Svg, { Defs, Pattern, Rect } from 'react-native-svg';
 
+import type { Box } from '@/lib/car-finder';
 import { play } from '@/lib/sfx';
 import { fonts } from '@/theme/theme';
 
@@ -14,7 +15,7 @@ const SCAN = '#4ab4ff';
  * and corner brackets that spring in from wide, lock green with a LOCK tag and a tap of haptics, then breathe.
  * Everything runs on the native driver, so it stays smooth while the photo is uploading.
  */
-export function ScanSweep({ haptics = true }: { haptics?: boolean }) {
+export function ScanSweep({ haptics = true, box = null }: { haptics?: boolean; box?: Box | null }) {
   const [h, setH] = useState(0);
   const [w, setW] = useState(0);
   const [sweep] = useState(() => new Animated.Value(0));
@@ -58,7 +59,12 @@ export function ScanSweep({ haptics = true }: { haptics?: boolean }) {
     setW(e.nativeEvent.layout.width);
   };
   const y = sweep.interpolate({ inputRange: [0, 1], outputRange: [0, Math.max(0, h - 4)] });
-  const fw = w * 0.78, fh = Math.min(h * 0.46, fw * 0.62);
+  // the frame hugs the car the phone found (a little room around it); with no find it is the generic centred frame
+  const pad = 0.06;
+  const bx = box ? Math.max(0, box.x - box.w * pad) : 0.11, by = box ? Math.max(0, box.y - box.h * pad) : 0;
+  const bw = box ? Math.min(1 - bx, box.w * (1 + 2 * pad)) : 0.78, bh = box ? Math.min(1 - by, box.h * (1 + 2 * pad)) : 0;
+  const fw = Math.max(90, bw * w), fh = box ? Math.max(70, bh * h) : Math.min(h * 0.46, fw * 0.62);
+  const fl = box ? bx * w : (w - fw) / 2, ft = box ? by * h : (h - fh) / 2;
   const scale = Animated.multiply(
     close.interpolate({ inputRange: [0, 1], outputRange: [1.6, 1] }),
     breath.interpolate({ inputRange: [0, 1], outputRange: [1, 1.025] }),
@@ -97,10 +103,10 @@ export function ScanSweep({ haptics = true }: { haptics?: boolean }) {
 
       {/* lock-on frame: springs in from wide to snug, then breathes once locked */}
       {w ? (
-        <View style={[StyleSheet.absoluteFill, { alignItems: 'center', justifyContent: 'center' }]}>
+        <View style={StyleSheet.absoluteFill}>
           <Animated.View
             style={{
-              width: fw, height: fh, alignItems: 'center', justifyContent: 'center',
+              position: 'absolute', left: fl, top: ft, width: fw, height: fh, alignItems: 'center', justifyContent: 'center',
               transform: [{ scale }],
               opacity: close.interpolate({ inputRange: [0, 0.2, 1], outputRange: [0, 1, 1] }),
             }}>
@@ -118,7 +124,7 @@ export function ScanSweep({ haptics = true }: { haptics?: boolean }) {
             ))}
             {locked ? (
               <View style={{ position: 'absolute', left: 0, top: -20, backgroundColor: LOCK, paddingHorizontal: 6, paddingVertical: 2 }}>
-                <Text style={{ fontFamily: fonts.utilityBold, fontSize: 9, letterSpacing: 1.5, color: '#0b1408' }}>LOCK</Text>
+                <Text style={{ fontFamily: fonts.utilityBold, fontSize: 9, letterSpacing: 1.5, color: '#0b1408' }}>{box ? 'LOCKED ON' : 'LOCK'}</Text>
               </View>
             ) : (
               <View style={{ position: 'absolute', left: 0, top: -20, backgroundColor: 'rgba(8,10,16,.7)', paddingHorizontal: 6, paddingVertical: 2 }}>
