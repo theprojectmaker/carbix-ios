@@ -1,6 +1,7 @@
 import { router } from 'expo-router';
 import React from 'react';
 import { Pressable, Text, View } from 'react-native';
+import Animated, { useAnimatedStyle, type SharedValue } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { play } from '@/lib/sfx';
@@ -11,6 +12,7 @@ import { useRace } from '@/state/race';
 import { fonts, palette } from '@/theme/theme';
 import { Plate } from './plate';
 import { BellIcon, RaceIcon, SeasonIcon } from './pixel-icons';
+import { RACE_GREEN, RacePill, usePulse, useRaceStatus } from './race-pill';
 
 const INK = '#141C27';
 
@@ -20,7 +22,10 @@ export function AppHeader() {
   const g = useGame();
   const invites = useRace().invites.length;
   const unread = useInbox().unread;
+  const { active } = useRaceStatus();
+  const pulse = usePulse(active, 800);
   return (
+    <View>
     <View
       style={{
         backgroundColor: palette.red, borderBottomWidth: 4, borderBottomColor: INK,
@@ -37,22 +42,35 @@ export function AppHeader() {
           </View>
         </Plate>
       </Pressable>
-      <HBtn dot={invites > 0} icon={<RaceIcon />} a11y={invites ? `Races, ${invites} invite` : 'Races'} onPress={() => router.push('/race')} />
+      <HBtn
+        dot={invites > 0 && !active}
+        icon={<RaceIcon />}
+        a11y={active ? 'Race in progress, open race control' : invites ? `Races, ${invites} invite` : 'Races'}
+        onPress={() => router.push(active ? '/race-live' : '/race')}
+        glow={active ? pulse : undefined}
+      />
       <HBtn icon={<SeasonIcon />} badge={String(daysUntilNext(currentSeason()))} a11y={`Quests and shop, ${daysUntilNext(currentSeason())} days left in the season`} onPress={() => router.push('/season')} />
       <HBtn dot={unread > 0} icon={<BellIcon />} a11y={unread ? `Inbox, ${unread} new` : 'Inbox'} onPress={() => router.push('/notifications')} />
+    </View>
+    <RacePill />
     </View>
   );
 }
 
-function HBtn({ icon, onPress, a11y, dot, badge }: { icon: React.ReactNode; onPress: () => void; a11y: string; dot?: boolean; badge?: string }) {
+/** `glow` set = a race is on: the key turns green and a ring around it pulses with that value. */
+function HBtn({ icon, onPress, a11y, dot, badge, glow }: { icon: React.ReactNode; onPress: () => void; a11y: string; dot?: boolean; badge?: string; glow?: SharedValue<number> }) {
+  const ring = useAnimatedStyle(() => ({ opacity: glow ? 0.2 + 0.8 * glow.get() : 0, transform: [{ scale: glow ? 1 + 0.16 * glow.get() : 1 }] }));
   return (
     <Pressable onPress={() => { play('whoosh'); onPress(); }} accessibilityRole="button" accessibilityLabel={a11y}>
       {({ pressed }) => (
-        <Plate color={palette.navyDk} depth={2} pressed={pressed} style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}>
+        <View>
+        {glow ? <Animated.View pointerEvents="none" style={[{ position: 'absolute', left: -4, right: -4, top: -4, bottom: -4, borderWidth: 3, borderColor: '#9CF0BA' }, ring]} /> : null}
+        <Plate color={glow ? RACE_GREEN : palette.navyDk} depth={2} pressed={pressed} style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}>
           {icon}
           {dot ? <View style={{ position: 'absolute', top: 3, right: 3, width: 14, height: 14, borderRadius: 7, backgroundColor: palette.gold, borderWidth: 3, borderColor: INK }} /> : null}
           {badge ? <View style={{ position: 'absolute', bottom: -5, right: -5, minWidth: 20, paddingHorizontal: 3, height: 16, backgroundColor: palette.gold, borderWidth: 2, borderColor: INK, alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontFamily: fonts.utilityBold, fontSize: 13, color: INK }}>{badge}</Text></View> : null}
         </Plate>
+        </View>
       )}
     </Pressable>
   );
