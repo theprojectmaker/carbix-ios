@@ -317,8 +317,11 @@ export function IdentifyReveal({ shot, car, onDone, haptics = true, startBox = n
                 <Fade key={i} t={t} a={skelA(2 + i)} b={99999} style={{ height: 10, width: `${w * 100}%`, backgroundColor: 'rgba(0,0,0,.3)' }} />
               ))}
             </View>
-            <Animated.View style={[{ position: 'absolute', overflow: 'hidden' }, flyStyle]}>
-              <Shot uri={shot} />
+            <Animated.View style={[{ position: 'absolute', overflow: 'hidden', alignItems: 'center', justifyContent: 'center' }, flyStyle]}>
+              {/* the photo keeps its size while the window around it shrinks, so it is cropped, never re-laid-out per frame */}
+              <View style={{ width: W, height: H, flexShrink: 0 }}>
+                <Shot uri={shot} />
+              </View>
             </Animated.View>
           </Animated.View>
         </>

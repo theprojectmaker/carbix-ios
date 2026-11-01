@@ -69,6 +69,10 @@ export default function Scan() {
   const [auto, setAuto] = useState(false);
   const [hold, setHold] = useState(0);
   const [shot, setShot] = useState<string | null>(null);
+  // the raw photo, shown the instant it exists; `shot` is the small copy that replaces it once that is ready
+  const [preview, setPreview] = useState<string | null>(null);
+  const [shotLoaded, setShotLoaded] = useState(false);
+  const frozen = shot ?? preview;
   const [flash] = useState(() => new Animated.Value(0));
   const [reveal, setReveal] = useState<{ car: Car; thumb: string } | null>(null);
   // where the car is in the frozen shot, found on the phone before the AI answers; the lock frame sits on it
@@ -170,14 +174,18 @@ export default function Scan() {
 
   async function single(rawUri: string) {
     // a 12-megapixel photo decoded several times is what makes iOS kill the app; work from a small copy
-    const small = await shrink(rawUri);
-    // freeze the picture and start the scan animation at once; the phone looks for the car while it plays, and the
-    // lock frame glides onto the car when it is found (no stall between the shutter and the scan)
-    setAspect(small.width > 0 && small.height > 0 ? small.width / small.height : 0);
+    // freeze on the photo and start the scan animation at once; shrinking it takes a moment, and doing that first left
+    // the live camera sitting there before the freeze. The lock frame glides onto the car when the phone finds it.
     setLock(null);
-    setShot(small.uri);
+    setAspect(0);
+    setPreview(rawUri);
     setPhase('reading');
     setStatus('LOOKING FOR THE CAR...');
+    const small = await shrink(rawUri);
+    setAspect(small.width > 0 && small.height > 0 ? small.width / small.height : 0);
+    // decode the small copy into memory before swapping to it, so the picture never blinks
+    try { await Image.prefetch(small.uri, { cachePolicy: 'memory' }); } catch { /* the swap just loads normally */ }
+    setShot(small.uri);
     const where = await findCar(small.uri);
     rememberScan({ ...small, where, at: Date.now() });
     if (where) { setLock(where); setStatus('LOCKED ON. READING THE CAR...'); } else setStatus('READING THE CAR...');
@@ -188,6 +196,8 @@ export default function Scan() {
       return;
     }
     setShot(null);
+    setPreview(null);
+    setShotLoaded(false);
     setLock(null);
     play('error');
     setPhase('error');
@@ -222,6 +232,8 @@ export default function Scan() {
     const id = await commit(car, thumb);
     setReveal(null);
     setShot(null);
+    setPreview(null);
+    setShotLoaded(false);
     setLock(null);
     setPhase('idle');
     setStatus('');
@@ -307,15 +319,15 @@ export default function Scan() {
   } else {
     viewport = (
       <>
-        {focused && !shot ? <CameraView ref={cam} style={StyleSheet.absoluteFill} facing={front ? 'front' : 'back'} enableTorch={torch} animateShutter={false} zoom={Math.max(0, Math.min(1, (zoomF - 1) / 9))} /> : null}
-        {shot ? (
+        {focused && !(frozen && shotLoaded) ? <CameraView ref={cam} style={StyleSheet.absoluteFill} facing={front ? 'front' : 'back'} enableTorch={torch} animateShutter={false} zoom={Math.max(0, Math.min(1, (zoomF - 1) / 9))} /> : null}
+        {frozen ? (
           <>
-            <Image source={{ uri: shot }} style={StyleSheet.absoluteFill} contentFit="cover" />
-            {reveal ? <IdentifyReveal shot={shot} car={reveal.car} onDone={finishReveal} haptics={g.settings.haptics} startBox={lock} aspect={aspect} /> : <ScanSweep haptics={g.settings.haptics} box={lock} aspect={aspect} />}
+            <Image source={{ uri: frozen }} style={StyleSheet.absoluteFill} contentFit="cover" cachePolicy="memory" transition={0} onLoad={() => setShotLoaded(true)} />
+            {reveal ? <IdentifyReveal shot={shot ?? frozen} car={reveal.car} onDone={finishReveal} haptics={g.settings.haptics} startBox={lock} aspect={aspect} /> : <ScanSweep haptics={g.settings.haptics} box={lock} aspect={aspect} />}
           </>
         ) : null}
         <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: '#fff', opacity: flash, zIndex: 20 }]} />
-        {!shot ? (
+        {!frozen ? (
           <View
             style={StyleSheet.absoluteFill}
             onTouchStart={(e) => {
@@ -332,18 +344,18 @@ export default function Scan() {
             onTouchEnd={() => { pinch.current.d = 0; }}
           />
         ) : null}
-        {!shot ? (
+        {!frozen ? (
           <View style={{ position: 'absolute', left: 10, top: 10 }} pointerEvents="none">
             <Text style={{ fontFamily: fonts.utilityBold, fontSize: 15, color: '#fff', backgroundColor: 'rgba(15,19,30,.82)', borderWidth: 2, borderColor: 'rgba(230,226,214,.55)', paddingHorizontal: 7, paddingVertical: 4 }}>{zoomF.toFixed(1)}x</Text>
           </View>
         ) : null}
-        {!shot && g.settings.callshot ? (
+        {!frozen && g.settings.callshot ? (
           <View style={{ position: 'absolute', left: 8, right: 8, bottom: 50, flexDirection: 'row', flexWrap: 'wrap', gap: 5, justifyContent: 'center' }}>
             <Text style={{ flexBasis: '100%', textAlign: 'center', fontFamily: fonts.utility, fontSize: 13, color: '#cfd6e4', letterSpacing: 1 }}>{callPick ? `CALLED: ${callPick.toUpperCase()}` : 'CALL YOUR SHOT. WHAT IS IT?'}</Text>
             {!callPick ? [...callPicks, 'OTHER'].map((b) => <Stog key={b} label={b.toUpperCase()} on={false} onPress={() => { play('click'); setCallPick(b); }} />) : null}
           </View>
         ) : null}
-        {!shot ? (
+        {!frozen ? (
           <View style={{ position: 'absolute', left: 10, bottom: 10, flexDirection: 'row', gap: 5 }}>
             {[1, 2, 3, 5].map((f) => (
               <Pressable key={f} onPress={() => { play('click'); setZoomF(f); }} accessibilityRole="button" accessibilityLabel={`Zoom ${f}x`}>
@@ -354,7 +366,7 @@ export default function Scan() {
             ))}
           </View>
         ) : null}
-        {grid && !shot ? (
+        {grid && !frozen ? (
           <View pointerEvents="none" style={StyleSheet.absoluteFill}>
             {[1 / 3, 2 / 3].map((p) => (
               <View key={'h' + p} style={{ position: 'absolute', left: 0, right: 0, top: `${p * 100}%`, height: 1, backgroundColor: 'rgba(255,255,255,.45)' }} />

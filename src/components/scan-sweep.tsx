@@ -1,5 +1,5 @@
 import * as Haptics from 'expo-haptics';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { LayoutChangeEvent, StyleSheet, Text, View } from 'react-native';
 import Animated, {
   Easing, interpolateColor, useAnimatedStyle, useSharedValue, withRepeat, withSpring, withTiming, type SharedValue,
@@ -40,6 +40,7 @@ function Corner({ c, l, t, w, h, lockP, breath }: { c: 'tl' | 'tr' | 'bl' | 'br'
 export function ScanSweep({ haptics = true, box = null, aspect = 0 }: { haptics?: boolean; box?: Box | null; aspect?: number }) {
   const [{ W, H }, setSize] = useState({ W: 0, H: 0 });
   const [locked, setLocked] = useState(false);
+  const didLock = useRef(false); // the lock sound, tap and flash happen once; later targets only glide the frame
   const sweep = useSharedValue(0);
   const lockP = useSharedValue(0);
   const breath = useSharedValue(0);
@@ -70,7 +71,9 @@ export function ScanSweep({ haptics = true, box = null, aspect = 0 }: { haptics?
     fl.set(withSpring(target.left, cfg)); ft.set(withSpring(target.top, cfg));
     fw.set(withSpring(target.w, cfg)); fh.set(withSpring(target.h, cfg));
     // lock a beat after the frame lands: right away for the car's own box, after a short read for the generic one
+    if (didLock.current) return;
     const id = setTimeout(() => {
+      didLock.current = true;
       setLocked(true);
       lockP.set(withTiming(1, { duration: 160 }));
       breath.set(withRepeat(withTiming(1, { duration: 800, easing: Easing.inOut(Easing.sin) }), -1, true));
