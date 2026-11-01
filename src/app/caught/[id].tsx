@@ -132,7 +132,7 @@ export default function Caught() {
           </Text>
         </View>
       </View>
-      <CatchSparks rarity={c.car.rarity} shiny={c.shiny} effect={equippedTier(g.profile, 'effect') || 'standard'} origin={{ x: width / 2, y: height * 0.42 }} />
+      {g.settings.reduceMotion ? null : <CatchSparks rarity={c.car.rarity} shiny={c.shiny} effect={equippedTier(g.profile, 'effect') || 'standard'} origin={{ x: width / 2, y: height * 0.42 }} />}
     </Screen>
   );
 }

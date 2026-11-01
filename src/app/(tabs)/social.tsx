@@ -17,12 +17,12 @@ export default function Social() {
   return (
     <Screen edges={[]}>
       <View style={{ paddingHorizontal: 12, paddingVertical: 8, gap: 6 }}>
-        <PText style={{ fontSize: 34, color: t.red }}>FEED</PText>
-        <PText style={{ color: t.muted }}>
-          YOU: {g.xp.toLocaleString()} XP · LV.{g.level} {g.rank}
-        </PText>
+        <View style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between' }}>
+          <PText style={{ fontSize: 40, lineHeight: 42, color: t.red }}>SPOTTERS</PText>
+          <PText style={{ color: t.muted, fontSize: 14, marginBottom: 6 }}>LV.{g.level}  {g.xp.toLocaleString()} XP</PText>
+        </View>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
-          <Chip label="FRIENDS FEED" on={seg === 'feed'} onPress={() => setSeg('feed')} />
+          <Chip label="FEED" on={seg === 'feed'} onPress={() => setSeg('feed')} />
           <Chip label="LEADERBOARD" on={seg === 'ranks'} onPress={() => setSeg('ranks')} />
           <Chip label="CLUBS" on={seg === 'clubs'} onPress={() => setSeg('clubs')} />
         </View>

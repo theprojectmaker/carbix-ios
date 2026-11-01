@@ -67,13 +67,14 @@ function Sheen() {
  * The catch card: metal frame in the rarity colour, name plate, your photo, three headline numbers, then two short
  * lists (the car, the catch). Only real facts are shown; nothing is estimated or padded.
  */
-export function CarCard({ g }: { g: Catch }) {
+export function CarCard({ g, units = 'mph' }: { g: Catch; units?: 'mph' | 'kmh' }) {
   const car = g.car;
   const entry = catalogMatch(car);
   const [fr, frl, frd] = FRAME[car.rarity] ?? FRAME.Common;
   const plate = mix(fr, '#666a72', 0.7);
   const darkOnFrame = ['Common', 'Legendary'].includes(car.rarity);
-  const spd = car.topSpeedMph || entry?.top || 0;
+  const mph = car.topSpeedMph || entry?.top || 0;
+  const spd = units === 'kmh' ? Math.round(mph * 1.609) : mph;
   const hp = car.horsepower || entry?.hp || 0;
   const zts = String(car.zeroToSixty || entry?.zts || '').replace(/s$/i, '');
   const tt = trimTier(car);
@@ -146,7 +147,7 @@ export function CarCard({ g }: { g: Catch }) {
         <>
           {/* three big numbers */}
           <View style={{ flexDirection: 'row', gap: 4, marginTop: 4 }}>
-            {[[hp ? String(hp) : '-', 'HORSEPOWER'], [spd ? String(spd) : '-', 'TOP MPH'], [zts || '-', '0-60 SEC']].map(([v, k]) => (
+            {[[hp ? String(hp) : '-', 'HORSEPOWER'], [spd ? String(spd) : '-', units === 'kmh' ? 'TOP KM/H' : 'TOP MPH'], [zts || '-', '0-60 SEC']].map(([v, k]) => (
               <View key={k} style={{ flex: 1, backgroundColor: '#1a2133', borderWidth: 2, borderColor: INK, alignItems: 'center', paddingVertical: 8 }}>
                 <Text style={{ fontFamily: fonts.display, fontSize: 28, lineHeight: 30, color: '#F4F6FA' }}>{v}</Text>
                 <Text style={{ fontFamily: fonts.utility, fontSize: 8.5, color: '#8e98b8', letterSpacing: 1 }}>{k}</Text>

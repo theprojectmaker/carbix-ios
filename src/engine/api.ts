@@ -6,7 +6,7 @@ import type { Car, CatalogEntry, Catch, Profile } from './types';
 export const API_ORIGIN = 'https://motordex.pages.dev';
 /** The website page that does Google sign-in in Safari and hands the account back with carbix://signed-in?code=... */
 export const GOOGLE_SIGNIN_URL = API_ORIGIN + '/app-signin.html';
-export const ICON_V = 8;
+export const ICON_V = 9;
 
 export const iconURL = (c: Pick<CatalogEntry, 'n' | 'make' | 'model' | 'years'>) =>
   `${API_ORIGIN}/api/icon?n=${c.n}&make=${encodeURIComponent(c.make)}&model=${encodeURIComponent(c.model)}` +
@@ -128,7 +128,7 @@ export async function pushGarage(profile: Profile, garage: Catch[]): Promise<boo
           targets: p.targets || 0, title: p.title || '', examDay: p.examDay || '', examLast: p.examLast || 0,
           examPerfect: p.examPerfect || 0, bestCombo: p.bestCombo || 0, shieldWeek: p.shieldWeek || '',
           rival: p.rival || '', spinDay: p.spinDay || '', spinLast: p.spinLast || 0, setsDone: p.setsDone || {},
-          orbs: p.orbs || 0, questStep: p.questStep || 0, cosmetics: p.cosmetics || {},
+          orbs: p.orbs || 0, orbsAt: p.orbsAt || 0, questStep: p.questStep || 0, cosmetics: p.cosmetics || {},
           consumables: p.consumables || {}, questOverrides: p.questOverrides || {},
           nativeIcons: p.nativeIcons || {}, chapterBadges: p.chapterBadges || [],
           comingSoon: p.comingSoon || {}, summerTitlesOwned: p.summerTitlesOwned || [],
@@ -164,8 +164,14 @@ export function mergeCloud(garage: Catch[], profile: Profile, d: Json): { garage
   out.friends = [...new Set([...(out.friends || []), ...(p.friends || [])])];
   out.stars = [...new Set([...((out.stars as string[]) || []), ...(p.stars || [])])];
   out.days = [...new Set([...(out.days || []), ...(p.days || [])])];
-  for (const k of ['bonusXP', 'targets', 'examPerfect', 'bestCombo', 'orbs', 'questStep']) {
+  for (const k of ['bonusXP', 'targets', 'examPerfect', 'bestCombo', 'questStep']) {
     if (Number(p[k]) > Number(out[k] || 0)) out[k] = Number(p[k]);
+  }
+  // orbs are spent, so "take the bigger number" would undo every purchase: the newer stamp wins
+  const localAt = Number(out.orbsAt || 0), cloudAt = Number(p.orbsAt || 0);
+  if (p.orbs != null) {
+    if (cloudAt > localAt) { out.orbs = Number(p.orbs); out.orbsAt = cloudAt; }
+    else if (!localAt && Number(p.orbs) > Number(out.orbs || 0)) out.orbs = Number(p.orbs);
   }
   if (p.avatar && !out.avatar) out.avatar = p.avatar;
   if (p.title && !out.title) out.title = p.title;

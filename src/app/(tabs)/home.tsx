@@ -82,6 +82,7 @@ export default function Home() {
   const caughtToday = g.garage.some((c) => dateKeyET(new Date(c.ts)) === today);
   const streakAtRisk = g.streak >= 2 && !caughtToday && new Date().getHours() >= 15;
   const spinDone = g.profile.spinDay === today;
+  const shadowDone = g.profile.shadowDay === today;
 
   // what your friends caught lately
   useEffect(() => {
@@ -220,6 +221,7 @@ export default function Home() {
               <View style={{ flexDirection: 'row', gap: 10, paddingTop: 4 }}>
                 <GameTile title="EXAM" sub={examDone ? `DONE ${(g.profile.examLast as number) || 0}/5` : '5 QUESTIONS'} done={examDone} onPress={() => router.push('/exam')} />
                 <GameTile title="SPIN" sub={spinDone ? `+${(g.profile.spinLast as number) || 0} XP` : 'FREE SPIN'} done={spinDone} onPress={() => router.push('/spin')} />
+                <GameTile title="SHADOW" sub={shadowDone ? `${(g.profile.shadowLast as number) || 0}/5 RIGHT` : 'GUESS 5 CARS'} done={shadowDone} onPress={() => router.push('/shadow')} />
               </View>
             </Panel>
           </>

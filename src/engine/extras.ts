@@ -64,6 +64,17 @@ export function finishExam(profileIn: Profile, score: number, day = dateKeyET())
 }
 
 export const SPIN_PRIZES = [10, 10, 15, 15, 20, 20, 25, 30, 40, 50, 75, 100];
+/** SHADOW GAME: five silhouettes a day; 15 XP each right answer, 25 more for a perfect round. */
+export function finishShadow(profileIn: Profile, right: number, day = dateKeyET()): Profile {
+  const p = { ...profileIn } as Profile;
+  const xp = right * 15 + (right === 5 ? 25 : 0);
+  p.shadowDay = day;
+  p.shadowLast = right;
+  p.shadowXP = xp;
+  p.bonusXP = (p.bonusXP || 0) + xp;
+  return p;
+}
+
 export function finishSpin(profileIn: Profile, prize: number, day = dateKeyET()): Profile {
   const p = { ...profileIn } as Profile;
   p.spinDay = day;

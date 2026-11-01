@@ -93,10 +93,10 @@ export function Chip({ label, on, onPress }: { label: string; on?: boolean; onPr
 /** A catalog sprite from the live /api/icon store. Uncaught cars are drawn as a flat silhouette. */
 export function Sprite({ entry, caught = true, size = 64, tint = '#141C27', crisp = false, shadow = false }: { entry: CatalogEntry; caught?: boolean; size?: number; tint?: string; crisp?: boolean; shadow?: boolean }) {
   // big (or asked-for) sprites go through the nearest-neighbour renderer so they stay sharp; a soft ground shadow adds depth
-  if (caught && (crisp || size >= 72)) {
+  if (crisp || (caught && size >= 72)) {
     return (
       <View style={{ alignItems: 'center' }}>
-        <PixelSprite uri={iconURL(entry)} width={size} height={size * 0.7} />
+        <PixelSprite uri={iconURL(entry)} width={size} height={size * 0.7} tint={caught ? undefined : tint} />
         {shadow ? <View style={{ width: size * 0.78, height: Math.max(3, size * 0.05), borderRadius: size, backgroundColor: 'rgba(0,0,0,.28)', marginTop: -size * 0.06 }} /> : null}
       </View>
     );

@@ -57,7 +57,7 @@ export default function CardScreen() {
   return (
     <Screen edges={['top', 'bottom']}>
       <ScrollView contentContainerStyle={{ padding: 16, gap: 14 }}>
-        <CarCard g={c} />
+        <CarCard g={c} units={g.settings.units} />
         <View style={{ flexDirection: 'row', gap: 10 }}>
           <Btn style={{ flex: 1 }} tone="gold" label={sharing ? 'MAKING IMAGE...' : 'SHARE CARD'} disabled={sharing} onPress={share} />
           <Btn style={{ flex: 1 }} tone="navy" label="COMPARE" onPress={() => { const e = catalogMatch(c.car); router.push({ pathname: '/compare', params: e ? { a: String(e.n) } : {} }); }} />

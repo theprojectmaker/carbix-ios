@@ -152,6 +152,22 @@ export default function Settings() {
           <Toggle label="CALL YOUR SHOT" sub="GUESS THE BRAND BEFORE EACH SCAN, JUST FOR A STREAK." value={g.settings.callshot} onChange={(v) => g.setSettings({ callshot: v })} />
         </Section>
 
+        <Section title="LOOK AND FEEL">
+          <Toggle label="CRISP PIXEL TILES" sub="SHARP BLOCKY SPRITES IN THE BIX GRID. OFF GIVES SMOOTHER, SMALLER ONES." value={g.settings.crispTiles !== false} onChange={(v) => g.setSettings({ crispTiles: v })} />
+          <Toggle label="HINT NAMES" sub="SHOW THE BRAND ON CARS YOU HAVE NOT CAUGHT YET, SO YOU KNOW WHAT TO HUNT." value={!!g.settings.hintNames} onChange={(v) => g.setSettings({ hintNames: v })} />
+          <Toggle label="REDUCE MOTION" sub="FEWER SPARKS, NO CARD SHEEN, SHORTER POP-UPS." value={!!g.settings.reduceMotion} onChange={(v) => g.setSettings({ reduceMotion: v })} />
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderTopWidth: 1, borderTopColor: palette.line, paddingTop: 10 }}>
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontFamily: fonts.display, fontSize: 19, color: palette.wht }}>UNITS</Text>
+              <Text style={{ fontFamily: fonts.utility, fontSize: 9, color: palette.lcdDim, marginTop: 1 }}>TOP SPEEDS ON CARDS AND IN COMPARE.</Text>
+            </View>
+            <View style={{ flexDirection: 'row' }}>
+              <Chip label="MPH" on={g.settings.units !== 'kmh'} onPress={() => g.setSettings({ units: 'mph' })} />
+              <Chip label="KM/H" on={g.settings.units === 'kmh'} onPress={() => g.setSettings({ units: 'kmh' })} />
+            </View>
+          </View>
+        </Section>
+
         <Section title="NOTIFICATIONS" hint={notifOk ? "ON. A FEW A DAY AT MOST." : "OFF. TURN THEM ON TO GET NUDGES AND FRIENDS' BIG CATCHES."}>
           {notifOk === false ? (
             <Btn small tone="red" label="TURN ON NOTIFICATIONS" onPress={async () => {

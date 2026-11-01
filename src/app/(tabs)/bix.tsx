@@ -21,7 +21,7 @@ type SortMode = (typeof SORTS)[number];
 
 const bigMoney = (n: number) => (n >= 1e6 ? `$${(n / 1e6).toFixed(2)}M` : n >= 1e3 ? `$${Math.round(n / 1e3)}K` : `$${n}`);
 
-const Tile = memo(function Tile({ item, caught, count }: { item: CatalogEntry; caught: boolean; count: number }) {
+const Tile = memo(function Tile({ item, caught, count, crisp, hint }: { item: CatalogEntry; caught: boolean; count: number; crisp: boolean; hint: boolean }) {
   return (
     <Pressable
       style={{ flex: 1 / COLS, padding: 5 }}
@@ -30,7 +30,7 @@ const Tile = memo(function Tile({ item, caught, count }: { item: CatalogEntry; c
       accessibilityLabel={caught ? `${item.make} ${item.model}, caught` : `Number ${dexRank(item.n)}, not caught`}>
       <View style={{ backgroundColor: caught ? '#1E2833' : '#1A212C', borderWidth: 3, borderColor: INK, borderTopWidth: 6, borderTopColor: caught ? TIER_COLOR[item.rarity] : '#3A4456', padding: 5, gap: 4 }}>
         <View style={{ backgroundColor: '#10151f', height: 62, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-          <Sprite entry={item} caught={caught} size={80} tint="#3E4A62" crisp={caught} shadow={caught} />
+          <Sprite entry={item} caught={caught} size={80} tint="#3E4A62" crisp={crisp} shadow={caught} />
           <Text style={{ position: 'absolute', top: 2, right: 4, fontFamily: fonts.utility, fontSize: 8.5, color: '#5f6b86' }}>{String(dexRank(item.n)).padStart(4, '0')}</Text>
           {count > 1 ? <Text style={{ position: 'absolute', top: 2, left: 4, fontFamily: fonts.utilityBold, fontSize: 9, color: INK, backgroundColor: TIER_COLOR[item.rarity], paddingHorizontal: 4 }}>x{count}</Text> : null}
         </View>
@@ -40,7 +40,7 @@ const Tile = memo(function Tile({ item, caught, count }: { item: CatalogEntry; c
             <Text numberOfLines={1} style={{ fontFamily: fonts.display, fontSize: 15, lineHeight: 16, color: palette.wht }}>{item.model.toUpperCase()}</Text>
           </View>
         ) : (
-          <Text style={{ fontFamily: fonts.utility, fontSize: 8.5, color: '#4f5a73', letterSpacing: 1, minHeight: 30, paddingTop: 4 }}>NOT SPOTTED</Text>
+          <Text style={{ fontFamily: fonts.utility, fontSize: 8.5, color: '#4f5a73', letterSpacing: 1, minHeight: 30, paddingTop: 4 }} numberOfLines={2}>{hint ? item.make.toUpperCase() + '\nNOT SPOTTED' : 'NOT SPOTTED'}</Text>
         )}
       </View>
     </Pressable>
@@ -53,7 +53,6 @@ export default function Garage() {
   const [tier, setTier] = useState<Rarity | ''>('');
   const [caughtOnly, setCaughtOnly] = useState(false);
   const [sort, setSort] = useState<SortMode>('POP');
-  const [menu, setMenu] = useState(false);
   const [roomW, setRoomW] = useState(320);
 
   const rows = useMemo(() => {
@@ -109,12 +108,13 @@ export default function Garage() {
     const near = Object.entries(per)
       .filter(([, v]) => v.total >= 2 && v.got > 0 && v.got < v.total)
       .sort((a, b) => b[1].got / b[1].total - a[1].got / a[1].total || a[1].total - a[1].got - (b[1].total - b[1].got))[0];
-    return { best: best?.e ?? null, perTier, value, brands: brands.size, near };
-  }, [g.garage]);
+    const showcase = (g.profile.avatar ? CATALOG.find((c) => c.n === g.profile.avatar && counted.has(c.n)) : null) || best?.e || null;
+    return { best: showcase, perTier, value, brands: brands.size, near };
+  }, [g.garage, g.profile.avatar]);
 
   const renderItem = useCallback(
-    ({ item }: { item: CatalogEntry }) => <Tile item={item} caught={g.caughtNs.has(item.n)} count={counts.get(item.n) ?? 0} />,
-    [g.caughtNs, counts],
+    ({ item }: { item: CatalogEntry }) => <Tile item={item} caught={g.caughtNs.has(item.n)} count={counts.get(item.n) ?? 0} crisp={g.settings.crispTiles !== false} hint={!!g.settings.hintNames} />,
+    [g.caughtNs, counts, g.settings.crispTiles, g.settings.hintNames],
   );
 
   const header = (
@@ -126,9 +126,8 @@ export default function Garage() {
             {g.caughtNs.size}/{CATALOG.length.toLocaleString()}
           </Text>
         </View>
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+        <View style={{ flexDirection: 'row', gap: 6 }}>
           <TopKey label="DECK" on={caughtOnly} onPress={() => { play('click'); setCaughtOnly(!caughtOnly); }} />
-          <TopKey label={sort} onPress={() => { play('click'); setSort(SORTS[(SORTS.indexOf(sort) + 1) % SORTS.length]); }} />
           <TopKey
             label="RAND"
             onPress={() => {
@@ -137,67 +136,54 @@ export default function Garage() {
               router.push({ pathname: '/car/[n]', params: { n: String(e.n) } });
             }}
           />
-          <TopKey label="FILTER" on={menu} onPress={() => { play('click'); setMenu(!menu); }} />
           <TopKey label="PHOTOS" onPress={() => { play('whoosh'); router.push('/gallery'); }} />
           <TopKey label="STATS" onPress={() => { play('whoosh'); router.push('/stats'); }} />
         </View>
       </View>
 
-      {menu ? (
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
-          <Chip label="ALL" on={!tier} onPress={() => setTier('')} />
-          {TIERS.map((r) => (
-            <Chip key={r} label={r.toUpperCase()} on={tier === r} onPress={() => setTier(tier === r ? '' : r)} />
-          ))}
-        </View>
-      ) : null}
-
-      {/* showroom: your best car on a road strip */}
+      {/* the garage card: your showcase car on a stage, then the numbers that matter */}
       <View onLayout={(e) => setRoomW(e.nativeEvent.layout.width)} style={{ backgroundColor: '#0f1522', borderWidth: 3, borderColor: INK }}>
-        <View style={{ height: 190, backgroundColor: '#161d2e', overflow: 'hidden' }}>
-          <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: 62, backgroundColor: '#232b40' }} />
-          <View style={{ position: 'absolute', left: 0, right: 0, bottom: 30, height: 3, flexDirection: 'row', gap: 14 }}>
-            {Array.from({ length: 16 }).map((_, i) => (
-              <View key={i} style={{ width: 20, height: 3, backgroundColor: '#3b465e' }} />
-            ))}
-          </View>
-          <View style={{ position: 'absolute', left: 14, top: 12, gap: 4 }}>
-            <Text style={{ fontFamily: fonts.utility, fontSize: 9.5, color: '#8e98b8', letterSpacing: 1.5 }}>{stats.best ? stats.best.make.toUpperCase() : 'YOUR BEST CAR'}</Text>
-            <Text style={{ fontFamily: fonts.display, fontSize: 22, color: '#fff' }}>{stats.best ? stats.best.model.toUpperCase() : 'CATCH A CAR'}</Text>
-            {stats.best ? (
-              <View style={{ alignSelf: 'flex-start', backgroundColor: TIER_COLOR[stats.best.rarity], borderWidth: 2, borderColor: INK, paddingHorizontal: 6, paddingVertical: 2 }}>
-                <Text style={{ fontFamily: fonts.utilityBold, fontSize: 9, color: ['Common', 'Legendary'].includes(stats.best.rarity) ? INK : '#fff' }}>{stats.best.rarity.toUpperCase()}</Text>
-              </View>
-            ) : null}
-          </View>
-          {stats.best ? (
-            <View style={{ position: 'absolute', left: 0, right: 0, bottom: -14, alignItems: 'center' }}>
-              <Sprite entry={stats.best} size={Math.min(300, roomW - 40)} shadow />
+        <Pressable onPress={() => { play('whoosh'); router.push('/showroom'); }} accessibilityRole="button" accessibilityLabel="Open the showroom">
+          <View style={{ height: 176, backgroundColor: '#161d2e', overflow: 'hidden', justifyContent: 'flex-end' }}>
+            <View style={{ position: 'absolute', top: 12, left: 14, right: 14, flexDirection: 'row', justifyContent: 'space-between' }}>
+              <Text style={{ fontFamily: fonts.utilityBold, fontSize: 10, color: '#8e98b8', letterSpacing: 2 }}>{stats.best ? (g.profile.avatar === stats.best.n ? 'YOUR SHOWCASE' : 'YOUR BEST CAR') : 'SHOWROOM'}</Text>
+              {stats.best ? <Text style={{ fontFamily: fonts.utilityBold, fontSize: 10, color: TIER_COLOR[stats.best.rarity], letterSpacing: 2 }}>{stats.best.rarity.toUpperCase()}</Text> : null}
             </View>
-          ) : null}
-        </View>
+            <View style={{ height: 46, backgroundColor: '#232b40', borderTopWidth: 3, borderTopColor: '#2f3a52' }} />
+            {stats.best ? (
+              <View style={{ position: 'absolute', left: 0, right: 0, bottom: 30, alignItems: 'center' }}>
+                <Sprite entry={stats.best} size={Math.min(250, roomW - 60)} shadow />
+              </View>
+            ) : (
+              <Text style={{ position: 'absolute', left: 14, bottom: 60, fontFamily: fonts.display, fontSize: 22, color: '#fff' }}>CATCH A CAR TO PARK IT HERE</Text>
+            )}
+            <View style={{ position: 'absolute', left: 14, bottom: 12, right: 14, flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between' }}>
+              <Text style={{ fontFamily: fonts.display, fontSize: 22, color: '#fff' }} numberOfLines={1}>{stats.best ? `${stats.best.make.toUpperCase()} ${stats.best.model.toUpperCase()}` : ''}</Text>
+              <Text style={{ fontFamily: fonts.utilityBold, fontSize: 10, color: palette.gold, letterSpacing: 1 }}>SHOWROOM ›</Text>
+            </View>
+          </View>
+        </Pressable>
         <View style={{ flexDirection: 'row', borderTopWidth: 2, borderTopColor: '#0b0f18' }}>
-          {[['CAUGHT', g.garage.length], ['IN BIX', g.caughtNs.size], ['BRANDS', stats.brands]].map(([k, v], i) => (
-            <View key={String(k)} style={{ flex: 1, alignItems: 'center', paddingVertical: 14, borderLeftWidth: i ? 1 : 0, borderLeftColor: '#1d2436' }}>
-              <Text style={{ fontFamily: fonts.display, fontSize: 38, lineHeight: 40, color: palette.gold }}>{v}</Text>
-              <Text style={{ fontFamily: fonts.utilityBold, fontSize: 10, color: '#8e98b8', letterSpacing: 1.5, marginTop: 6 }}>{k}</Text>
+          {[['CAUGHT', g.garage.length], ['IN BIX', g.caughtNs.size], ['BRANDS', stats.brands], ['VALUE', bigMoney(stats.value)]].map(([k, v], i) => (
+            <View key={String(k)} style={{ flex: 1, alignItems: 'center', paddingVertical: 10, borderLeftWidth: i ? 1 : 0, borderLeftColor: '#1d2436' }}>
+              <Text style={{ fontFamily: fonts.display, fontSize: 24, lineHeight: 26, color: palette.gold }} numberOfLines={1} adjustsFontSizeToFit>{v}</Text>
+              <Text style={{ fontFamily: fonts.utilityBold, fontSize: 8.5, color: '#8e98b8', letterSpacing: 1.5, marginTop: 2 }}>{k}</Text>
             </View>
           ))}
         </View>
-        <View style={{ paddingHorizontal: 14, gap: 8, paddingBottom: 14 }}>
+        <View style={{ paddingHorizontal: 14, paddingBottom: 12, gap: 6 }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-            <Text style={{ fontFamily: fonts.utilityBold, fontSize: 10, color: '#aab4cc', letterSpacing: 1 }}>BIX COMPLETION</Text>
-            <Text style={{ fontFamily: fonts.utilityBold, fontSize: 10, color: '#aab4cc' }}>{g.bixPct.toFixed(1)}%</Text>
+            <Text style={{ fontFamily: fonts.utilityBold, fontSize: 9.5, color: '#aab4cc', letterSpacing: 1 }}>BIX COMPLETE</Text>
+            <Text style={{ fontFamily: fonts.utilityBold, fontSize: 9.5, color: '#aab4cc' }}>{g.bixPct.toFixed(1)}%  -  {CATALOG.length - g.caughtNs.size} TO GO</Text>
           </View>
           <Bar value={g.bixPct / 100} />
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-            <Text style={{ fontFamily: fonts.utilityBold, fontSize: 10, color: '#aab4cc', letterSpacing: 1 }}>EST. COLLECTION VALUE</Text>
-            <Text style={{ fontFamily: fonts.utilityBold, fontSize: 10, color: '#aab4cc' }}>{bigMoney(stats.value)}</Text>
-          </View>
-          <Plate color="#2d3d58" depth={0} style={{ paddingVertical: 12, alignItems: 'center' }}>
-            <Text style={{ fontFamily: fonts.utilityBold, fontSize: 12, color: '#6f7b97', letterSpacing: 2 }}>SHOWROOM</Text>
-          </Plate>
         </View>
+      </View>
+
+      {/* sort */}
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+        <Text style={{ fontFamily: fonts.utilityBold, fontSize: 9.5, color: palette.navyDk, letterSpacing: 1.5, marginRight: 4 }}>SORT</Text>
+        {SORTS.map((m) => <Chip key={m} label={m} on={sort === m} onPress={() => { play('click'); setSort(m); }} />)}
       </View>
 
       {/* tier shelf */}

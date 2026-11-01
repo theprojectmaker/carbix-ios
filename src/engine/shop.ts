@@ -12,7 +12,12 @@ export type ShopItem = {
   season?: SeasonName;
   marker?: string; // map pin art slug
 };
-export type Track = 'mappin' | 'effect';
+export type Track = 'mappin' | 'effect' | 'boost';
+
+export const BOOSTS: ShopItem[] = [
+  { id: 'streaksaver', name: 'STREAK SAVER', price: 60, desc: 'Miss a day and this covers it automatically, so your streak lives on. Buy as many as you like; one is used per missed day.' },
+  { id: 'xpcharm', name: 'XP CHARM', price: 45, desc: 'Your next 10 catches earn 25% more XP.' },
+];
 
 export const MAP_PIN_STYLES: ShopItem[] = [
   { id: 'map-marker-palmtree', marker: 'palmtree', name: 'PALM TREE', price: 40, season: 'summer', desc: "Your catch pins on the Map become palm trees — color still follows each catch's rarity." },
@@ -86,17 +91,30 @@ export function effectEntries(p: Profile, season: SeasonName): ShopEntry[] {
 
 export type ShopResult = { ok: boolean; message: string; profile: Profile };
 
-const priceOf = (id: string) => [...MAP_PIN_STYLES, ...CATCH_EFFECTS].find((t) => t.id === id)?.price ?? null;
+const priceOf = (id: string) => [...MAP_PIN_STYLES, ...CATCH_EFFECTS, ...BOOSTS].find((t) => t.id === id)?.price ?? null;
+
+export const boostEntries = (p: Profile): (ShopEntry & { count: number })[] => BOOSTS.map((b) => ({
+  ...b, track: 'boost', owned: false, equipped: false,
+  count: Number(b.id === 'streaksaver' ? p.consumables?.streakSaverCharges || 0 : p.consumables?.xpCharm || 0),
+}));
 
 /** Spend Orbs once, own it, and wear it (like buyCosmetic). Never mutates the input. */
 export function buyItem(profileIn: Profile, track: Track, id: string): ShopResult {
   const profile = JSON.parse(JSON.stringify(profileIn)) as Profile;
   const price = priceOf(id);
   if (price == null) return { ok: false, message: 'NOT FOR SALE', profile: profileIn };
+  const orbs = (profile.orbs as number) || 0;
+  if (track === 'boost') {
+    if (orbs < price) return { ok: false, message: `NOT ENOUGH ORBS — NEED ${price}`, profile: profileIn };
+    profile.orbs = orbs - price;
+    const cons = (profile.consumables = { ...(profile.consumables || { xpCharm: 0, streakSaverCharges: 0 }) });
+    if (id === 'streaksaver') cons.streakSaverCharges = Number(cons.streakSaverCharges || 0) + 1;
+    else cons.xpCharm = Number(cons.xpCharm || 0) + 10;
+    return { ok: true, message: id === 'streaksaver' ? `STREAK SAVER READY (${cons.streakSaverCharges})` : 'XP CHARM ON FOR 10 CATCHES', profile };
+  }
   const c = (profile.cosmetics = (profile.cosmetics || {}) as Cos);
   const owned: string[] = (c[track + 'Owned'] = c[track + 'Owned'] || []);
   if (owned.includes(id) || price === 0) return { ok: false, message: 'ALREADY YOURS', profile: profileIn };
-  const orbs = (profile.orbs as number) || 0;
   if (orbs < price) return { ok: false, message: `NOT ENOUGH ORBS — NEED ${price}`, profile: profileIn };
   profile.orbs = orbs - price;
   owned.push(id);

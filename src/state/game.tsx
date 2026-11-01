@@ -3,7 +3,7 @@ import { Alert } from 'react-native';
 import { router } from 'expo-router';
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
-import { mergeCloud, pullGarage, pushGarage, pushPublicRow, recheckScan, redeemLinkCode } from '@/engine/api';
+import { iconURL, mergeCloud, pullGarage, pushGarage, pushPublicRow, recheckScan, redeemLinkCode } from '@/engine/api';
 import { publicRow, withRollovers } from '@/engine/publish';
 import { catalogMatch, CATALOG, fixStats } from '@/engine/data';
 import {
@@ -26,9 +26,9 @@ import { catchXP as catchXPOf, levelFor, rankFor, xpForLevel } from '@/engine/xp
 
 const TIER_RANK: Record<string, number> = { Common: 0, Uncommon: 1, Rare: 2, Epic: 3, Legendary: 4, Mythic: 5 };
 
-export type Settings = { cool: boolean; sfx: number; haptics: boolean; theme: 'light' | 'dark'; callshot: boolean; silentMute: boolean; feedShare: boolean; notify: NotifyPrefs };
+export type Settings = { cool: boolean; sfx: number; haptics: boolean; theme: 'light' | 'dark'; callshot: boolean; silentMute: boolean; feedShare: boolean; notify: NotifyPrefs; reduceMotion: boolean; units: 'mph' | 'kmh'; hintNames: boolean; crispTiles: boolean };
 const SETTINGS_KEY = 'motordex.native.settings';
-const DEFAULT_SETTINGS: Settings = { cool: true, sfx: 1, haptics: true, theme: 'light', callshot: false, silentMute: true, feedShare: true, notify: DEFAULT_NOTIFY };
+const DEFAULT_SETTINGS: Settings = { cool: true, sfx: 1, haptics: true, theme: 'light', callshot: false, silentMute: true, feedShare: true, notify: DEFAULT_NOTIFY, reduceMotion: false, units: 'mph', hintNames: false, crispTiles: true };
 
 type Game = {
   ready: boolean;
@@ -106,6 +106,18 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         const s = JSON.parse((await AsyncStorage.getItem(SETTINGS_KEY)) || 'null');
         if (s) setSettingsState({ ...DEFAULT_SETTINGS, ...s, notify: { ...DEFAULT_NOTIFY, ...(s.notify || {}) } });
       } catch {}
+      {
+        // STREAK SAVER: if yesterday was missed, the day before was not, and a charge is owned, spend it on yesterday
+        const p = loaded.profile;
+        const charges = Number(p.consumables?.streakSaverCharges || 0);
+        const y = new Date(); y.setDate(y.getDate() - 1);
+        const y2 = new Date(); y2.setDate(y2.getDate() - 2);
+        const yk = todayKey(y), y2k = todayKey(y2);
+        if (charges > 0 && !p.days.includes(yk) && p.days.includes(y2k)) {
+          loaded.profile = { ...p, days: [...p.days, yk], consumables: { ...p.consumables, streakSaverCharges: charges - 1 }, orbsAt: p.orbsAt };
+          setTimeout(() => showToast({ kind: 'daily', title: 'STREAK SAVED', body: 'A STREAK SAVER COVERED YESTERDAY. YOUR STREAK IS STILL ALIVE.', route: '/home' }), 1500);
+        }
+      }
       const q = advanceQuests(loaded.garage, loaded.profile);
       latest.current = { garage: loaded.garage, profile: q.profile };
       setGarage(loaded.garage);
@@ -165,8 +177,9 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   const shopBuy = useCallback((track: Track, id: string) => {
     const r = buyItem(latest.current.profile, track, id);
     if (r.ok) {
-      latest.current = { ...latest.current, profile: r.profile };
-      setProfile(r.profile);
+      const np = { ...r.profile, orbsAt: Date.now() };
+      latest.current = { ...latest.current, profile: np };
+      setProfile(np);
     }
     flash(r.ok ? 'BOUGHT — ' + r.message : r.message);
     return r.ok;
@@ -211,8 +224,9 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   const iconBuy = useCallback(async (seasonKey: string, id: string) => {
     const r = buyIcon(latest.current.profile, seasonKey, currentSeason().key, id);
     if (!r.ok) return { ok: false, message: r.message };
-    latest.current = { ...latest.current, profile: r.profile };
-    setProfile(r.profile);
+    const np = { ...r.profile, orbsAt: Date.now() };
+    latest.current = { ...latest.current, profile: np };
+    setProfile(np);
     switchIcon(id);
     return { ok: true, message: r.message + '. SWITCHING YOUR HOME SCREEN ICON...' };
   }, [switchIcon]);
@@ -246,6 +260,11 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const persist = useCallback(() => {
+    try {
+      const { garage: g0, profile: p0 } = latest.current;
+      const pick = (p0.avatar ? CATALOG.find((c) => c.n === p0.avatar) : null) || (g0[0] ? catalogMatch(g0[0].car) : null);
+      AsyncStorage.setItem('motordex.native.showcase', pick ? iconURL(pick) : '').catch(() => {});
+    } catch {}
     if (saveTimer.current) clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(() => {
       const { garage: g, profile: p } = latest.current;
@@ -287,6 +306,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     }
     const ch = evalChallenges(nextGarage, np);
     const r0 = advanceQuests(nextGarage, ch.profile);
+    if (r0.events.some((e) => e.type === 'complete') || bonuses.some((b) => b.orbs)) r0.profile.orbsAt = Date.now();
     const tr = trophyCheck(nextGarage, r0.profile);
     const r = { ...r0, profile: tr.profile };
     latest.current = { garage: nextGarage, profile: r.profile };

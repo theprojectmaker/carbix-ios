@@ -78,6 +78,8 @@ function Shell() {
         <Stack.Screen name="notifications" options={{ presentation: 'modal' }} />
         <Stack.Screen name="notify" options={{ presentation: 'fullScreenModal', animation: 'fade' }} />
         <Stack.Screen name="gallery" options={{ presentation: 'modal' }} />
+        <Stack.Screen name="showroom" options={{ presentation: 'fullScreenModal', animation: 'fade' }} />
+        <Stack.Screen name="shadow" options={{ presentation: 'modal' }} />
         <Stack.Screen name="stats" options={{ presentation: 'modal' }} />
         <Stack.Screen name="compare" options={{ presentation: 'modal' }} />
         <Stack.Screen name="season" options={{ presentation: 'modal' }} />

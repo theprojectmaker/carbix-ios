@@ -1,3 +1,5 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Image } from 'expo-image';
 import React, { useEffect, useState } from 'react';
 import { Animated, Easing, Text, View } from 'react-native';
 
@@ -38,11 +40,15 @@ export function Loading({ label = 'LOADING', color = palette.lcdDim, size = 10 }
 export function LoadingScreen({ fontsReady, note = 'LOADING YOUR GARAGE' }: { fontsReady: boolean; note?: string }) {
   const [x] = useState(() => new Animated.Value(0));
   const [bob] = useState(() => new Animated.Value(0));
+  const [car, setCar] = useState<string | null>(null);
+  useEffect(() => {
+    AsyncStorage.getItem('motordex.native.showcase').then((u) => { if (u) setCar(u); }).catch(() => {});
+  }, []);
   useEffect(() => {
     const drive = Animated.loop(Animated.timing(x, { toValue: 1, duration: 2600, easing: Easing.linear, useNativeDriver: true }));
     const hop = Animated.loop(Animated.sequence([
-      Animated.timing(bob, { toValue: 1, duration: 140, useNativeDriver: true }),
-      Animated.timing(bob, { toValue: 0, duration: 140, useNativeDriver: true }),
+      Animated.timing(bob, { toValue: 1, duration: 170, useNativeDriver: true }),
+      Animated.timing(bob, { toValue: 0, duration: 170, useNativeDriver: true }),
     ]));
     drive.start();
     hop.start();
@@ -60,13 +66,20 @@ export function LoadingScreen({ fontsReady, note = 'LOADING YOUR GARAGE' }: { fo
       <Text style={{ fontFamily: utility, fontSize: 11, color: palette.navyDk, letterSpacing: 3 }}>SPOT REAL CARS. FILL YOUR BIX.</Text>
 
       {/* the road */}
-      <View style={{ width: 260, height: 54, marginTop: 10, overflow: 'hidden' }}>
-        <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: 18, backgroundColor: '#33465F', borderTopWidth: 3, borderTopColor: INK }} />
-        <Animated.View style={{ position: 'absolute', left: 0, bottom: 7, flexDirection: 'row', gap: 16, transform: [{ translateX: x.interpolate({ inputRange: [0, 1], outputRange: [0, -36] }) }] }}>
-          {Array.from({ length: 12 }).map((_, i) => <View key={i} style={{ width: 20, height: 3, backgroundColor: '#C9A227' }} />)}
+      <View style={{ width: 280, height: 110, marginTop: 6, overflow: 'hidden' }}>
+        <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: 26, backgroundColor: '#33465F', borderTopWidth: 3, borderTopColor: INK }} />
+        <Animated.View style={{ position: 'absolute', left: 0, bottom: 10, flexDirection: 'row', gap: 16, transform: [{ translateX: x.interpolate({ inputRange: [0, 1], outputRange: [0, -36] }) }] }}>
+          {Array.from({ length: 12 }).map((_, i) => <View key={i} style={{ width: 20, height: 4, backgroundColor: '#C9A227' }} />)}
         </Animated.View>
-        <Animated.View style={{ position: 'absolute', left: 104, bottom: 16, transform: [{ translateY: bob.interpolate({ inputRange: [0, 1], outputRange: [0, -2] }) }] }}>
-          <PixelCar />
+        <Animated.View style={{ position: 'absolute', left: 0, right: 0, bottom: 20, alignItems: 'center', transform: [{ translateY: bob.interpolate({ inputRange: [0, 1], outputRange: [0, -3] }) }] }}>
+          {car ? (
+            <Image source={{ uri: car }} style={{ width: 150, height: 84 }} contentFit="contain" contentPosition="bottom" cachePolicy="disk" transition={0} />
+          ) : (
+            <PixelCar />
+          )}
+        </Animated.View>
+        <Animated.View style={{ position: 'absolute', left: 0, bottom: 2, flexDirection: 'row', gap: 40, transform: [{ translateX: x.interpolate({ inputRange: [0, 1], outputRange: [0, -60] }) }] }}>
+          {Array.from({ length: 8 }).map((_, i) => <View key={i} style={{ width: 20, height: 4, backgroundColor: '#243247' }} />)}
         </Animated.View>
       </View>
 

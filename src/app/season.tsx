@@ -11,7 +11,7 @@ import { catalogMatch } from '@/engine/data';
 import type { Catch } from '@/engine/types';
 import { CHAPTER_REWARDS, chaptersFor, currentSeason, daysUntilNext, SEASON_EVENT_NAMES, type Quest } from '@/engine/quests';
 import { SEASON_APP_ICONS, iconEquipped, iconOwned, ownedKey } from '@/engine/appicons';
-import { effectEntries, mapPinEntries } from '@/engine/shop';
+import { boostEntries, effectEntries, mapPinEntries } from '@/engine/shop';
 import { play } from '@/lib/sfx';
 import { useGame } from '@/state/game';
 import { fonts, palette, useTheme } from '@/theme/theme';
@@ -79,7 +79,7 @@ function NowCard({ q, step, total, have, need, matched }: { q: Quest; step: numb
       </View>
       <Btn tone="red" label="GO SCAN A CAR" onPress={() => { play('tab'); router.back(); router.navigate('/'); }} />
       <Text style={{ fontFamily: fonts.utility, fontSize: 9, color: palette.lcdDim }}>
-        ONLY CARS YOU CATCH FROM NOW COUNT. DONE QUESTS PAY XP AND ORBS AUTOMATICALLY.
+        ONLY CARS CAUGHT AFTER THIS QUEST OPENED COUNT. REWARDS LAND THE MOMENT YOU FINISH.
       </Text>
     </View>
   );
@@ -104,12 +104,6 @@ function QuestsView() {
 
   return (
     <>
-      <Panel>
-        <Text style={{ fontFamily: fonts.utility, fontSize: 9.5, color: palette.lcdDim, lineHeight: 15 }}>
-          HOW IT WORKS: THERE ARE {quests.length} QUESTS. YOU DO THEM ONE AT A TIME, IN ORDER. FINISH ONE AND THE NEXT OPENS. YOU EARN XP AND ORBS. ORBS BUY THINGS IN THE SHOP TAB.
-        </Text>
-      </Panel>
-
       {q && prog ? (
         <NowCard q={q} step={step} total={quests.length} have={prog.have} need={prog.need} matched={matched} />
       ) : (
@@ -119,21 +113,8 @@ function QuestsView() {
         </Panel>
       )}
 
-      <View style={{ backgroundColor: palette.panel, borderWidth: 3, borderColor: INK, padding: 12, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-        <View style={{ alignItems: 'center', minWidth: 64 }}>
-          <Text style={{ fontFamily: fonts.display, fontSize: 36, lineHeight: 38, color: left <= 7 ? palette.red : palette.gold }}>{left}</Text>
-          <Text style={{ fontFamily: fonts.utilityBold, fontSize: 8, color: palette.lcdDim, letterSpacing: 1 }}>DAYS</Text>
-        </View>
-        <View style={{ flex: 1, gap: 2 }}>
-          <Text style={{ fontFamily: fonts.display, fontSize: 18, color: '#fff' }}>UNTIL {season.next.toUpperCase()} STARTS</Text>
-          <Text style={{ fontFamily: fonts.utility, fontSize: 9.5, color: palette.lcdDim, lineHeight: 14 }}>
-            {nextName} BEGINS {nextDate} WITH 50 NEW QUESTS, NEW MAP PINS AND CATCH EFFECTS. UNFINISHED QUESTS RESET; ORBS AND EVERYTHING YOU OWN STAY.
-          </Text>
-        </View>
-      </View>
-
       <Text style={{ fontFamily: fonts.utilityBold, fontSize: 10, color: palette.lcdDim, letterSpacing: 1.5, marginTop: 4 }}>
-        THE WHOLE SEASON  -  {step} OF {quests.length} DONE
+        ALL {quests.length} QUESTS, IN ORDER  -  {step} DONE  -  TAP A CHAPTER TO SEE ITS QUESTS
       </Text>
       {chapters.map((c) => {
         const done = Math.max(0, Math.min(step, c.to + 1) - c.from);
@@ -188,6 +169,20 @@ function QuestsView() {
           </View>
         );
       })}
+
+      <View style={{ backgroundColor: palette.panel, borderWidth: 3, borderColor: INK, padding: 12, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+        <View style={{ alignItems: 'center', minWidth: 64 }}>
+          <Text style={{ fontFamily: fonts.display, fontSize: 36, lineHeight: 38, color: left <= 7 ? palette.red : palette.gold }}>{left}</Text>
+          <Text style={{ fontFamily: fonts.utilityBold, fontSize: 8, color: palette.lcdDim, letterSpacing: 1 }}>DAYS</Text>
+        </View>
+        <View style={{ flex: 1, gap: 2 }}>
+          <Text style={{ fontFamily: fonts.display, fontSize: 18, color: '#fff' }}>UNTIL {season.next.toUpperCase()} STARTS</Text>
+          <Text style={{ fontFamily: fonts.utility, fontSize: 9.5, color: palette.lcdDim, lineHeight: 14 }}>
+            {nextName} BEGINS {nextDate} WITH 50 NEW QUESTS, NEW MAP PINS AND CATCH EFFECTS. UNFINISHED QUESTS RESET; ORBS AND EVERYTHING YOU OWN STAY.
+          </Text>
+        </View>
+      </View>
+
     </>
   );
 }
@@ -252,9 +247,11 @@ function IconShelf() {
 function ShopView() {
   const g = useGame();
   const season = currentSeason();
-  const [cat, setCat] = useState<'pins' | 'fx' | 'icons'>('pins');
+  const [cat, setCat] = useState<'pins' | 'fx' | 'icons' | 'boosts'>('pins');
+  const boosts = boostEntries(g.profile);
+  const SHELF_HINT = { pins: 'CHANGE THE SHAPE OF YOUR CATCH PINS ON THE MAP. PICK ONE TO WEAR; THE COLOUR STILL FOLLOWS RARITY.', fx: 'WHAT HAPPENS ON SCREEN THE MOMENT YOU CATCH A CAR.', icons: 'REAL HOME-SCREEN ICONS FOR YOUR PHONE.', boosts: 'ONE-TIME HELPERS. BUY AS MANY AS YOU WANT.' } as const;
   const orbs = (g.profile.orbs as number) || 0;
-  const items = cat === 'icons' ? [] : (cat === 'pins' ? mapPinEntries(g.profile, season.event) : effectEntries(g.profile, season.event)).sort(
+  const items = cat === 'icons' || cat === 'boosts' ? [] : (cat === 'pins' ? mapPinEntries(g.profile, season.event) : effectEntries(g.profile, season.event)).sort(
     (a, b) => (a.owned === b.owned ? 0 : a.owned ? -1 : 1) || a.price - b.price,
   );
 
@@ -265,14 +262,30 @@ function ShopView() {
           <Text style={{ fontFamily: fonts.display, fontSize: 22, color: '#fff' }}>YOUR ORBS</Text>
           <Text style={{ fontFamily: fonts.display, fontSize: 34, color: palette.gold }}>{orbs}</Text>
         </View>
-        <Text style={{ fontFamily: fonts.utility, fontSize: 9.5, color: palette.lcdDim }}>YOU GET ORBS FROM QUESTS. WHAT YOU BUY IS YOURS FOREVER.</Text>
+        <Text style={{ fontFamily: fonts.utility, fontSize: 9.5, color: palette.lcdDim }}>EARN ORBS BY FINISHING QUESTS. PINS, EFFECTS AND ICONS ARE YOURS FOREVER ONCE BOUGHT.</Text>
       </Panel>
       <View style={{ flexDirection: 'row' }}>
         <Chip label="MAP PINS" on={cat === 'pins'} onPress={() => setCat('pins')} />
         <Chip label="CATCH EFFECTS" on={cat === 'fx'} onPress={() => setCat('fx')} />
         <Chip label="APP ICONS" on={cat === 'icons'} onPress={() => setCat('icons')} />
+        <Chip label="BOOSTS" on={cat === 'boosts'} onPress={() => setCat('boosts')} />
       </View>
+      <Text style={{ fontFamily: fonts.utility, fontSize: 9.5, color: palette.lcdDim, lineHeight: 14 }}>{SHELF_HINT[cat]}</Text>
       {cat === 'icons' ? <IconShelf /> : null}
+      {cat === 'boosts' ? (
+        <View style={{ gap: 10 }}>
+          {boosts.map((b) => (
+            <View key={b.id} style={{ backgroundColor: palette.panel, borderWidth: 3, borderColor: INK, padding: 12, gap: 6 }}>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Text style={{ fontFamily: fonts.display, fontSize: 22, color: '#fff' }}>{b.name}</Text>
+                <Text style={{ fontFamily: fonts.utilityBold, fontSize: 10, color: b.count ? palette.green : palette.lcdDim }}>{b.id === 'streaksaver' ? `${b.count} READY` : b.count ? `${b.count} CATCHES LEFT` : 'NONE ACTIVE'}</Text>
+              </View>
+              <Text style={{ fontFamily: fonts.utility, fontSize: 9.5, color: palette.lcdDim, lineHeight: 14 }}>{b.desc}</Text>
+              <Btn small tone="red" label={`BUY  ${b.price} ORBS`} onPress={() => { if (g.shopBuy('boost', b.id)) play('coin'); else play('error'); }} />
+            </View>
+          ))}
+        </View>
+      ) : null}
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
         {items.map((e) => (
           <View key={e.track + e.id} style={{ width: '47.5%', backgroundColor: palette.panel, borderWidth: 3, borderColor: e.equipped ? palette.gold : INK, padding: 10, gap: 6, alignItems: 'center' }}>

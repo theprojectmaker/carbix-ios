@@ -6,7 +6,9 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { StyleSheet, Text, View } from 'react-native';
 import MapView, { Marker, type Region } from 'react-native-maps';
 
-import { PinArt } from '@/components/map-pin';
+import { Image } from 'expo-image';
+
+import { classicPinURI, pinImageURI } from '@/components/pin-image';
 import { Screen } from '@/components/screen';
 import { Btn, PText, Sprite } from '@/components/ui';
 import { catalogMatch } from '@/engine/data';
@@ -51,14 +53,26 @@ export default function MapTab() {
 
   const pins = useMemo(() => g.garage.filter((c) => c.geo), [g.garage]);
   const pinId = equippedTier(g.profile, 'mappin') ?? 'classic';
-  // custom pin views are snapshotted to bitmaps; track them just long enough to draw, then stop to save memory
-  const pinKey = `${pins.length}|${pinId}`;
-  const [settled, setSettled] = useState('');
-  const track = settled !== pinKey;
-  useEffect(() => {
-    const id = setTimeout(() => setSettled(pinKey), 1500);
-    return () => clearTimeout(id);
-  }, [pinKey]);
+  // one small bitmap per rarity, drawn once: a marker is then a single image, not a tree of views
+  const pinURIs = useMemo(() => {
+    const m: Record<string, string | null> = {};
+    for (const r of ['Common', 'Uncommon', 'Rare', 'Epic', 'Legendary', 'Mythic']) m[r] = pinImageURI(pinId, r) ?? classicPinURI(TIER_COLOR[r as Rarity]);
+    return m;
+  }, [pinId]);
+  // zoomed out, nearby catches collapse into one numbered dot; zoomed in they spread back out
+  const zoomStep = Math.round(zoomV);
+  const clusters = useMemo(() => {
+    if (pins.length <= 40 || zoomStep >= 15) return pins.map((c) => ({ key: String(c.id), lat: c.geo!.lat, lng: c.geo!.lng, items: [c] }));
+    const cell = 360 / Math.pow(2, zoomStep) / 6;
+    const grid = new Map<string, { key: string; lat: number; lng: number; items: Catch[] }>();
+    for (const c of pins) {
+      const k = `${Math.floor(c.geo!.lat / cell)}:${Math.floor(c.geo!.lng / cell)}`;
+      const g0 = grid.get(k);
+      if (g0) { g0.items.push(c); g0.lat += (c.geo!.lat - g0.lat) / g0.items.length; g0.lng += (c.geo!.lng - g0.lng) / g0.items.length; }
+      else grid.set(k, { key: k, lat: c.geo!.lat, lng: c.geo!.lng, items: [c] });
+    }
+    return [...grid.values()];
+  }, [pins, zoomStep]);
 
   const initial: Region = useMemo(() => {
     const f = pins[0]?.geo;
@@ -150,14 +164,25 @@ export default function MapTab() {
           onMapReady={fit}
           onRegionChange={(r) => { if (!drag.isOn()) setZoomV(zoomOf(r.longitudeDelta)); }}
           onPress={() => setSel(null)}>
-          {pins.map((c) => (
+          {clusters.map((cl) => cl.items.length === 1 ? (
             <Marker
-              key={c.id}
-              coordinate={{ latitude: c.geo!.lat, longitude: c.geo!.lng }}
+              key={cl.key}
+              coordinate={{ latitude: cl.lat, longitude: cl.lng }}
               anchor={{ x: 0.5, y: 1 }}
-              tracksViewChanges={track}
-              onPress={(e) => { e.stopPropagation(); play('tab'); setSel(c); }}>
-              <PinArt id={pinId} rarity={c.car.rarity} color={TIER_COLOR[c.car.rarity as Rarity]} size={44} />
+              tracksViewChanges={false}
+              onPress={(e) => { e.stopPropagation(); play('tab'); setSel(cl.items[0]); }}>
+              {pinURIs[cl.items[0].car.rarity] ? <Image source={{ uri: pinURIs[cl.items[0].car.rarity]! }} style={{ width: 34, height: 44 }} contentFit="contain" /> : null}
+            </Marker>
+          ) : (
+            <Marker
+              key={cl.key}
+              coordinate={{ latitude: cl.lat, longitude: cl.lng }}
+              anchor={{ x: 0.5, y: 0.5 }}
+              tracksViewChanges={false}
+              onPress={(e) => { e.stopPropagation(); play('tab'); map.current?.animateToRegion({ latitude: cl.lat, longitude: cl.lng, latitudeDelta: 360 / Math.pow(2, zoomStep + 2) * 1.3, longitudeDelta: 360 / Math.pow(2, zoomStep + 2) }, 350); }}>
+              <View style={{ width: 38, height: 38, borderRadius: 19, backgroundColor: palette.navy, borderWidth: 3, borderColor: INK, alignItems: 'center', justifyContent: 'center' }}>
+                <Text style={{ fontFamily: fonts.display, fontSize: 17, color: '#fff' }}>{cl.items.length}</Text>
+              </View>
             </Marker>
           ))}
         </MapView>

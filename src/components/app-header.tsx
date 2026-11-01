@@ -4,6 +4,7 @@ import { Pressable, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { play } from '@/lib/sfx';
+import { currentSeason, daysUntilNext } from '@/engine/quests';
 import { useInbox } from '@/lib/inbox';
 import { useGame } from '@/state/game';
 import { useRace } from '@/state/race';
@@ -37,19 +38,20 @@ export function AppHeader() {
         </Plate>
       </Pressable>
       <HBtn dot={invites > 0} icon={<RaceIcon />} a11y={invites ? `Races, ${invites} invite` : 'Races'} onPress={() => router.push('/race')} />
-      <HBtn icon={<SeasonIcon />} a11y="Quests and shop" onPress={() => router.push('/season')} />
+      <HBtn icon={<SeasonIcon />} badge={String(daysUntilNext(currentSeason()))} a11y={`Quests and shop, ${daysUntilNext(currentSeason())} days left in the season`} onPress={() => router.push('/season')} />
       <HBtn dot={unread > 0} icon={<BellIcon />} a11y={unread ? `Inbox, ${unread} new` : 'Inbox'} onPress={() => router.push('/notifications')} />
     </View>
   );
 }
 
-function HBtn({ icon, onPress, a11y, dot }: { icon: React.ReactNode; onPress: () => void; a11y: string; dot?: boolean }) {
+function HBtn({ icon, onPress, a11y, dot, badge }: { icon: React.ReactNode; onPress: () => void; a11y: string; dot?: boolean; badge?: string }) {
   return (
     <Pressable onPress={() => { play('whoosh'); onPress(); }} accessibilityRole="button" accessibilityLabel={a11y}>
       {({ pressed }) => (
         <Plate color={palette.navyDk} depth={2} pressed={pressed} style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}>
           {icon}
           {dot ? <View style={{ position: 'absolute', top: 3, right: 3, width: 14, height: 14, borderRadius: 7, backgroundColor: palette.gold, borderWidth: 3, borderColor: INK }} /> : null}
+          {badge ? <View style={{ position: 'absolute', bottom: -5, right: -5, minWidth: 20, paddingHorizontal: 3, height: 16, backgroundColor: palette.gold, borderWidth: 2, borderColor: INK, alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontFamily: fonts.utilityBold, fontSize: 9, color: INK }}>{badge}</Text></View> : null}
         </Plate>
       )}
     </Pressable>
