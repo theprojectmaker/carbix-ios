@@ -13,7 +13,7 @@ import { fonts, palette, useTheme } from '@/theme/theme';
 
 const INK = '#141C27';
 const COLS = 3;
-const TIERS: Rarity[] = ['Common', 'Uncommon', 'Rare', 'Epic', 'Legendary', 'Mythic'];
+const TIERS: Rarity[] = ['Common', 'Uncommon', 'Rare', 'Epic', 'Legendary', 'Mythic', 'Grail'];
 
 const when = (ts: number) => new Date(ts).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
 

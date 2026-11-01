@@ -7,6 +7,7 @@ import { Screen } from '@/components/screen';
 import { Btn, Sprite } from '@/components/ui';
 import generations from '@/data/generations.json';
 import { CATALOG, CATALOG_BY_N, CLASS_STATS, catalogMatch, dexRank, similarCars } from '@/engine/data';
+import { limitedInfo } from '@/engine/limited';
 import { RTIER, TIER_COLOR, TIER_XP } from '@/engine/xp';
 import { play } from '@/lib/sfx';
 import { useGame } from '@/state/game';
@@ -24,6 +25,7 @@ const RARITY_TEXT: Record<string, string> = {
   Epic: 'Seriously uncommon. Spotting one is a good day.',
   Legendary: 'A dream car. Most spotters never see one.',
   Mythic: 'The top of the Bix. A once-in-a-blue-moon spot.',
+  Grail: 'Fifteen or fewer exist. A one-off or a tiny coachbuilt run. Finding one is the story of your year.',
 };
 
 function Panel({ title, children }: { title?: string; children: React.ReactNode }) {
@@ -91,6 +93,7 @@ export default function CarDetail() {
   const sameMake = CATALOG.filter((c) => c.make === e.make);
   const gotMake = sameMake.filter((c) => g.caughtNs.has(c.n));
   const color = TIER_COLOR[e.rarity];
+  const ltd = limitedInfo(e);
   const gl = gens[String(e.n)] ?? [];
   const mid = e.low && e.high ? (e.low + e.high) / 2 : null;
   const cs = CLASS_STATS[e.cls];
@@ -128,6 +131,11 @@ export default function CarDetail() {
               </Text>
             </View>
             <Text style={{ fontFamily: fonts.prose, fontSize: 21, color: '#C9D2E6' }}>{RARITY_TEXT[e.rarity]}</Text>
+            {ltd ? (
+              <View style={{ alignSelf: 'flex-start', backgroundColor: ltd.grail ? '#E4DDFF' : '#E8C547', borderWidth: 2, borderColor: INK, paddingHorizontal: 9, paddingVertical: 1, marginTop: 4 }}>
+                <Text style={{ fontFamily: fonts.display, fontSize: 19, letterSpacing: 1, color: ltd.grail ? '#1a1530' : INK }}>{ltd.grail ? 'GRAIL  ' : 'LIMITED  '}{ltd.label}</Text>
+              </View>
+            ) : null}
           </View>
         </View>
 

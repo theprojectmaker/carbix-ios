@@ -12,8 +12,8 @@ import { useGame } from '@/state/game';
 import { fonts, palette, useTheme } from '@/theme/theme';
 
 const INK = '#141C27';
-const TIERS: Rarity[] = ['Common', 'Uncommon', 'Rare', 'Epic', 'Legendary', 'Mythic'];
-const RT: Record<string, number> = { Common: 0, Uncommon: 1, Rare: 2, Epic: 3, Legendary: 4, Mythic: 5 };
+const TIERS: Rarity[] = ['Common', 'Uncommon', 'Rare', 'Epic', 'Legendary', 'Mythic', 'Grail'];
+const RT: Record<string, number> = { Common: 0, Uncommon: 1, Rare: 2, Epic: 3, Legendary: 4, Mythic: 5, Grail: 6 };
 const DAY = 86400000;
 
 function Panel({ title, children }: { title: string; children: React.ReactNode }) {

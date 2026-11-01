@@ -33,6 +33,7 @@ const FILES = {
   'caught-epic': require('../../assets/sfx/caught-epic.wav'),
   'caught-legendary': require('../../assets/sfx/caught-legendary.wav'),
   'caught-mythic': require('../../assets/sfx/caught-mythic.wav'),
+  'caught-grail': require('../../assets/sfx/caught-grail.wav'),
 } as const;
 
 export type SfxName = keyof typeof FILES;

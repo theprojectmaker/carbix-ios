@@ -5,6 +5,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { CarCard } from '@/components/car-card';
 import { CatchSparks } from '@/components/catch-sparks';
+import { RareCatchFX } from '@/components/rare-fx';
+import { limitedInfo } from '@/engine/limited';
 import { Screen } from '@/components/screen';
 import { Btn } from '@/components/ui';
 import { CATALOG, catalogMatch } from '@/engine/data';
@@ -36,6 +38,8 @@ export default function Caught() {
   const [pop] = useState(() => new Animated.Value(0));
   const [flavor] = useState(() => FLAVOR[Math.floor(Math.random() * FLAVOR.length)]);
   const [re, setRe] = useState<'' | 'busy' | 'fail'>('');
+  const [fx, setFx] = useState(true);
+  const ltd = c ? limitedInfo(c.car) : null;
 
   async function reanalyze() {
     if (!c || re === 'busy') return;
@@ -132,6 +136,7 @@ export default function Caught() {
           </Text>
         </View>
       </View>
+      {fx && ltd && !g.settings.reduceMotion ? <RareCatchFX grail={ltd.grail || c.car.rarity === 'Grail'} label={ltd.label} name={`${c.car.make} ${c.car.model}`.toUpperCase()} haptics={g.settings.haptics} onDone={() => setFx(false)} /> : null}
       {g.settings.reduceMotion ? null : <CatchSparks rarity={c.car.rarity} shiny={c.shiny} effect={equippedTier(g.profile, 'effect') || 'standard'} origin={{ x: width / 2, y: height * 0.42 }} />}
     </Screen>
   );

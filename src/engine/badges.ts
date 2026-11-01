@@ -4,6 +4,9 @@ import { dateKeyET, streak as streakOf } from './store';
 import type { Catch, Profile } from './types';
 import { levelFor, TIERS, totalXpFor } from './xp';
 
+/** The collection badges climb Common to Mythic; the Grail shelf is its own thing. */
+const BADGE_TIERS = TIERS.filter((t) => t !== 'Grail');
+
 /* The badge list, ported 1:1 from the web app's badgeList(): tiered ladders plus a few one-offs,
    all computed fresh from the garage and profile. */
 
@@ -114,7 +117,7 @@ export function badgeList(garage: Catch[], profile: Profile, now = new Date()): 
   [0.5, 1, 2, 3, 5, 7.5, 10, 15, 20, 25, 33, 40, 50, 60, 66, 75, 85, 90, 95, 100].forEach((p) =>
     add('BIX', `BIX ${p}%`, pct >= p, `fill ${p}% of the bix`, `DEX ${p}%`));
   B.push(...ladder('BIX', 'UNIQUE', s.dex.size, [1, 10, 25, 50, 100, 200, 350, 500, 750, 1000]));
-  TIERS.forEach((t) => {
+  BADGE_TIERS.forEach((t) => {
     const have = s.tiers[t] || 0;
     const steps = t === 'Common' ? [1, 10, 50, 150, 400] : t === 'Uncommon' ? [1, 5, 25, 75, 200] : t === 'Rare' ? [1, 5, 15, 40, 100]
       : t === 'Epic' ? [1, 3, 10, 25, 60] : t === 'Legendary' ? [1, 2, 5, 15, 35] : [1, 2, 3, 8, 20];
@@ -169,7 +172,7 @@ export function badgeList(garage: Catch[], profile: Profile, now = new Date()): 
   B.push(...ladder('FIELD', 'MILES LOGGED', Math.floor(spotMiles(garage)), [10, 50, 150, 500]));
   B.push(...ladder('FIELD', 'ZONES', zonesExplored(garage), [3, 10, 25, 60]));
   B.push(...ladder('SPECIAL', 'SETS COMPLETE', Object.keys((profile.setsDone as object) || {}).length, [1, 3, 6]));
-  add('SPECIAL', 'FULL SPECTRUM', TIERS.every((t) => (s.tiers[t] || 0) >= 1), 'catch one of every rarity');
+  add('SPECIAL', 'FULL SPECTRUM', BADGE_TIERS.every((t) => (s.tiers[t] || 0) >= 1), 'catch one of every rarity');
   const sh = garage.filter((g) => g && g.shiny).length;
   B.push(...ladder('SHINY', 'SHINY', sh, [1, 3, 10, 25]));
   return B;

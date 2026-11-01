@@ -145,7 +145,7 @@ export const SEASON_THEMES = [
   { label: 'SPORTS SEASON', test: (c: Catch['car']) => /SPORT|SUPER|MUSCLE/i.test(c.class || ''), n: 12, bg: 'sunset' },
   { label: 'WORKHORSE SEASON', test: (c: Catch['car']) => /TRUCK|VAN|OFFROAD|SUV/i.test(c.class || ''), n: 12, bg: 'forest' },
   { label: 'IMPORT SEASON', test: (c: Catch['car']) => !/USA|AMERICA/i.test(String(c.country || '')), n: 15, bg: 'midnight' },
-  { label: 'LUXURY SEASON', test: (c: Catch['car']) => /LUXURY|SUPER|HYPER/i.test(c.class || '') || ['Epic', 'Legendary', 'Mythic'].includes(c.rarity), n: 8, bg: 'champagne' },
+  { label: 'LUXURY SEASON', test: (c: Catch['car']) => /LUXURY|SUPER|HYPER/i.test(c.class || '') || ['Epic', 'Legendary', 'Mythic', 'Grail'].includes(c.rarity), n: 8, bg: 'champagne' },
 ];
 
 export function seasonTheme(now = new Date()) {

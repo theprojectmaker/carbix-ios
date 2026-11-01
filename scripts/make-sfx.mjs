@@ -4,7 +4,7 @@
 import fs from 'node:fs';
 
 const SR = 44100;
-const TIERS = ['Common', 'Uncommon', 'Rare', 'Epic', 'Legendary', 'Mythic'];
+const TIERS = ['Common', 'Uncommon', 'Rare', 'Epic', 'Legendary', 'Mythic', 'Grail'];
 
 function wav(samples) {
   const b = Buffer.alloc(44 + samples.length * 2);
@@ -83,11 +83,12 @@ def('rev', (m) => {
   m.noise(0.52, 0.3, { vol: 0.11, freq: 420, q: 1, drop: 260 });
 });
 def('error', (m) => { m.tone(180, 0, 0.18, { type: 'sawtooth', vol: 0.1 }); m.tone(140, 0.18, 0.25, { type: 'sawtooth', vol: 0.1 }); });
-const BASE = [[523, 659, 784], [523, 659, 784, 1047], [587, 740, 880, 1175], [659, 830, 988, 1319, 1568], [698, 880, 1047, 1397, 1760], [784, 988, 1175, 1568, 1976, 2349]];
+const BASE = [[523, 659, 784], [523, 659, 784, 1047], [587, 740, 880, 1175], [659, 830, 988, 1319, 1568], [698, 880, 1047, 1397, 1760], [784, 988, 1175, 1568, 1976, 2349], [523, 784, 1047, 1319, 1568, 2093, 2637, 3136]];
 TIERS.forEach((r, ti) => def('caught-' + r.toLowerCase(), (m) => {
   const seq = BASE[ti];
   seq.forEach((f, i) => { m.tone(f, i * 0.09, 0.14, { vol: 0.11 }); m.tone(f / 2, i * 0.09, 0.14, { type: 'triangle', vol: 0.07 }); });
   if (ti >= 4) seq.forEach((f, i) => m.tone(f * 2, 0.6 + i * 0.07, 0.1, { vol: 0.06 }));
+  if (ti >= 6) { m.tone(98, 0, 0.9, { type: 'sawtooth', vol: 0.05, slide: 60 }); seq.forEach((f, i) => m.tone(f * 1.5, 1.0 + i * 0.06, 0.12, { type: 'triangle', vol: 0.06 })); m.tone(3136, 1.5, 0.7, { vol: 0.08 }); }
 }));
 def('star-on', (m) => { m.tone(880, 0, 0.06, { vol: 0.09 }); m.tone(1320, 0.07, 0.07, { vol: 0.09 }); m.tone(1760, 0.15, 0.1, { vol: 0.08 }); });
 def('star-off', (m) => { m.tone(660, 0, 0.07, { vol: 0.07 }); m.tone(440, 0.08, 0.1, { vol: 0.06 }); });

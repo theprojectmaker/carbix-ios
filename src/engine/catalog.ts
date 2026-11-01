@@ -2,7 +2,7 @@ import type { Car, CatalogEntry, Rarity } from './types';
 import { RTIER, STAT_BOUNDS } from './xp';
 
 const RMAP: Record<string, Rarity> = {
-  C: 'Common', U: 'Uncommon', R: 'Rare', E: 'Epic', L: 'Legendary', M: 'Mythic',
+  C: 'Common', U: 'Uncommon', R: 'Rare', E: 'Epic', L: 'Legendary', M: 'Mythic', G: 'Grail',
 };
 
 const MOTO_MAKES = new Set([
@@ -48,7 +48,7 @@ const POPULAR_MAKES = [
   'Jeep', 'Ram', 'GMC', 'BMW', 'Mercedes-Benz', 'Audi', 'Lexus', 'Dodge', 'Chrysler', 'Buick', 'Acura',
   'Volvo', 'Mitsubishi', 'Cadillac',
 ];
-const RTIER_LOCAL: Record<string, number> = { Common: 0, Uncommon: 1, Rare: 2, Epic: 3, Legendary: 4, Mythic: 5 };
+const RTIER_LOCAL: Record<string, number> = { Common: 0, Uncommon: 1, Rare: 2, Epic: 3, Legendary: 4, Mythic: 5, Grail: 6 };
 /** Low score = more popular (drives which car is "the people's car" / "the unicorn"). */
 export const popularityScore = (c: Pick<CatalogEntry, 'make' | 'rarity'>) => {
   const mk = POPULAR_MAKES.indexOf(c.make);

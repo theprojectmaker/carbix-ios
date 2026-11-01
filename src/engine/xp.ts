@@ -1,12 +1,12 @@
 import type { Car, Rarity } from './types';
 
-export const TIERS: Rarity[] = ['Common', 'Uncommon', 'Rare', 'Epic', 'Legendary', 'Mythic'];
+export const TIERS: Rarity[] = ['Common', 'Uncommon', 'Rare', 'Epic', 'Legendary', 'Mythic', 'Grail'];
 export const TIER_XP: Record<Rarity, number> = {
-  Common: 3, Uncommon: 8, Rare: 25, Epic: 65, Legendary: 130, Mythic: 330,
+  Common: 3, Uncommon: 8, Rare: 25, Epic: 65, Legendary: 130, Mythic: 330, Grail: 1000,
 };
 export const COLOR_XP: Record<string, number> = { Common: 0, Uncommon: 4, Rare: 13 };
 export const RTIER: Record<Rarity, number> = {
-  Common: 0, Uncommon: 1, Rare: 2, Epic: 3, Legendary: 4, Mythic: 5,
+  Common: 0, Uncommon: 1, Rare: 2, Epic: 3, Legendary: 4, Mythic: 5, Grail: 6,
 };
 
 export const RANKS: [number, string][] = [
@@ -75,7 +75,7 @@ export const STAT_BOUNDS: Record<string, [number, number]> = {
 
 export const TIER_COLOR: Record<Rarity, string> = {
   Common: '#B3A98D', Uncommon: '#7FA05C', Rare: '#5FA89B',
-  Epic: '#8C6FB5', Legendary: '#C9A227', Mythic: '#D8402F',
+  Epic: '#8C6FB5', Legendary: '#C9A227', Mythic: '#D8402F', Grail: '#E4DDFF',
 };
 
 /** Total XP from raw garage + bonus (same as the web's xp()). */

@@ -6,7 +6,7 @@ import { Plate } from '@/components/plate';
 import { Screen } from '@/components/screen';
 import { Bar, Sprite } from '@/components/ui';
 import { norm } from '@/engine/catalog';
-import { CATALOG, DISPLAY_RANK, catalogMatch, dexRank } from '@/engine/data';
+import { CATALOG, DISPLAY_RANK, GRAIL_CATALOG, catalogMatch, dexRank } from '@/engine/data';
 import type { CatalogEntry, Rarity } from '@/engine/types';
 import { RTIER, TIERS, TIER_COLOR } from '@/engine/xp';
 import { play } from '@/lib/sfx';
@@ -21,6 +21,7 @@ const COLS = 3;
 const bigMoney = (n: number) => (n >= 1e6 ? `$${(n / 1e6).toFixed(2)}M` : n >= 1e3 ? `$${Math.round(n / 1e3)}K` : `$${n}`);
 
 const Tile = memo(function Tile({ item, caught, count, crisp, hint }: { item: CatalogEntry; caught: boolean; count: number; crisp: boolean; hint: boolean }) {
+  const secret = item.rarity === 'Grail' && !caught;
   return (
     <Pressable
       style={{ flex: 1 / COLS, padding: 5 }}
@@ -30,7 +31,7 @@ const Tile = memo(function Tile({ item, caught, count, crisp, hint }: { item: Ca
       <View style={{ backgroundColor: caught ? '#1E2833' : '#1A212C', borderWidth: 3, borderColor: INK, borderTopWidth: 6, borderTopColor: caught ? TIER_COLOR[item.rarity] : '#3A4456', padding: 5, gap: 4 }}>
         <View style={{ backgroundColor: '#10151f', height: 62, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
           <Sprite entry={item} caught={caught} size={80} tint="#3E4A62" crisp={crisp} shadow={caught} />
-          <Text style={{ position: 'absolute', top: 2, right: 4, fontFamily: fonts.utility, fontSize: 12, color: '#5f6b86' }}>{String(dexRank(item.n)).padStart(4, '0')}</Text>
+          <Text style={{ position: 'absolute', top: 2, right: 4, fontFamily: fonts.utility, fontSize: 12, color: '#5f6b86' }}>{item.rarity === 'Grail' ? (caught ? 'GRAIL' : '????') : String(dexRank(item.n)).padStart(4, '0')}</Text>
           {count > 1 ? <Text style={{ position: 'absolute', top: 2, left: 4, fontFamily: fonts.utilityBold, fontSize: 13, color: INK, backgroundColor: TIER_COLOR[item.rarity], paddingHorizontal: 4 }}>x{count}</Text> : null}
         </View>
         {caught ? (
@@ -39,7 +40,7 @@ const Tile = memo(function Tile({ item, caught, count, crisp, hint }: { item: Ca
             <Text numberOfLines={1} style={{ fontFamily: fonts.display, fontSize: 15, lineHeight: 16, color: palette.wht }}>{item.model.toUpperCase()}</Text>
           </View>
         ) : (
-          <Text style={{ fontFamily: fonts.utility, fontSize: 12, color: '#4f5a73', letterSpacing: 1, minHeight: 30, paddingTop: 4 }} numberOfLines={2}>{hint ? item.make.toUpperCase() + '\nNOT SPOTTED' : 'NOT SPOTTED'}</Text>
+          <Text style={{ fontFamily: fonts.utility, fontSize: 12, color: '#4f5a73', letterSpacing: 1, minHeight: 30, paddingTop: 4 }} numberOfLines={2}>{secret ? 'HIDDEN' : hint ? item.make.toUpperCase() + '\nNOT SPOTTED' : 'NOT SPOTTED'}</Text>
         )}
       </View>
     </Pressable>
@@ -54,7 +55,7 @@ export default function Garage() {
 
   const rows = useMemo(() => {
     const nq = norm(q);
-    const list = ORDERED.filter(
+    const list = (tier === 'Grail' ? GRAIL_CATALOG : ORDERED).filter(
       (c) => (!tier || c.rarity === tier) && (!caughtOnly || g.caughtNs.has(c.n)) && (!nq || norm(c.make + c.model).includes(nq)),
     );
     return list;
@@ -181,11 +182,18 @@ export default function Garage() {
           <Pressable key={r} style={{ flex: 1 }} onPress={() => setTier(tier === r ? '' : r)}>
             <View style={{ backgroundColor: '#141c2a', borderWidth: 2, borderColor: tier === r ? '#fff' : INK, borderTopWidth: 6, borderTopColor: TIER_COLOR[r], alignItems: 'center', paddingVertical: 12 }}>
               <Text style={{ fontFamily: fonts.display, fontSize: 24, color: '#fff', lineHeight: 26 }}>{stats.perTier[r] || 0}</Text>
-              <Text style={{ fontFamily: fonts.utility, fontSize: 13, color: '#aab4cc', marginTop: 8 }}>{r.slice(0, 4).toUpperCase()}</Text>
+              <Text style={{ fontFamily: fonts.utility, fontSize: 13, color: '#aab4cc', marginTop: 8 }}>{r === 'Grail' ? 'GRAIL' : r.slice(0, 4).toUpperCase()}</Text>
             </View>
           </Pressable>
         ))}
       </View>
+
+      {tier === 'Grail' ? (
+        <View style={{ backgroundColor: '#1a1530', borderWidth: 3, borderColor: '#E4DDFF', padding: 12, gap: 4 }}>
+          <Text style={{ fontFamily: fonts.display, fontSize: 24, color: '#E4DDFF', letterSpacing: 2 }}>THE HIDDEN SHELF</Text>
+          <Text style={{ fontFamily: fonts.display, fontSize: 17, lineHeight: 19, color: '#C9D2E6' }}>One-offs and cars with 15 or fewer built, road or race. They are not part of the Bix count. Spot one and its name appears here. {stats.perTier.Grail || 0} OF {GRAIL_CATALOG.length} FOUND.</Text>
+        </View>
+      ) : null}
 
       <View style={{ gap: 6 }}>
         <Text style={{ fontFamily: fonts.utilityBold, fontSize: 15, color: palette.navyDk, letterSpacing: 2 }}>SEARCH THE BIX</Text>

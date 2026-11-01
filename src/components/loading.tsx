@@ -1,17 +1,18 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { PixelSprite } from '@/components/pixel-sprite';
 import React, { useEffect, useState } from 'react';
-import { Animated, Easing, Text, View } from 'react-native';
+import { Animated as RNAnimated, Easing as RNEasing, Text, View } from 'react-native';
+import Animated, { Easing, useAnimatedStyle, useSharedValue, withRepeat, withSequence, withTiming, type SharedValue } from 'react-native-reanimated';
 
+import { PixelSprite } from '@/components/pixel-sprite';
 import { fonts, palette } from '@/theme/theme';
 
 const INK = '#141C27';
 
-/** Three pixel blocks that light up in turn: the app's one loading indicator, used inline wherever something is fetching. */
+/** Three pixel blocks that light up in turn: the app's one inline loading indicator, used wherever something is fetching. */
 export function Loading({ label = 'LOADING', color = palette.lcdDim, size = 10 }: { label?: string; color?: string; size?: number }) {
-  const [t] = useState(() => new Animated.Value(0));
+  const [t] = useState(() => new RNAnimated.Value(0));
   useEffect(() => {
-    const a = Animated.loop(Animated.timing(t, { toValue: 3, duration: 900, easing: Easing.linear, useNativeDriver: true }));
+    const a = RNAnimated.loop(RNAnimated.timing(t, { toValue: 3, duration: 900, easing: RNEasing.linear, useNativeDriver: true }));
     a.start();
     return () => a.stop();
   }, [t]);
@@ -19,7 +20,7 @@ export function Loading({ label = 'LOADING', color = palette.lcdDim, size = 10 }
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 10 }} accessibilityLabel={label} accessibilityRole="progressbar">
       <View style={{ flexDirection: 'row', gap: 3 }}>
         {[0, 1, 2].map((i) => (
-          <Animated.View
+          <RNAnimated.View
             key={i}
             style={{
               width: size, height: size, backgroundColor: palette.gold, borderWidth: 2, borderColor: INK,
@@ -33,64 +34,143 @@ export function Loading({ label = 'LOADING', color = palette.lcdDim, size = 10 }
   );
 }
 
+/* ---- the boot scene: your car driving through a pixel town. No logo, no words. ---- */
+const PERIOD = 480; // one repeat of the skyline
+
+/** [left, width, height] of each building in one repeat; the layer is drawn twice so it loops without a seam */
+const FAR: [number, number, number][] = [[0, 52, 70], [58, 38, 104], [100, 60, 58], [166, 44, 120], [216, 70, 84], [292, 40, 96], [338, 58, 66], [402, 50, 112], [458, 22, 60]];
+const NEAR: [number, number, number][] = [[10, 64, 46], [84, 40, 70], [130, 74, 40], [214, 50, 64], [270, 66, 48], [346, 44, 78], [396, 62, 42]];
+
+function Skyline({ shared, rects, color, window }: { shared: SharedValue<number>; rects: [number, number, number][]; color: string; window?: string }) {
+  const style = useAnimatedStyle(() => ({ transform: [{ translateX: -PERIOD * shared.get() }] }));
+  return (
+    <Animated.View style={[{ position: 'absolute', left: 0, bottom: 0, width: PERIOD * 2, height: 130, flexDirection: 'row' }, style]}>
+      {[0, 1].map((k) => (
+        <View key={k} style={{ width: PERIOD, height: 130 }}>
+          {rects.map(([l, w, h], i) => (
+            <View key={i} style={{ position: 'absolute', left: l, bottom: 0, width: w, height: h, backgroundColor: color }}>
+              {window ? Array.from({ length: Math.floor(h / 22) }).map((_, r) => (
+                <View key={r} style={{ position: 'absolute', left: 8, top: 8 + r * 22, width: Math.max(6, w - 16), height: 6, backgroundColor: window, opacity: (i + r) % 3 === 0 ? 0.9 : 0.35 }} />
+              )) : null}
+            </View>
+          ))}
+        </View>
+      ))}
+    </Animated.View>
+  );
+}
+
+function Cloud({ shared, top, w, phase }: { shared: SharedValue<number>; top: number; w: number; phase: number }) {
+  const style = useAnimatedStyle(() => ({ transform: [{ translateX: ((1 - ((shared.get() + phase) % 1)) * 520) - 130 }] }));
+  return (
+    <Animated.View style={[{ position: 'absolute', left: 0, top }, style]}>
+      <View style={{ width: w, height: 14, backgroundColor: '#FFFFFF', opacity: 0.85 }} />
+      <View style={{ position: 'absolute', left: w * 0.2, top: -10, width: w * 0.45, height: 12, backgroundColor: '#FFFFFF', opacity: 0.85 }} />
+      <View style={{ position: 'absolute', left: w * 0.5, top: -6, width: w * 0.3, height: 8, backgroundColor: '#FFFFFF', opacity: 0.85 }} />
+    </Animated.View>
+  );
+}
+
+function Dashes({ shared, bottom, color, gap, period }: { shared: SharedValue<number>; bottom: number; color: string; gap: number; period: number }) {
+  const style = useAnimatedStyle(() => ({ transform: [{ translateX: -period * shared.get() }] }));
+  return (
+    <Animated.View style={[{ position: 'absolute', left: 0, bottom, flexDirection: 'row', gap }, style]}>
+      {Array.from({ length: 16 }).map((_, i) => <View key={i} style={{ width: period - gap, height: 5, backgroundColor: color }} />)}
+    </Animated.View>
+  );
+}
+
+function Streak({ shared, top, len, phase, speed }: { shared: SharedValue<number>; top: number; len: number; phase: number; speed: number }) {
+  const style = useAnimatedStyle(() => {
+    const p = (shared.get() * speed + phase) % 1;
+    return { opacity: p < 0.1 ? p * 6 : p > 0.7 ? Math.max(0, (1 - p) * 2) : 0.6, transform: [{ translateX: 40 - p * 150 }] };
+  });
+  return <Animated.View style={[{ position: 'absolute', right: 0, top, width: len, height: 3, backgroundColor: '#FFFFFF' }, style]} />;
+}
+
+function Dot({ shared, i }: { shared: SharedValue<number>; i: number }) {
+  const style = useAnimatedStyle(() => ({ opacity: Math.abs(((shared.get() + 3 - i) % 3) - 0.5) < 0.6 ? 1 : 0.25 }));
+  return <Animated.View style={[{ width: 12, height: 12, backgroundColor: palette.gold, borderWidth: 2, borderColor: INK }, style]} />;
+}
+
 /**
- * The full-screen boot screen, shown while fonts and the saved garage load. Cream paper, the wordmark, a little pixel car
- * driving along a dashed road, and a line that says what is happening. Drawn with system fonts until the pixel fonts land.
+ * The boot screen, shown while fonts and your saved garage load: only your showcase car driving down a pixel street,
+ * bobbing on its suspension with streaks flying past. Everything is a transform on the UI thread, so it never stutters
+ * while the app is busy loading. First launch, before there is a showcase car, a little red hatchback drives instead.
  */
-export function LoadingScreen({ fontsReady, note = 'LOADING YOUR GARAGE' }: { fontsReady: boolean; note?: string }) {
-  const [x] = useState(() => new Animated.Value(0));
-  const [bob] = useState(() => new Animated.Value(0));
+export function LoadingScreen(_props: { fontsReady?: boolean; note?: string }) {
+  void _props;
   const [car, setCar] = useState<string | null>(null);
+  const road = useSharedValue(0);
+  const near = useSharedValue(0);
+  const far = useSharedValue(0);
+  const clouds = useSharedValue(0);
+  const bob = useSharedValue(0);
+  const dots = useSharedValue(0);
+
   useEffect(() => {
     AsyncStorage.getItem('motordex.native.showcase').then((u) => { if (u) setCar(u); }).catch(() => {});
   }, []);
   useEffect(() => {
-    const drive = Animated.loop(Animated.timing(x, { toValue: 1, duration: 2600, easing: Easing.linear, useNativeDriver: true }));
-    const hop = Animated.loop(Animated.sequence([
-      Animated.timing(bob, { toValue: 1, duration: 170, useNativeDriver: true }),
-      Animated.timing(bob, { toValue: 0, duration: 170, useNativeDriver: true }),
-    ]));
-    drive.start();
-    hop.start();
-    return () => { drive.stop(); hop.stop(); };
-  }, [x, bob]);
-  const display = fontsReady ? fonts.display : undefined;
-  const utility = fontsReady ? fonts.utilityBold : undefined;
+    road.set(withRepeat(withTiming(1, { duration: 520, easing: Easing.linear }), -1, false));
+    near.set(withRepeat(withTiming(1, { duration: 9000, easing: Easing.linear }), -1, false));
+    far.set(withRepeat(withTiming(1, { duration: 22000, easing: Easing.linear }), -1, false));
+    clouds.set(withRepeat(withTiming(1, { duration: 40000, easing: Easing.linear }), -1, false));
+    bob.set(withRepeat(withSequence(withTiming(1, { duration: 150, easing: Easing.inOut(Easing.quad) }), withTiming(0, { duration: 190, easing: Easing.inOut(Easing.quad) }), withTiming(0.35, { duration: 120 }), withTiming(0, { duration: 160 })), -1, false));
+    dots.set(withRepeat(withTiming(3, { duration: 1100, easing: Easing.linear }), -1, false));
+  }, [road, near, far, clouds, bob, dots]);
+
+  const carStyle = useAnimatedStyle(() => ({ transform: [{ translateY: -4 * bob.get() }, { rotate: `${-0.9 * bob.get()}deg` }] }));
+  const shadowStyle = useAnimatedStyle(() => ({ transform: [{ scaleX: 1 - 0.05 * bob.get() }], opacity: 0.32 - 0.08 * bob.get() }));
+
   return (
-    <View style={{ flex: 1, backgroundColor: '#F0EEE7', alignItems: 'center', justifyContent: 'center', gap: 18 }}>
-      <View style={{ backgroundColor: palette.red, borderWidth: 4, borderColor: INK, paddingHorizontal: 22, paddingVertical: 8, shadowColor: '#000', shadowOpacity: 0.35, shadowOffset: { width: 5, height: 5 }, shadowRadius: 0 }}>
-        <Text style={{ fontFamily: display, fontSize: 54, lineHeight: 58, color: '#fff', letterSpacing: 2, textShadowColor: 'rgba(0,0,0,.5)', textShadowOffset: { width: 2, height: 2 }, textShadowRadius: 0 }}>
-          <Text style={{ color: palette.gold }}>› </Text>CARBIX
-        </Text>
-      </View>
-      <Text style={{ fontFamily: utility, fontSize: 11, color: palette.navyDk, letterSpacing: 3 }}>SPOT REAL CARS. FILL YOUR BIX.</Text>
+    <View style={{ flex: 1, backgroundColor: '#F0EEE7', justifyContent: 'flex-end' }}>
+      {/* sky: three soft bands */}
+      <View style={{ position: 'absolute', left: 0, right: 0, top: 0, height: '38%', backgroundColor: '#F0EEE7' }} />
+      <View style={{ position: 'absolute', left: 0, right: 0, top: '38%', height: '14%', backgroundColor: '#E8E5D8' }} />
+      <View style={{ position: 'absolute', left: 0, right: 0, top: '52%', height: '48%', backgroundColor: '#DEDACB' }} />
+      <Cloud shared={clouds} top={110} w={96} phase={0} />
+      <Cloud shared={clouds} top={190} w={64} phase={0.37} />
+      <Cloud shared={clouds} top={70} w={52} phase={0.7} />
 
-      {/* the road */}
-      <View style={{ width: 280, height: 110, marginTop: 6, overflow: 'hidden' }}>
-        <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: 26, backgroundColor: '#33465F', borderTopWidth: 3, borderTopColor: INK }} />
-        <Animated.View style={{ position: 'absolute', left: 0, bottom: 10, flexDirection: 'row', gap: 16, transform: [{ translateX: x.interpolate({ inputRange: [0, 1], outputRange: [0, -36] }) }] }}>
-          {Array.from({ length: 12 }).map((_, i) => <View key={i} style={{ width: 20, height: 4, backgroundColor: '#C9A227' }} />)}
-        </Animated.View>
-        <Animated.View style={{ position: 'absolute', left: 0, right: 0, bottom: 20, alignItems: 'center', transform: [{ translateY: bob.interpolate({ inputRange: [0, 1], outputRange: [0, -3] }) }] }}>
-          {car ? (
-            <PixelSprite uri={car} width={160} height={90} bottom />
-          ) : (
-            <PixelCar />
-          )}
-        </Animated.View>
-        <Animated.View style={{ position: 'absolute', left: 0, bottom: 2, flexDirection: 'row', gap: 40, transform: [{ translateX: x.interpolate({ inputRange: [0, 1], outputRange: [0, -60] }) }] }}>
-          {Array.from({ length: 8 }).map((_, i) => <View key={i} style={{ width: 20, height: 4, backgroundColor: '#243247' }} />)}
-        </Animated.View>
+      <View style={{ height: 150 }}>
+        <Skyline shared={far} rects={FAR} color="#C7C3B5" />
+      </View>
+      <View style={{ height: 0 }}>
+        <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: 130, justifyContent: 'flex-end' }}>
+          <Skyline shared={near} rects={NEAR} color="#9AA6BA" window="#F0EEE7" />
+        </View>
       </View>
 
-      <Loading label={note} color={palette.navyDk} />
+      {/* road */}
+      <View style={{ height: 170, backgroundColor: '#33465F', borderTopWidth: 6, borderTopColor: INK }}>
+        <View style={{ position: 'absolute', left: 0, right: 0, top: 0, height: 10, backgroundColor: '#5C7AA0' }} />
+        <Dashes shared={road} bottom={86} color="#C9A227" gap={36} period={72} />
+        <Dashes shared={road} bottom={22} color="#243247" gap={60} period={96} />
+      </View>
+
+      {/* the car, sitting on the road; its box is anchored so the wheels meet the asphalt */}
+      <View style={{ position: 'absolute', left: 0, right: 0, bottom: 118, alignItems: 'center' }}>
+        <Animated.View style={[{ position: 'absolute', bottom: -8, width: 210, height: 14, borderRadius: 7, backgroundColor: '#000' }, shadowStyle]} />
+        <Animated.View style={carStyle}>
+          {car ? <PixelSprite uri={car} width={230} height={120} bottom /> : <PixelCar />}
+        </Animated.View>
+        <Streak shared={road} top={-70} len={70} phase={0.1} speed={1} />
+        <Streak shared={road} top={-48} len={110} phase={0.5} speed={1} />
+        <Streak shared={road} top={-22} len={80} phase={0.8} speed={1} />
+      </View>
+
+      {/* three pixel blocks, no words */}
+      <View style={{ position: 'absolute', left: 0, right: 0, bottom: 44, flexDirection: 'row', justifyContent: 'center', gap: 6 }}>
+        {[0, 1, 2].map((i) => <Dot key={i} shared={dots} i={i} />)}
+      </View>
     </View>
   );
 }
 
-/** A 13x7 pixel hatchback in the app's red, drawn with plain views so it works before any font or image loads. */
+/** A 13x7 pixel hatchback in the app's red, for the very first launch when there is no showcase car yet. */
 function PixelCar() {
-  const P = 4;
+  const P = 9;
   const rows = [
     '....RRRRR....',
     '...RWWRWWR...',

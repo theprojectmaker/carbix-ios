@@ -5,7 +5,7 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useR
 
 import { iconURL, mergeCloud, pullGarage, pushGarage, pushPublicRow, recheckScan, redeemLinkCode } from '@/engine/api';
 import { publicRow, withRollovers } from '@/engine/publish';
-import { catalogMatch, CATALOG, fixStats } from '@/engine/data';
+import { catalogMatch, CATALOG, fixStats, GRAIL_NS } from '@/engine/data';
 import {
   dateKeyET as todayKey, KEYS, loadAll, markDay, normalizeGarage, newProfile, normalizeProfile, saveAll, shinyRoll, streak, totalXp,
 } from '@/engine/store';
@@ -24,7 +24,7 @@ import { currentSeason } from '@/engine/quests';
 import { wearIcon } from '@/lib/appicon';
 import { catchXP as catchXPOf, levelFor, rankFor, xpForLevel } from '@/engine/xp';
 
-const TIER_RANK: Record<string, number> = { Common: 0, Uncommon: 1, Rare: 2, Epic: 3, Legendary: 4, Mythic: 5 };
+const TIER_RANK: Record<string, number> = { Common: 0, Uncommon: 1, Rare: 2, Epic: 3, Legendary: 4, Mythic: 5, Grail: 6 };
 
 export type Settings = { cool: boolean; sfx: number; haptics: boolean; theme: 'light' | 'dark'; callshot: boolean; silentMute: boolean; feedShare: boolean; notify: NotifyPrefs; reduceMotion: boolean; units: 'mph' | 'kmh'; hintNames: boolean; crispTiles: boolean };
 const SETTINGS_KEY = 'motordex.native.settings';
@@ -506,7 +506,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     return {
       ready, garage, profile, settings, xp, level, rank: rankFor(level),
       nextLevelXp: xpForLevel(level + 1), prevLevelXp: xpForLevel(level),
-      streak: streak(profile), bixPct: CATALOG.length ? (caught.size / CATALOG.length) * 100 : 0,
+      streak: streak(profile), bixPct: CATALOG.length ? (([...caught].filter((n) => !GRAIL_NS.has(n)).length) / CATALOG.length) * 100 : 0,
       notify: flash, shopBuy, shopEquip, iconBuy, iconWear, quests: () => questsView(garage, profile), caughtNs: caught, addCatch, removeCatch, replaceCar, secondLook, setSettings, setUsername, toggleStar, patchProfile, restore, linkAccount, recalcScore, replanNotifications, googleSignIn, syncState,
     };
   }, [ready, garage, profile, settings, flash, shopBuy, shopEquip, iconBuy, iconWear, addCatch, removeCatch, replaceCar, secondLook, setSettings, setUsername, toggleStar, patchProfile, restore, linkAccount, recalcScore, replanNotifications, googleSignIn, syncState]);

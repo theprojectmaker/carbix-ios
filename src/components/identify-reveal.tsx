@@ -15,7 +15,7 @@ import { fonts } from '@/theme/theme';
 const RARC: Record<Rarity, [string, string, string]> = {
   Common: ['#B3A98D', '#8A8168', '#141C27'], Uncommon: ['#7FA05C', '#5B7A3F', '#0E1A08'],
   Rare: ['#5FA89B', '#3F7A70', '#ffffff'], Epic: ['#8C6FB5', '#654A8C', '#ffffff'],
-  Legendary: ['#C9A227', '#8F7318', '#241a02'], Mythic: ['#D8402F', '#98261A', '#ffffff'],
+  Legendary: ['#C9A227', '#8F7318', '#241a02'], Mythic: ['#D8402F', '#98261A', '#ffffff'], Grail: ['#E4DDFF', '#9C93D1', '#1a1530'],
 };
 
 function checklist(car: Car): string[] {
@@ -28,7 +28,7 @@ function checklist(car: Car): string[] {
   return l.slice(0, 4).map((t) => t + '  OK');
 }
 
-const RT: Record<string, number> = { Common: 0, Uncommon: 1, Rare: 2, Epic: 3, Legendary: 4, Mythic: 5 };
+const RT: Record<string, number> = { Common: 0, Uncommon: 1, Rare: 2, Epic: 3, Legendary: 4, Mythic: 5, Grail: 6 };
 
 /* ---- worklet helpers: everything below runs on the UI thread, driven by ONE timeline value (ms) ---- */
 const seg = (t: number, a: number, b: number) => {

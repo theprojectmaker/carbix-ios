@@ -4,8 +4,8 @@ import { Animated, Easing, StyleSheet, View } from 'react-native';
 import type { Rarity } from '@/engine/types';
 import { TIER_COLOR } from '@/engine/xp';
 
-const SPARKS: Record<Rarity, number> = { Common: 8, Uncommon: 11, Rare: 14, Epic: 18, Legendary: 24, Mythic: 32 };
-const REACH: Record<Rarity, number> = { Common: 0.7, Uncommon: 0.85, Rare: 1, Epic: 1.2, Legendary: 1.5, Mythic: 1.9 };
+const SPARKS: Record<Rarity, number> = { Common: 8, Uncommon: 11, Rare: 14, Epic: 18, Legendary: 24, Mythic: 32, Grail: 40 };
+const REACH: Record<Rarity, number> = { Common: 0.7, Uncommon: 0.85, Rare: 1, Epic: 1.2, Legendary: 1.5, Mythic: 1.9, Grail: 2.2 };
 
 /** How each shop effect moves: a burst off the card, a fall from above, a rise from below, or a slow drift. */
 type Mode = 'burst' | 'fall' | 'rise' | 'drift';

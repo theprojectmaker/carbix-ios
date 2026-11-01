@@ -36,7 +36,7 @@ export function newProfile(): Profile {
   };
 }
 
-const RARITIES = ['Common', 'Uncommon', 'Rare', 'Epic', 'Legendary', 'Mythic'];
+const RARITIES = ['Common', 'Uncommon', 'Rare', 'Epic', 'Legendary', 'Mythic', 'Grail'];
 
 /** Same self-heals the web app runs at load: bad rarity -> Common, duplicate ids dropped, defaults filled. */
 export function normalizeGarage(list: unknown): Catch[] {

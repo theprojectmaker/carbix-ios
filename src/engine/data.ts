@@ -4,12 +4,16 @@ import { buildCatalog, buildDisplayRank, catalogMatchIn, fixStatsWith } from './
 import type { Car, CatalogEntry } from './types';
 
 /** The bundled 4,652-car catalog (motorcycles, trailers and fleet chassis already filtered out). */
-export const CATALOG: CatalogEntry[] = buildCatalog(raw as string[], hidden as number[]);
-export const CATALOG_BY_N = new Map(CATALOG.map((c) => [c.n, c]));
+const ALL: CatalogEntry[] = buildCatalog(raw as string[], hidden as number[]);
+export const CATALOG: CatalogEntry[] = ALL.filter((c) => c.rarity !== 'Grail');
+/** The hidden tab: one-offs and tiny runs (15 or fewer built). Matched on scan, hidden from the grid until caught. */
+export const GRAIL_CATALOG: CatalogEntry[] = ALL.filter((c) => c.rarity === 'Grail');
+export const GRAIL_NS = new Set(GRAIL_CATALOG.map((c) => c.n));
+export const CATALOG_BY_N = new Map(ALL.map((c) => [c.n, c]));
 export const DISPLAY_RANK = buildDisplayRank(CATALOG);
 export const dexRank = (n: number) => DISPLAY_RANK.get(n) || n;
-export const catalogMatch = (car: Pick<Car, 'make' | 'model'>) => catalogMatchIn(CATALOG, car);
-export const fixStats = (car: Car) => fixStatsWith(CATALOG, car);
+export const catalogMatch = (car: Pick<Car, 'make' | 'model'>) => catalogMatchIn(ALL, car);
+export const fixStats = (car: Car) => fixStatsWith(ALL, car);
 
 /** Average power and top speed per body class, for "vs class" bars on the car page. */
 export const CLASS_STATS = (() => {

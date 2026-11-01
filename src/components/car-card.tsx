@@ -4,6 +4,7 @@ import { Animated, Easing, StyleSheet, Text, View } from 'react-native';
 
 import { catalogMatch, dexRank } from '@/engine/data';
 import type { Catch, Rarity } from '@/engine/types';
+import { limitedInfo } from '@/engine/limited';
 import { catchXP, RTIER, TIERS, trimTier } from '@/engine/xp';
 import { fonts } from '@/theme/theme';
 import { Sprite } from './ui';
@@ -11,21 +12,22 @@ import { Sprite } from './ui';
 const INK = '#141C27';
 
 /** Frame metal per rarity: [frame, light bevel, dark bevel] — exactly the web app's --fr/--frl/--frd. */
-const FRAME: Record<Rarity, [string, string, string]> = {
+export const FRAME: Record<Rarity, [string, string, string]> = {
   Common: ['#B3A98D', '#D6CDB4', '#8A8168'],
   Uncommon: ['#7FA05C', '#A6C285', '#5B7A3F'],
   Rare: ['#5FA89B', '#8FC9BE', '#3F7A70'],
   Epic: ['#8C6FB5', '#B49AD6', '#654A8C'],
   Legendary: ['#C9A227', '#E2C55B', '#8F7318'],
   Mythic: ['#D8402F', '#E8705F', '#98261A'],
+  Grail: ['#E4DDFF', '#FFFFFF', '#9C93D1'],
 };
 
 const CLASS_EST: Record<string, { rl: number; tq: number; wt: number }> = {
   SEDAN: { rl: 6200, tq: 190, wt: 3300 }, SUV: { rl: 6000, tq: 260, wt: 4300 },
 };
 
-const hex = (s: string) => [1, 3, 5].map((i) => parseInt(s.slice(i, i + 2), 16));
-const mix = (a: string, b: string, t: number) => {
+export const hex = (s: string) => [1, 3, 5].map((i) => parseInt(s.slice(i, i + 2), 16));
+export const mix = (a: string, b: string, t: number) => {
   const x = hex(a), y = hex(b);
   return '#' + x.map((v, i) => Math.round(v * t + y[i] * (1 - t)).toString(16).padStart(2, '0')).join('');
 };
@@ -99,6 +101,7 @@ export function CarCard({ g, units = 'mph' }: { g: Catch; units?: 'mph' | 'kmh' 
   const zts = parseFloat(String(car.zeroToSixty)) || 0;
   const ex = CLASS_EST[(car.class || 'SEDAN').toUpperCase()] ?? CLASS_EST.SEDAN;
   const tt = trimTier(car);
+  const ltd = limitedInfo(car);
   const has = (v: unknown) => Boolean(v);
   const e = (v: unknown, fb: number) => (has(v) ? String(v) : String(fb));
 
@@ -135,6 +138,11 @@ export function CarCard({ g, units = 'mph' }: { g: Catch; units?: 'mph' | 'kmh' 
         {g.photo && entry ? (
           <View pointerEvents="none" style={{ position: 'absolute', right: 8, bottom: 8, backgroundColor: 'rgba(10,13,20,.78)', borderWidth: 2, borderColor: fr, padding: 2 }}>
             <Sprite entry={entry} size={60} crisp shadow />
+          </View>
+        ) : null}
+        {ltd ? (
+          <View pointerEvents="none" style={{ position: 'absolute', top: 8, left: 24, backgroundColor: ltd.grail ? '#E4DDFF' : '#E8C547', borderWidth: 2, borderColor: INK, paddingHorizontal: 7, paddingVertical: 1 }}>
+            <Text style={{ fontFamily: fonts.display, fontSize: 16, letterSpacing: 1, color: ltd.grail ? '#1a1530' : INK }}>{ltd.grail ? 'GRAIL  ' : 'LIMITED  '}{ltd.label}</Text>
           </View>
         ) : null}
         <View pointerEvents="none" style={{ position: 'absolute', top: 4, left: 4, width: 14, height: 14, borderTopWidth: 3, borderLeftWidth: 3, borderColor: '#E4E7EC' }} />
