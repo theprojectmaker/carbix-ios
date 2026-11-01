@@ -28,19 +28,20 @@ const Tile = memo(function Tile({ item, caught, count }: { item: CatalogEntry; c
       onPress={() => { play('tab'); router.push({ pathname: '/car/[n]', params: { n: String(item.n) } }); }}
       accessibilityRole="button"
       accessibilityLabel={caught ? `${item.make} ${item.model}, caught` : `Number ${dexRank(item.n)}, not caught`}>
-      <View style={{ backgroundColor: '#0d1119', padding: 2 }}>
-        <View style={{ backgroundColor: '#232E3F', borderWidth: 4, borderColor: '#4A5568', borderTopWidth: 7, borderTopColor: caught ? TIER_COLOR[item.rarity] : '#3A4456', paddingHorizontal: 4, paddingBottom: 6, paddingTop: 3 }}>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 3 }}>
-            {count > 1 ? <Text style={{ fontFamily: fonts.utilityBold, fontSize: 9, color: INK, backgroundColor: TIER_COLOR[item.rarity], paddingHorizontal: 4, paddingVertical: 1 }}>x{count}</Text> : <View />}
-            <Text style={{ fontFamily: fonts.utility, fontSize: 9, color: '#8b96b8' }}>#{String(dexRank(item.n)).padStart(4, '0')}</Text>
-          </View>
-          <View style={{ backgroundColor: '#161c2c', borderWidth: 2, borderColor: '#10141f', height: 62, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-            <Sprite entry={item} caught={caught} size={80} tint="#56658A" crisp={caught} shadow={caught} />
-          </View>
-          <Text numberOfLines={2} style={{ fontFamily: fonts.display, fontSize: 13, lineHeight: 14, color: palette.wht, textAlign: 'center', marginTop: 5, minHeight: 28 }}>
-            {caught ? `${item.make} ${item.model}` : ' '}
-          </Text>
+      <View style={{ backgroundColor: caught ? '#1E2833' : '#1A212C', borderWidth: 3, borderColor: INK, borderTopWidth: 6, borderTopColor: caught ? TIER_COLOR[item.rarity] : '#3A4456', padding: 5, gap: 4 }}>
+        <View style={{ backgroundColor: '#10151f', height: 62, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+          <Sprite entry={item} caught={caught} size={80} tint="#3E4A62" crisp={caught} shadow={caught} />
+          <Text style={{ position: 'absolute', top: 2, right: 4, fontFamily: fonts.utility, fontSize: 8.5, color: '#5f6b86' }}>{String(dexRank(item.n)).padStart(4, '0')}</Text>
+          {count > 1 ? <Text style={{ position: 'absolute', top: 2, left: 4, fontFamily: fonts.utilityBold, fontSize: 9, color: INK, backgroundColor: TIER_COLOR[item.rarity], paddingHorizontal: 4 }}>x{count}</Text> : null}
         </View>
+        {caught ? (
+          <View style={{ minHeight: 30 }}>
+            <Text numberOfLines={1} style={{ fontFamily: fonts.utility, fontSize: 8.5, color: '#8b96b8', letterSpacing: 1 }}>{item.make.toUpperCase()}</Text>
+            <Text numberOfLines={1} style={{ fontFamily: fonts.display, fontSize: 15, lineHeight: 16, color: palette.wht }}>{item.model.toUpperCase()}</Text>
+          </View>
+        ) : (
+          <Text style={{ fontFamily: fonts.utility, fontSize: 8.5, color: '#4f5a73', letterSpacing: 1, minHeight: 30, paddingTop: 4 }}>NOT SPOTTED</Text>
+        )}
       </View>
     </Pressable>
   );

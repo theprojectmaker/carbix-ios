@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { ScrollView, Text, View } from 'react-native';
 
 import { Screen } from '@/components/screen';
+import { Loading } from '@/components/loading';
 import { Btn, PText, Sprite } from '@/components/ui';
 import { fetchFeed, fetchLeaderboard, friendAction, friendsGet } from '@/engine/api';
 import { CATALOG, catalogMatch } from '@/engine/data';
@@ -78,7 +79,7 @@ export default function Profile() {
         <PText style={{ fontSize: 40, lineHeight: 42, color: t.red }} numberOfLines={1}>{String(row?.displayName || name).toUpperCase()}</PText>
 
         {row === undefined ? (
-          <Text style={{ fontFamily: fonts.utility, fontSize: 10, color: t.muted }}>LOADING...</Text>
+          <Loading label="LOADING PROFILE" color={t.muted} />
         ) : row === null ? (
           <Text style={{ fontFamily: fonts.utility, fontSize: 10, color: t.muted }}>THIS SPOTTER HAS NOT SHARED A PROFILE YET.</Text>
         ) : (

@@ -11,7 +11,7 @@ import type { Car, Catch } from '../src/engine/types';
 const car = (o: Partial<Car> = {}): Car => ({ make: 'Toyota', model: 'Camry', rarity: 'Common', ...o });
 
 test('catalog size after the same filters the web app applies', () => {
-  assert.equal(CATALOG.length, 3001); // 4,810 raw rows, minus bikes/trailers/hidden
+  assert.equal(CATALOG.length, 3122); // 4,892 raw rows, minus bikes/trailers/hidden
 });
 
 test('web parity: the catalog + display rank equal what index.html computes', () => {

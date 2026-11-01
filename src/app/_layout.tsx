@@ -1,5 +1,5 @@
 import { Jersey25_400Regular } from '@expo-google-fonts/jersey-25';
-import { PixelifySans_400Regular } from '@expo-google-fonts/pixelify-sans';
+import { PixelifySans_400Regular, PixelifySans_500Medium, PixelifySans_700Bold } from '@expo-google-fonts/pixelify-sans';
 import { PressStart2P_400Regular } from '@expo-google-fonts/press-start-2p';
 import { Silkscreen_400Regular, Silkscreen_700Bold } from '@expo-google-fonts/silkscreen';
 import { useFonts } from 'expo-font';
@@ -16,6 +16,7 @@ import { loadInbox } from '@/lib/inbox';
 import { onNotificationTap, setupNotifications } from '@/lib/notify';
 import { preloadSfx } from '@/lib/sfx';
 import { RaceProvider } from '@/state/race';
+import { LoadingScreen } from '@/components/loading';
 import { ToastHost } from '@/components/toast';
 import { useTheme } from '@/theme/theme';
 
@@ -26,7 +27,7 @@ function Shell() {
   const { ready, profile, garage } = useGame();
   const pathname = usePathname();
   const [fontsLoaded] = useFonts({
-    Jersey25_400Regular, PixelifySans_400Regular, PressStart2P_400Regular, Silkscreen_400Regular, Silkscreen_700Bold,
+    Jersey25_400Regular, PixelifySans_400Regular, PixelifySans_500Medium, PixelifySans_700Bold, PressStart2P_400Regular, Silkscreen_400Regular, Silkscreen_700Bold,
   });
   useEffect(() => {
     if (fontsLoaded && ready) {
@@ -52,7 +53,7 @@ function Shell() {
     const id = setTimeout(() => { try { router.push('/notify'); } catch {} }, 2500);
     return () => clearTimeout(id);
   }, [ready, needsWelcome, profile.askedNotify, pathname]);
-  if (!fontsLoaded || !ready) return null;
+  if (!fontsLoaded || !ready) return <LoadingScreen fontsReady={fontsLoaded} note={fontsLoaded ? 'LOADING YOUR GARAGE' : 'WARMING UP'} />;
   return (
     <>
       <StatusBar style={t.dark ? 'light' : 'dark'} />

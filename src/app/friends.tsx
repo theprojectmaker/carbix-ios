@@ -3,6 +3,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { ScrollView, Text, TextInput, View } from 'react-native';
 
 import { Screen } from '@/components/screen';
+import { Loading } from '@/components/loading';
 import { Btn, PText } from '@/components/ui';
 import { friendAction, friendsGet, type FriendState } from '@/engine/api';
 import { play } from '@/lib/sfx';
@@ -104,7 +105,7 @@ export default function Friends() {
 
         <Panel title="YOUR FRIENDS">
           {!state ? (
-            <Text style={{ fontFamily: fonts.utility, fontSize: 9.5, color: palette.lcdDim }}>LOADING...</Text>
+            <Loading label="FINDING YOUR FRIENDS" />
           ) : state.friends.length === 0 ? (
             <Text style={{ fontFamily: fonts.utility, fontSize: 9.5, color: palette.lcdDim }}>NO FRIENDS YET. ADD SOMEONE ABOVE.</Text>
           ) : (

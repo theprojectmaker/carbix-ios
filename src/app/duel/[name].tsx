@@ -3,6 +3,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 
 import { Screen } from '@/components/screen';
+import { Loading } from '@/components/loading';
 import { Btn, Sprite } from '@/components/ui';
 import { fetchLeaderboard } from '@/engine/api';
 import { CATALOG_BY_N } from '@/engine/data';
@@ -71,7 +72,7 @@ export default function Duel() {
         <Text style={{ fontFamily: fonts.utilityBold, fontSize: 10, color: palette.navyDk }}>YOU VS {String(name).toUpperCase()}</Text>
 
         {bits === undefined ? (
-          <Text style={{ fontFamily: fonts.display, fontSize: 18, color: palette.navyDk }}>LOADING...</Text>
+          <Loading label="LOADING THE DUEL" color={palette.navyDk} />
         ) : !d ? (
           <View style={{ backgroundColor: palette.panel, borderWidth: 3, borderColor: INK, padding: 12 }}>
             <Text style={{ fontFamily: fonts.prose, fontSize: 15, color: '#C9D2E6' }}>

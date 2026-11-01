@@ -32,12 +32,15 @@ const dark = {
   muted: '#A6B2C8',
 };
 
+/* Jersey 25 for headlines, Pixelify Sans for every label and body line (it stays readable at 9-10px, where
+   Silkscreen turned into noise), Silkscreen kept as `retro` for the few stamped badges, Press Start for the LCD. */
 export const fonts = {
   display: 'Jersey25_400Regular',
   pixel: 'PressStart2P_400Regular',
-  utility: 'Silkscreen_400Regular',
-  utilityBold: 'Silkscreen_700Bold',
+  utility: 'PixelifySans_500Medium',
+  utilityBold: 'PixelifySans_700Bold',
   prose: 'PixelifySans_400Regular',
+  retro: 'Silkscreen_700Bold',
 };
 
 export type Theme = typeof palette & typeof light & { dark: boolean };
