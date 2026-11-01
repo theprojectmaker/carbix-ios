@@ -108,6 +108,30 @@ function draw(kind: string): Grid {
       ell(g, 8, 8, 6, 6, '#8C6FB5', false);
       ell(g, 8, 8, 3, 3, '#1B1F27', false);
       break;
+    case 'snow':
+      ell(g, 8, 8, 7, 7, '#2B5470', false);
+      for (const [x, y] of [[4, 4], [9, 3], [12, 7], [6, 8], [10, 10], [4, 11], [8, 13]]) rect(g, x, y, 2, 2, '#F5F0E0');
+      break;
+    case 'frost':
+      ell(g, 8, 8, 7, 7, '#1B2A3A', false);
+      rect(g, 7, 2, 2, 12, '#BFE0F5');
+      rect(g, 2, 7, 12, 2, '#BFE0F5');
+      for (const [x, y] of [[4, 4], [10, 4], [4, 10], [10, 10]]) rect(g, x, y, 2, 2, '#BFE0F5');
+      rect(g, 7, 7, 2, 2, '#ffffff');
+      break;
+    case 'aurora':
+      ell(g, 8, 8, 7, 7, '#141C27', false);
+      for (const [y, c] of [[4, '#7CE0A8'], [6, '#5FA89B'], [8, '#8C6FB5'], [10, '#B58BFF']] as const) for (let x = 2; x < 14; x++) if (g[y][x]) { px(g, x, y, c); if (g[y + 1][x]) px(g, x, y + 1, c); }
+      break;
+    case 'petal':
+      for (let i = 0; i < 9; i++) rect(g, 3 + i, 12 - i, 3, 1, '#F6A8C8');
+      for (let i = 0; i < 6; i++) rect(g, 4 + i, 11 - i, 2, 1, '#FFD1E3');
+      rect(g, 3, 13, 3, 1, '#E58CB5');
+      break;
+    case 'rainbow':
+      ell(g, 8, 8, 7, 7, '#141C27', false);
+      (['#D8402F', '#E0863A', '#F2D36B', '#7FA05C', '#5C9ED6', '#8C6FB5'] as const).forEach((c, i) => { for (let y = 2; y < 14; y++) if (g[y][2 + i * 2]) { px(g, 2 + i * 2, y, c); px(g, 3 + i * 2, y, c); } });
+      break;
     default: // classic pin
       ell(g, 8, 6, 4, 4, '#C9A227', false);
       rect(g, 7, 9, 2, 4, '#C9A227');
@@ -121,6 +145,7 @@ const KIND: Record<string, string> = {
   'map-marker-candycorn': 'candycorn', 'map-marker-ghost': 'ghost', 'map-marker-mapleleaf': 'leaf',
   'map-marker-palmtree': 'palm', 'map-marker-surfboard': 'surfboard',
   standard: 'ring', leaffall: 'leaf', embers: 'flame', ghostparade: 'ghost', harvestmoon: 'moon', starburst: 'star',
+  snowfall: 'snow', frost: 'frost', aurora: 'aurora', petals: 'petal', rainbow: 'rainbow',
 };
 
 /** Icon for a shop item id (map pin or catch effect). */
@@ -135,6 +160,5 @@ export function ShopIcon({ id, size = 56 }: { id: string; size?: number }) {
 
 /** Season header icon: leaf for fall, sun for summer, snowflake for winter, sprout for spring. */
 export function SeasonGlyph({ season, size = 40 }: { season: string; size?: number }) {
-  const kind = season === 'fall' ? 'leaf' : season === 'summer' ? 'star' : season === 'winter' ? 'ring' : 'palm';
-  return <ShopIcon id={kind === 'leaf' ? 'leaffall' : kind === 'star' ? 'starburst' : kind === 'ring' ? 'standard' : 'map-marker-palmtree'} size={size} />;
+  return <ShopIcon id={season === 'fall' ? 'leaffall' : season === 'summer' ? 'starburst' : season === 'winter' ? 'snowfall' : 'petals'} size={size} />;
 }

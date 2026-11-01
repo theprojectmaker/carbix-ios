@@ -201,7 +201,7 @@ export default function Home() {
                   <Text style={{ fontFamily: fonts.display, fontSize: 19, color: palette.wht }}>{q.t}</Text>
                   <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                     <Text style={{ fontFamily: fonts.display, fontSize: 15, color: palette.gold }}>{Math.min(prog.have, prog.need)} / {prog.need}</Text>
-                    <Text style={{ fontFamily: fonts.utility, fontSize: 9, color: palette.lcdDim }}>{SEASON_EVENT_NAMES[season.event]} - {daysLeft}D LEFT</Text>
+                    <Text style={{ fontFamily: fonts.utility, fontSize: 9, color: palette.lcdDim }}>{SEASON_EVENT_NAMES[season.event]} - {daysLeft}D UNTIL {season.next.toUpperCase()}</Text>
                   </View>
                   <Bar value={prog.need ? Math.min(1, prog.have / prog.need) : 0} color={palette.green} />
                 </>
@@ -296,7 +296,7 @@ export default function Home() {
             <Btn small tone="red" label="SIGN IN" onPress={() => router.push('/settings')} />
           </Panel>
         ) : null}
-        <Text style={{ fontFamily: fonts.utility, fontSize: 9, color: t.muted, textAlign: 'center' }}>{SEASON_EVENT_NAMES[season.event]}  -  {season.name}</Text>
+        <Text style={{ fontFamily: fonts.utility, fontSize: 9, color: t.muted, textAlign: 'center' }}>{SEASON_EVENT_NAMES[season.event]}  -  {season.name}  -  {daysLeft} DAYS UNTIL {season.next.toUpperCase()}</Text>
       </ScrollView>
     </Screen>
   );

@@ -1,10 +1,7 @@
-import { Image } from 'expo-image';
-import React, { useState } from 'react';
+import React, { useMemo } from 'react';
 import Svg, { Path, Rect } from 'react-native-svg';
 
-import { API_ORIGIN } from '@/engine/api';
-import { MAP_PIN_STYLES, pinArtURL } from '@/engine/shop';
-import { ShopIcon } from './shop-icons';
+import { PIN_H, PIN_W, RARITY_HEX, renderPin, shapeForPinId } from '@/engine/pin-art';
 
 const INK = '#141C27';
 
@@ -22,19 +19,17 @@ export function ClassicPin({ color, width = 30, height = 40 }: { color: string; 
 }
 
 /**
- * A map pin exactly as it appears on the Map: the equipped shape's art in the catch's rarity colour,
- * or the classic teardrop. Falls back to the drawn icon if the art can't load.
+ * A map pin exactly as it appears on the Map: the equipped shape, drawn pixel by pixel in the catch's rarity colour
+ * (the same art the website serves), or the classic teardrop. Nothing to download, so it is crisp at any size and
+ * works offline.
  */
 export function PinArt({ id, rarity, color, size = 44 }: { id: string; rarity: string; color: string; size?: number }) {
-  const [failed, setFailed] = useState(false);
-  if (id === 'classic' || !MAP_PIN_STYLES.some((s) => s.id === id)) return <ClassicPin color={color} width={size * 0.75} height={size} />;
-  if (failed) return <ShopIcon id={id} size={size} />;
+  const shape = shapeForPinId(id);
+  const pixels = useMemo(() => (shape ? renderPin(shape, RARITY_HEX[rarity.toLowerCase()] || color) : []), [shape, rarity, color]);
+  if (!shape) return <ClassicPin color={color} width={size * 0.75} height={size} />;
   return (
-    <Image
-      source={{ uri: pinArtURL(API_ORIGIN, id, rarity) }}
-      style={{ width: size * 0.8, height: size }}
-      contentFit="contain"
-      onError={() => setFailed(true)}
-    />
+    <Svg width={size * (PIN_W / PIN_H)} height={size} viewBox={`0 0 ${PIN_W} ${PIN_H}`}>
+      {pixels.map((p) => <Rect key={`${p.x}-${p.y}`} x={p.x} y={p.y} width={1} height={1} fill={p.c} />)}
+    </Svg>
   );
 }

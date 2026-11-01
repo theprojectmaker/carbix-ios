@@ -121,3 +121,16 @@ export function onNotificationTap(go: (route: string) => void) {
     return () => {};
   }
 }
+
+/**
+ * A notification right now, for something that just happened in the app (a finished quest, a level-up). Shows as a
+ * banner on the lock screen and in Notification Center so it is still there later; needs permission like the rest.
+ */
+export async function notifyNow(title: string, body: string, route?: string) {
+  try {
+    if (!(await notifyGranted())) return;
+    await Notifications.scheduleNotificationAsync({ content: { title, body, sound: 'default', data: route ? { route } : {} }, trigger: null });
+  } catch {
+    /* best effort */
+  }
+}

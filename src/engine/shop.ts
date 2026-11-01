@@ -23,6 +23,16 @@ export const MAP_PIN_STYLES: ShopItem[] = [
   { id: 'map-marker-candycorn', marker: 'candycorn', name: 'CANDY CORN', price: 40, season: 'fall', desc: "Your catch pins on the Map become candy corn — color still follows each catch's rarity." },
   { id: 'map-marker-ghost', marker: 'ghost', name: 'GHOST', price: 40, season: 'fall', desc: "Your catch pins on the Map become friendly ghosts — color still follows each catch's rarity." },
   { id: 'map-marker-apple', marker: 'apple', name: 'APPLE', price: 40, season: 'fall', desc: "Your catch pins on the Map become apples — color still follows each catch's rarity." },
+  { id: 'map-marker-snowflake', marker: 'snowflake', name: 'SNOWFLAKE', price: 40, season: 'winter', desc: "Your catch pins on the Map become snowflakes — color still follows each catch's rarity." },
+  { id: 'map-marker-pinetree', marker: 'pinetree', name: 'PINE TREE', price: 40, season: 'winter', desc: "Your catch pins on the Map become pine trees — color still follows each catch's rarity." },
+  { id: 'map-marker-snowman', marker: 'snowman', name: 'SNOWMAN', price: 45, season: 'winter', desc: "Your catch pins on the Map become snowmen — color still follows each catch's rarity." },
+  { id: 'map-marker-mitten', marker: 'mitten', name: 'MITTEN', price: 40, season: 'winter', desc: "Your catch pins on the Map become mittens — color still follows each catch's rarity." },
+  { id: 'map-marker-cocoa', marker: 'cocoa', name: 'HOT COCOA', price: 45, season: 'winter', desc: "Your catch pins on the Map become steaming mugs — color still follows each catch's rarity." },
+  { id: 'map-marker-sled', marker: 'sled', name: 'SLED', price: 40, season: 'winter', desc: "Your catch pins on the Map become sleds — color still follows each catch's rarity." },
+  { id: 'map-marker-tulip', marker: 'tulip', name: 'TULIP', price: 40, season: 'spring', desc: "Your catch pins on the Map become tulips — color still follows each catch's rarity." },
+  { id: 'map-marker-butterfly', marker: 'butterfly', name: 'BUTTERFLY', price: 45, season: 'spring', desc: "Your catch pins on the Map become butterflies — color still follows each catch's rarity." },
+  { id: 'map-marker-bee', marker: 'bee', name: 'BEE', price: 40, season: 'spring', desc: "Your catch pins on the Map become bees — color still follows each catch's rarity." },
+  { id: 'map-marker-umbrella', marker: 'umbrella', name: 'UMBRELLA', price: 40, season: 'spring', desc: "Your catch pins on the Map become umbrellas — color still follows each catch's rarity." },
 ];
 
 export const CATCH_EFFECTS: ShopItem[] = [
@@ -32,6 +42,11 @@ export const CATCH_EFFECTS: ShopItem[] = [
   { id: 'ghostparade', name: 'GHOST PARADE', price: 60, season: 'fall', desc: 'Friendly ghosts float up past the card while purple and orange sparks twinkle.' },
   { id: 'harvestmoon', name: 'HARVEST MOON', price: 70, season: 'fall', desc: 'Moonlight washes over the card and fireflies drift around it.' },
   { id: 'starburst', name: 'STARBURST', price: 60, desc: 'A bright ring blasts out from the card and throws gold stars twice as far.' },
+  { id: 'snowfall', name: 'SNOWFALL', price: 45, season: 'winter', desc: 'Soft snow drifts down over the card in a cold blue glow.' },
+  { id: 'frost', name: 'FROSTBITE', price: 55, season: 'winter', desc: 'Ice crystals shoot out from the card edges and the screen flashes pale blue.' },
+  { id: 'aurora', name: 'AURORA', price: 70, season: 'winter', desc: 'Green and violet lights rise off the card like northern lights.' },
+  { id: 'petals', name: 'PETAL DRIFT', price: 45, season: 'spring', desc: 'Pink and white petals tumble down over the card.' },
+  { id: 'rainbow', name: 'RAINBOW', price: 60, season: 'spring', desc: 'Every colour of spark at once, bursting out in a ring.' },
 ];
 
 export const MAP_PIN_RARITIES = ['common', 'uncommon', 'rare', 'epic', 'legendary', 'mythic'];

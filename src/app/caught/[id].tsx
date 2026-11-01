@@ -14,6 +14,7 @@ import { File } from 'expo-file-system';
 import { catchXP } from '@/engine/xp';
 import { lastScan } from '@/lib/last-scan';
 import { play } from '@/lib/sfx';
+import { equippedTier } from '@/engine/shop';
 import { useGame } from '@/state/game';
 import { fonts, palette, useTheme } from '@/theme/theme';
 
@@ -131,7 +132,7 @@ export default function Caught() {
           </Text>
         </View>
       </View>
-      <CatchSparks rarity={c.car.rarity} shiny={c.shiny} origin={{ x: width / 2, y: height * 0.42 }} />
+      <CatchSparks rarity={c.car.rarity} shiny={c.shiny} effect={equippedTier(g.profile, 'effect') || 'standard'} origin={{ x: width / 2, y: height * 0.42 }} />
     </Screen>
   );
 }

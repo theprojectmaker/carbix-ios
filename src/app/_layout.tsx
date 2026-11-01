@@ -7,7 +7,7 @@ import { Redirect, Stack, router, usePathname } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import React, { useEffect } from 'react';
-import { AppState, View } from 'react-native';
+import { AppState } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Image } from 'expo-image';
 
@@ -16,14 +16,14 @@ import { loadInbox } from '@/lib/inbox';
 import { onNotificationTap, setupNotifications } from '@/lib/notify';
 import { preloadSfx } from '@/lib/sfx';
 import { RaceProvider } from '@/state/race';
-import { PText } from '@/components/ui';
+import { ToastHost } from '@/components/toast';
 import { useTheme } from '@/theme/theme';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
 function Shell() {
   const t = useTheme();
-  const { ready, toast, profile, garage } = useGame();
+  const { ready, profile, garage } = useGame();
   const pathname = usePathname();
   const [fontsLoaded] = useFonts({
     Jersey25_400Regular, PixelifySans_400Regular, PressStart2P_400Regular, Silkscreen_400Regular, Silkscreen_700Bold,
@@ -83,11 +83,7 @@ function Shell() {
         <Stack.Screen name="race" options={{ presentation: 'modal' }} />
       </Stack>
       {needsWelcome && pathname !== '/signed-in' ? <Redirect href="/welcome" /> : null}
-      {toast ? (
-        <View pointerEvents="none" style={{ position: 'absolute', top: 54, left: 12, right: 12, backgroundColor: t.gold, borderWidth: 3, borderColor: t.panel, padding: 10 }}>
-          <PText style={{ color: t.panel, fontSize: 17 }}>{toast}</PText>
-        </View>
-      ) : null}
+      <ToastHost />
     </>
   );
 }

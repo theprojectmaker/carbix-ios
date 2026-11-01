@@ -6,8 +6,10 @@ import { Pressable, ScrollView, Text, View } from 'react-native';
 import { Screen } from '@/components/screen';
 import { PinArt } from '@/components/map-pin';
 import { SeasonGlyph, ShopIcon } from '@/components/shop-icons';
-import { Btn, Chip, PText } from '@/components/ui';
-import { chaptersFor, currentSeason, SEASON_EVENT_NAMES, type Quest } from '@/engine/quests';
+import { Btn, Chip, PText, Sprite } from '@/components/ui';
+import { catalogMatch } from '@/engine/data';
+import type { Catch } from '@/engine/types';
+import { CHAPTER_REWARDS, chaptersFor, currentSeason, daysUntilNext, SEASON_EVENT_NAMES, type Quest } from '@/engine/quests';
 import { SEASON_APP_ICONS, iconEquipped, iconOwned, ownedKey } from '@/engine/appicons';
 import { effectEntries, mapPinEntries } from '@/engine/shop';
 import { play } from '@/lib/sfx';
@@ -32,7 +34,7 @@ function Chipish({ label, color }: { label: string; color: string }) {
 }
 
 /** The quest you are on, said in plain words: what to do, how far along, what you win. */
-function NowCard({ q, step, total, have, need }: { q: Quest; step: number; total: number; have: number; need: number }) {
+function NowCard({ q, step, total, have, need, matched }: { q: Quest; step: number; total: number; have: number; need: number; matched: Catch[] }) {
   const filled = Math.min(have, need);
   const dots = need <= 12;
   return (
@@ -53,6 +55,22 @@ function NowCard({ q, step, total, have, need }: { q: Quest; step: number; total
         </View>
       )}
       <Text style={{ fontFamily: fonts.display, fontSize: 20, color: filled >= need ? palette.green : '#fff' }}>{filled} of {need} done</Text>
+      {matched.length ? (
+        <View style={{ gap: 4 }}>
+          <Text style={{ fontFamily: fonts.utilityBold, fontSize: 8.5, color: palette.lcdDim, letterSpacing: 1.5 }}>COUNTED SO FAR</Text>
+          {matched.slice(0, 6).map((c) => {
+            const e = catalogMatch(c.car);
+            return (
+              <View key={c.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                {e ? <Sprite entry={e} size={40} /> : <View style={{ width: 40, height: 28 }} />}
+                <Text style={{ fontFamily: fonts.display, fontSize: 15, color: '#fff', flex: 1 }} numberOfLines={1}>{c.car.make.toUpperCase()} {c.car.model.toUpperCase()}</Text>
+                <Text style={{ fontFamily: fonts.utility, fontSize: 8.5, color: palette.lcdDim }}>{String(c.car.color || '').toUpperCase()}</Text>
+              </View>
+            );
+          })}
+          {matched.length > 6 ? <Text style={{ fontFamily: fonts.utility, fontSize: 8.5, color: palette.lcdDim }}>AND {matched.length - 6} MORE</Text> : null}
+        </View>
+      ) : null}
       <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
         <Text style={{ fontFamily: fonts.utility, fontSize: 9.5, color: palette.lcdDim }}>YOU WIN</Text>
         <Chipish label={`${q.xp} XP`} color={palette.gold} />
@@ -75,7 +93,13 @@ function QuestsView() {
   const starts = (g.profile.questStarts || {}) as Record<number, number>;
   const q = quests[step];
   const prog = q ? q.test(starts[step] ?? 0) : null;
+  const since = starts[step] ?? 0;
+  const matched = q && q.pred ? g.garage.filter((c) => c.ts >= since && !!q.pred!(c)) : [];
   const chapters = chaptersFor(season.event);
+  const [now] = useState(() => Date.now());
+  const left = daysUntilNext(season, now);
+  const nextName = SEASON_EVENT_NAMES[season.next];
+  const nextDate = new Date(season.end).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }).toUpperCase();
   const [openCh, setOpenCh] = useState<Record<string, boolean>>({});
 
   return (
@@ -87,13 +111,26 @@ function QuestsView() {
       </Panel>
 
       {q && prog ? (
-        <NowCard q={q} step={step} total={quests.length} have={prog.have} need={prog.need} />
+        <NowCard q={q} step={step} total={quests.length} have={prog.have} need={prog.need} matched={matched} />
       ) : (
         <Panel>
           <Text style={{ fontFamily: fonts.display, fontSize: 26, color: palette.gold }}>YOU FINISHED EVERY QUEST</Text>
           <Text style={{ fontFamily: fonts.prose, fontSize: 15, color: '#C9D2E6' }}>A brand new set shows up next season.</Text>
         </Panel>
       )}
+
+      <View style={{ backgroundColor: palette.panel, borderWidth: 3, borderColor: INK, padding: 12, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+        <View style={{ alignItems: 'center', minWidth: 64 }}>
+          <Text style={{ fontFamily: fonts.display, fontSize: 36, lineHeight: 38, color: left <= 7 ? palette.red : palette.gold }}>{left}</Text>
+          <Text style={{ fontFamily: fonts.utilityBold, fontSize: 8, color: palette.lcdDim, letterSpacing: 1 }}>DAYS</Text>
+        </View>
+        <View style={{ flex: 1, gap: 2 }}>
+          <Text style={{ fontFamily: fonts.display, fontSize: 18, color: '#fff' }}>UNTIL {season.next.toUpperCase()} STARTS</Text>
+          <Text style={{ fontFamily: fonts.utility, fontSize: 9.5, color: palette.lcdDim, lineHeight: 14 }}>
+            {nextName} BEGINS {nextDate} WITH 50 NEW QUESTS, NEW MAP PINS AND CATCH EFFECTS. UNFINISHED QUESTS RESET; ORBS AND EVERYTHING YOU OWN STAY.
+          </Text>
+        </View>
+      </View>
 
       <Text style={{ fontFamily: fonts.utilityBold, fontSize: 10, color: palette.lcdDim, letterSpacing: 1.5, marginTop: 4 }}>
         THE WHOLE SEASON  -  {step} OF {quests.length} DONE
@@ -115,6 +152,11 @@ function QuestsView() {
               <View style={{ height: 12, borderWidth: 2, borderColor: INK, backgroundColor: '#222c3d' }}>
                 <View style={{ flex: 1, width: `${(done / total) * 100}%`, backgroundColor: c.accent }} />
               </View>
+              {CHAPTER_REWARDS[c.key] ? (
+                <Text style={{ fontFamily: fonts.utilityBold, fontSize: 8.5, color: done === total ? palette.green : c.accent, letterSpacing: 1 }}>
+                  {done === total ? 'EARNED: ' : 'FINISH FOR: '}{CHAPTER_REWARDS[c.key]}
+                </Text>
+              ) : null}
             </Pressable>
             {open ? (
               <View style={{ paddingHorizontal: 12, paddingBottom: 12 }}>
@@ -237,7 +279,7 @@ function ShopView() {
             <View style={{ height: 64, justifyContent: 'center' }}>
               {e.track === 'mappin' ? <PinArt id={e.id} rarity="legendary" color="#C9A227" size={60} /> : <ShopIcon id={e.id} size={60} />}
             </View>
-            {e.season ? <Text style={{ fontFamily: fonts.utilityBold, fontSize: 8, color: INK, backgroundColor: e.season === 'fall' ? '#E0863A' : e.season === 'summer' ? '#F2D36B' : '#9FC3E0', paddingHorizontal: 5, paddingVertical: 2 }}>{e.season.toUpperCase()} ONLY</Text> : <Text style={{ fontFamily: fonts.utilityBold, fontSize: 8, color: palette.lcdDim }}>ALWAYS AVAILABLE</Text>}
+            {e.season ? <Text style={{ fontFamily: fonts.utilityBold, fontSize: 8, color: INK, backgroundColor: e.season === 'fall' ? '#E0863A' : e.season === 'summer' ? '#F2D36B' : e.season === 'spring' ? '#A8D86E' : '#9FC3E0', paddingHorizontal: 5, paddingVertical: 2 }}>{e.season.toUpperCase()} ONLY</Text> : <Text style={{ fontFamily: fonts.utilityBold, fontSize: 8, color: palette.lcdDim }}>ALWAYS AVAILABLE</Text>}
             <Text style={{ fontFamily: fonts.display, fontSize: 18, color: '#fff', textAlign: 'center' }}>{e.name}</Text>
             <Text style={{ fontFamily: fonts.utility, fontSize: 9, color: palette.lcdDim, textAlign: 'center' }} numberOfLines={3}>{e.desc}</Text>
             {e.equipped ? (
@@ -261,7 +303,7 @@ export default function Season() {
   const [seg, setSeg] = useState<'quests' | 'shop'>(tab === 'shop' ? 'shop' : 'quests');
   const season = currentSeason();
   const [now] = useState(() => Date.now());
-  const daysLeft = Math.max(1, Math.ceil((season.end - now) / 864e5));
+  const daysLeft = daysUntilNext(season, now);
   return (
     <Screen edges={['top', 'bottom']}>
       <ScrollView contentContainerStyle={{ padding: 14, gap: 12, paddingBottom: 30 }}>
@@ -270,7 +312,7 @@ export default function Season() {
             <SeasonGlyph season={season.event} size={44} />
             <PText style={{ fontSize: 40, lineHeight: 42, color: t.red, flexShrink: 1 }}>{SEASON_EVENT_NAMES[season.event]}</PText>
           </View>
-          <PText style={{ color: t.muted, fontSize: 15 }}>{season.name}  -  {daysLeft} DAYS LEFT  -  {(g.profile.orbs as number) || 0} ORBS</PText>
+          <PText style={{ color: t.muted, fontSize: 15 }}>{season.name}  -  {daysLeft} DAYS UNTIL {season.next.toUpperCase()}  -  {(g.profile.orbs as number) || 0} ORBS</PText>
         </View>
         <View style={{ flexDirection: 'row' }}>
           <Chip label="QUESTS" on={seg === 'quests'} onPress={() => { play('tab'); setSeg('quests'); }} />

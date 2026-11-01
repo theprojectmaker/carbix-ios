@@ -1,6 +1,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useSyncExternalStore } from 'react';
 
+import { showToast } from './toast';
+
 /**
  * The in-app notification inbox: race invites, friend requests, level-ups, finished quests, trophies, reactions on
  * your catches. Kept on this device (last 60), shown behind the bell in the header. Nothing here is a push notification;
@@ -38,7 +40,7 @@ export async function loadInbox() {
 }
 
 /** Adds a notice. `key` dedupes: the same key within a day is not added twice (polls repeat). */
-export function addNotice(n: { kind: NoticeKind; title: string; body?: string; route?: string; key?: string }) {
+export function addNotice(n: { kind: NoticeKind; title: string; body?: string; route?: string; key?: string; quiet?: boolean }) {
   const now = Date.now();
   if (n.key) {
     const id = 'k:' + n.key;
@@ -48,6 +50,7 @@ export function addNotice(n: { kind: NoticeKind; title: string; body?: string; r
   } else {
     items = [{ id: now.toString(36) + Math.random().toString(36).slice(2, 6), ts: now, kind: n.kind, title: n.title, body: n.body, route: n.route, read: false }, ...items].slice(0, MAX);
   }
+  if (!n.quiet) showToast({ kind: n.kind, title: n.title, body: n.body, route: n.route });
   emit();
   save();
 }

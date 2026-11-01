@@ -74,7 +74,7 @@ function randomGarage(now: number, n: number): Catch[] {
   return out;
 }
 
-for (const iso of ['2026-10-18T15:00:00Z', '2026-07-20T15:00:00Z']) {
+for (const iso of ['2026-10-18T15:00:00Z', '2026-07-20T15:00:00Z', '2027-01-15T15:00:00Z', '2027-04-20T15:00:00Z', '2026-12-21T15:00:00Z']) {
   let maxStep = 0;
 test(`quest ladder matches the web app (${iso})`, () => {
     const now = new Date(iso).getTime();
@@ -107,4 +107,22 @@ test('the ladder has 50 quests and rebuilds per season', () => {
   const p = normalizeProfile(null);
   assert.equal(buildQuests([], p, s, now).length, 50);
   assert.equal(buildQuests([], p, currentSeason(new Date('2026-07-20T15:00:00Z')), now).length, 50);
+});
+
+test('seasons follow the real calendar and keep their keys', () => {
+  const at = (iso: string) => currentSeason(new Date(iso));
+  assert.equal(at('2026-11-01T15:00:00Z').key, '2026Q4');
+  assert.equal(at('2026-11-01T15:00:00Z').event, 'fall');
+  assert.equal(at('2026-12-20T15:00:00Z').event, 'fall');
+  assert.equal(at('2026-12-21T15:00:00Z').event, 'winter');
+  assert.equal(at('2026-12-21T15:00:00Z').key, '2027Q1');
+  assert.equal(at('2027-02-01T15:00:00Z').key, '2027Q1');
+  assert.equal(at('2027-03-19T15:00:00Z').event, 'winter');
+  assert.equal(at('2027-03-20T15:00:00Z').event, 'spring');
+  assert.equal(at('2027-06-21T15:00:00Z').event, 'summer');
+  assert.equal(at('2027-09-22T15:00:00Z').event, 'fall');
+  assert.equal(at('2026-11-01T15:00:00Z').next, 'winter');
+  const fall = at('2026-11-01T15:00:00Z');
+  assert.equal(new Date(fall.end).getMonth(), 11);
+  assert.equal(new Date(fall.end).getDate(), 21);
 });

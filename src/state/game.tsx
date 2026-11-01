@@ -12,11 +12,12 @@ import {
 import type { Car, Catch, Profile } from '@/engine/types';
 import { googleSignInCode } from '@/lib/google-signin';
 import { addNotice } from '@/lib/inbox';
-import { DEFAULT_NOTIFY, planLocalNotifications, registerPush, type NotifyPrefs } from '@/lib/notify';
+import { DEFAULT_NOTIFY, planLocalNotifications, registerPush, type NotifyPrefs, notifyNow } from '@/lib/notify';
 import { play, setSfxVolume, setSilentMute } from '@/lib/sfx';
 import { catchBonuses, cotd, evalChallenges, nextCombo } from '@/engine/daily';
 import { trophyCheck } from '@/engine/extras';
 import { advanceQuests, type QuestEvent } from '@/engine/quests';
+import { showToast } from '@/lib/toast';
 import { buyIcon, equipIcon } from '@/engine/appicons';
 import { buyItem, equipItem, type Track } from '@/engine/shop';
 import { currentSeason } from '@/engine/quests';
@@ -42,7 +43,6 @@ type Game = {
   streak: number;
   bixPct: number;
   caughtNs: Set<number>;
-  toast: string;
   notify: (msg: string) => void;
   shopBuy: (track: Track, id: string) => boolean;
   shopEquip: (track: Track, id: string) => void;
@@ -72,11 +72,6 @@ function questsView(garage: Catch[], profile: Profile) {
   return advanceQuests(garage, profile);
 }
 
-function describe(e: QuestEvent): string {
-  if (e.type === 'progress') return `${e.have}/${e.need} — ${e.title}`;
-  if (e.type === 'complete') return `QUEST ${e.step} COMPLETE — +${e.xp} XP · +${e.orbs} ORBS`;
-  return e.label.includes('—') || e.label.includes('+') || e.label.includes('×') ? e.label : `CHAPTER COMPLETE - ${e.label}`;
-}
 
 const Ctx = createContext<Game | null>(null);
 
@@ -86,13 +81,12 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   const [profile, setProfile] = useState<Profile>(() => normalizeProfile(null));
   const [settings, setSettingsState] = useState<Settings>(DEFAULT_SETTINGS);
   const [syncState, setSyncState] = useState('');
-  const [toast, setToast] = useState('');
-  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  /** Quest progress and bonus lines as pop-ups (finished quests and chapters go through the inbox, which pops too). */
   const say = useCallback((events: QuestEvent[]) => {
-    if (!events.length) return;
-    setToast(events.map(describe).join(' | '));
-    if (toastTimer.current) clearTimeout(toastTimer.current);
-    toastTimer.current = setTimeout(() => setToast(''), 3500);
+    for (const e of events) {
+      if (e.type === 'progress') showToast({ kind: 'progress', title: `${e.have} OF ${e.need}  -  ${e.title}`, route: '/season', ms: 2400 });
+      else if (e.type === 'chapter' && !e.label.includes('—') && !e.label.includes('+') && !e.label.includes('×')) showToast({ kind: 'trophy', title: `CHAPTER COMPLETE: ${e.label}`, body: 'A NEW CHAPTER OF QUESTS IS OPEN.', route: '/season' });
+    }
   }, []);
   const latest = useRef({ garage, profile });
   const settingsRef = useRef(settings);
@@ -165,9 +159,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   }, [settings.silentMute]);
 
   const flash = useCallback((msg: string) => {
-    setToast(msg);
-    if (toastTimer.current) clearTimeout(toastTimer.current);
-    toastTimer.current = setTimeout(() => setToast(''), 3000);
+    showToast({ kind: /NOT |MISSED|FAIL|OOPS|ERROR/i.test(msg) ? 'error' : 'info', title: msg });
   }, []);
 
   const shopBuy = useCallback((track: Track, id: string) => {
@@ -306,13 +298,23 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     const leveled = lvNow > levelFor(totalXp(latest.current.garage.slice(1), p0));
     if (leveled) play('levelup');
     else if (r.events.some((e) => e.type === 'complete') || ch.won.length) play('streak');
-    if (leveled) addNotice({ kind: 'level', title: `LEVEL ${lvNow}: ${rankFor(lvNow)}`, body: 'KEEP CATCHING TO CLIMB THE RANKS.', route: '/home' });
-    for (const e of r.events) if (e.type === 'complete') addNotice({ kind: 'quest', title: `QUEST ${e.step} COMPLETE`, body: `+${e.xp} XP, +${e.orbs} ORBS. THE NEXT QUEST IS OPEN.`, route: '/season' });
+    if (leveled) {
+      addNotice({ kind: 'level', title: `LEVEL ${lvNow}: ${rankFor(lvNow)}`, body: 'KEEP CATCHING TO CLIMB THE RANKS.', route: '/home' });
+      notifyNow(`Level ${lvNow}: ${rankFor(lvNow)}`, 'You just levelled up. Keep catching to climb the ranks.', '/home');
+    }
+    for (const e of r.events) {
+      if (e.type !== 'complete') continue;
+      const done = r.quests[e.step - 1];
+      const next = r.quests[e.step];
+      addNotice({ kind: 'quest', title: `QUEST DONE: ${done ? done.t : 'QUEST ' + e.step}`, body: `+${e.xp} XP, +${e.orbs} ORBS.${e.badge ? ' MILESTONE BADGE EARNED.' : ''}${next ? ' NEXT: ' + next.t : ' THAT WAS THE LAST ONE.'}`, route: '/season' });
+      notifyNow(`Quest done: ${done ? done.t : 'quest ' + e.step}`, `+${e.xp} XP, +${e.orbs} Orbs.${next ? ' Next up: ' + next.t : ''}`, '/season');
+    }
     for (const ev of tr.events) addNotice({ kind: 'trophy', title: ev, route: '/trophies' });
     if (tr.events.length) setTimeout(() => play('fanfare'), 900);
     for (const c of ch.won) addNotice({ kind: 'daily', title: `DAILY DONE: ${c.label}`, body: `+${c.xp} XP`, route: '/home' });
-    if (lines.length) say([...lines.map((l) => ({ type: 'chapter', label: l }) as QuestEvent), ...r.events]);
-    else say(r.events);
+    if (lines.length) showToast({ kind: 'bonus', title: lines[0], body: lines.length > 1 ? lines.slice(1).join('  -  ') : undefined, route: '/home' });
+    if (firstToday && np.days.length >= 2) showToast({ kind: 'daily', title: `DAY ${streak(np)} OF YOUR STREAK`, body: 'FIRST CATCH TODAY. COME BACK TOMORROW TO KEEP IT GOING.', route: '/home' });
+    say(r.events);
     return entry;
   }, [say]);
 
@@ -485,9 +487,9 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       ready, garage, profile, settings, xp, level, rank: rankFor(level),
       nextLevelXp: xpForLevel(level + 1), prevLevelXp: xpForLevel(level),
       streak: streak(profile), bixPct: CATALOG.length ? (caught.size / CATALOG.length) * 100 : 0,
-      toast, notify: flash, shopBuy, shopEquip, iconBuy, iconWear, quests: () => questsView(garage, profile), caughtNs: caught, addCatch, removeCatch, replaceCar, secondLook, setSettings, setUsername, toggleStar, patchProfile, restore, linkAccount, recalcScore, replanNotifications, googleSignIn, syncState,
+      notify: flash, shopBuy, shopEquip, iconBuy, iconWear, quests: () => questsView(garage, profile), caughtNs: caught, addCatch, removeCatch, replaceCar, secondLook, setSettings, setUsername, toggleStar, patchProfile, restore, linkAccount, recalcScore, replanNotifications, googleSignIn, syncState,
     };
-  }, [ready, garage, profile, settings, toast, flash, shopBuy, shopEquip, iconBuy, iconWear, addCatch, removeCatch, replaceCar, secondLook, setSettings, setUsername, toggleStar, patchProfile, restore, linkAccount, recalcScore, replanNotifications, googleSignIn, syncState]);
+  }, [ready, garage, profile, settings, flash, shopBuy, shopEquip, iconBuy, iconWear, addCatch, removeCatch, replaceCar, secondLook, setSettings, setUsername, toggleStar, patchProfile, restore, linkAccount, recalcScore, replanNotifications, googleSignIn, syncState]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

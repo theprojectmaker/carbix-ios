@@ -11,19 +11,30 @@ export const SEASON_EVENT_NAMES: Record<SeasonName, string> = {
   summer: 'SUNSET CIRCUIT', fall: 'HARVEST HIGHWAY', winter: 'FROSTLINE', spring: 'BLOOM RUN',
 };
 
-export type Season = { key: string; name: string; start: number; end: number; idx: number; event: SeasonName };
+export type Season = { key: string; name: string; start: number; end: number; idx: number; event: SeasonName; next: SeasonName };
 
+/* Real seasons, on the calendar people live by (Eastern Time): winter starts Dec 21 and ends when spring starts
+   on Mar 20; summer starts Jun 21; fall Sep 22. Keys stay `YYYYQn` so everything already saved (quest cursors,
+   icon packs, leaderboards) keeps its meaning: the winter that starts Dec 21 2026 is "2027Q1", shown as WINTER '26. */
+const SEASON_NAMES = ['WINTER', 'SPRING', 'SUMMER', 'FALL'];
 export function currentSeason(now = new Date()): Season {
   const d = dateKeyET(now);
-  const yr = Number(d.slice(0, 4));
-  const q = Math.floor((Number(d.slice(5, 7)) - 1) / 3);
-  const names = ['WINTER', 'SPRING', 'SUMMER', 'FALL'];
-  const ev = names[q].toLowerCase() as SeasonName;
+  const yr = Number(d.slice(0, 4)), mo = Number(d.slice(5, 7)), day = Number(d.slice(8, 10));
+  const onOrAfter = (m: number, dd: number) => mo > m || (mo === m && day >= dd);
+  let q: number, keyYear = yr, label = yr, start: Date, end: Date;
+  if (onOrAfter(12, 21)) { q = 0; keyYear = yr + 1; start = new Date(yr, 11, 21); end = new Date(yr + 1, 2, 20); }
+  else if (onOrAfter(9, 22)) { q = 3; start = new Date(yr, 8, 22); end = new Date(yr, 11, 21); }
+  else if (onOrAfter(6, 21)) { q = 2; start = new Date(yr, 5, 21); end = new Date(yr, 8, 22); }
+  else if (onOrAfter(3, 20)) { q = 1; start = new Date(yr, 2, 20); end = new Date(yr, 5, 21); }
+  else { q = 0; label = yr - 1; start = new Date(yr - 1, 11, 21); end = new Date(yr, 2, 20); }
   return {
-    key: `${yr}Q${q + 1}`, name: `${names[q]} '${String(yr).slice(2)}`,
-    start: new Date(yr, q * 3, 1).getTime(), end: new Date(yr, q * 3 + 3, 1).getTime(), idx: q, event: ev,
+    key: `${keyYear}Q${q + 1}`, name: `${SEASON_NAMES[q]} '${String(label).slice(2)}`,
+    start: start.getTime(), end: end.getTime(), idx: q,
+    event: SEASON_NAMES[q].toLowerCase() as SeasonName, next: SEASON_NAMES[(q + 1) % 4].toLowerCase() as SeasonName,
   };
 }
+/** Whole days until the next season starts. */
+export const daysUntilNext = (s: Season, now = Date.now()) => Math.max(0, Math.ceil((s.end - now) / 864e5));
 
 const SEASON_COLORS = [['Silver', 'White', 'Black', 'Grey'], ['Green', 'Yellow', 'White', 'Blue'], ['Green', 'Blue', 'Red', 'Yellow'], ['Orange', 'Brown', 'Red', 'Black']];
 const SEASON_BRANDS = [['Toyota', 'Subaru', 'Volkswagen', 'Jeep'], ['Mazda', 'Honda', 'Hyundai', 'Kia'], ['BMW', 'Mercedes-Benz', 'Audi', 'Nissan'], ['Ford', 'Chevrolet', 'Dodge', 'Nissan']];
@@ -41,17 +52,41 @@ export const FALL_CHAPTERS: Chapter[] = [
   { key: 'moon', name: 'HARVEST MOON', accent: '#C9A227', from: 26, to: 37, desc: 'Long shadows and a big orange moon — Epic, Legendary, and the cars that make a season.' },
   { key: 'frost', name: 'FIRST FROST', accent: '#6FA3C8', from: 38, to: 49, desc: 'Cold mornings, clear skies — one last sprint to the Harvest Highway finale.' },
 ];
-export const chaptersFor = (ev: SeasonName) => (ev === 'fall' ? FALL_CHAPTERS : SUMMER_CHAPTERS);
+export const WINTER_CHAPTERS: Chapter[] = [
+  { key: 'snowfall', name: 'FIRST SNOW', accent: '#9FC3E0', from: 0, to: 12, desc: 'The first flakes fall and the season opens — easy colors, easy brands, first Orbs in your pocket.' },
+  { key: 'icebound', name: 'ICE ROAD', accent: '#6FA3C8', from: 13, to: 25, desc: 'Salt-white roads and frosted windshields — more brands, more countries, the ladder starts asking more.' },
+  { key: 'aurora', name: 'AURORA NIGHTS', accent: '#8C6FB5', from: 26, to: 37, desc: 'Long nights and bright skies — Epic, Legendary, and the cars that make a season.' },
+  { key: 'thaw', name: 'THE THAW', accent: '#5FA89B', from: 38, to: 49, desc: 'The ice cracks and the days get longer — one last sprint to the Frostline finale.' },
+];
+export const SPRING_CHAPTERS: Chapter[] = [
+  { key: 'sprout', name: 'FIRST SPROUT', accent: '#7CB65B', from: 0, to: 12, desc: 'Green comes back and the season opens — easy colors, easy brands, first Orbs in your pocket.' },
+  { key: 'bloom', name: 'FULL BLOOM', accent: '#E58CB5', from: 13, to: 25, desc: 'Blossoms on every street — more brands, more countries, the ladder starts asking more.' },
+  { key: 'rain', name: 'APRIL SHOWERS', accent: '#5C9ED6', from: 26, to: 37, desc: 'Wet roads and bright reflections — Epic, Legendary, and the cars that make a season.' },
+  { key: 'meadow', name: 'OPEN MEADOW', accent: '#C9A227', from: 38, to: 49, desc: 'Long evenings and open windows — one last sprint to the Bloom Run finale.' },
+];
+export const chaptersFor = (ev: SeasonName) => (ev === 'fall' ? FALL_CHAPTERS : ev === 'winter' ? WINTER_CHAPTERS : ev === 'spring' ? SPRING_CHAPTERS : SUMMER_CHAPTERS);
+/** What finishing each chapter hands you, in plain words, for the quest screen. */
+export const CHAPTER_REWARDS: Record<string, string> = {
+  leaves: 'ACORN MAP PIN', pumpkin: 'PUMPKIN MAP PIN + HAYRIDE HERO TITLE', moon: 'EMBERS CATCH EFFECT + HARVEST GRADIENT', frost: 'GHOST MAP PIN + HARVEST MOON EFFECT + HARVEST HIGHWAY FRAME',
+  beach: 'BEACH BALL PIN (COMING SOON)', road: 'ROAD ATLAS + ROAD TRIPPER TITLE', golden: 'SUNSET GRADIENT', midnight: 'SUNSET CIRCUIT FRAME',
+  snowfall: 'SNOWFLAKE MAP PIN', icebound: 'MITTEN MAP PIN + ICE ROAD TRUCKER TITLE', aurora: 'SNOWFALL CATCH EFFECT + AURORA GRADIENT', thaw: 'SNOWMAN MAP PIN + AURORA EFFECT + FROSTLINE FRAME',
+  sprout: 'TULIP MAP PIN', bloom: 'BUTTERFLY MAP PIN + BLOOM RUNNER TITLE', rain: 'PETAL DRIFT EFFECT + BLOOM GRADIENT', meadow: 'BEE MAP PIN + RAINBOW EFFECT + BLOOM RUN FRAME',
+};
 
 /* ---------- colour families ---------- */
 const COLOR_FAMILY_KEYWORDS: Record<string, string[]> = {
-  Red: ['red', 'rosso', 'rouge', 'rot'], Orange: ['orange', 'arancio'],
-  Yellow: ['yellow', 'giallo', 'jaune', 'gelb', 'gold', 'champagne'],
-  Green: ['green', 'verde', 'vert', 'grün', 'gruen'], Blue: ['blue', 'blu', 'azzurro', 'bleu', 'blau', 'navy'],
-  Brown: ['brown', 'marrone', 'braun', 'tan', 'beige', 'bronze'], Black: ['black', 'nero', 'noir', 'schwarz'],
-  White: ['white', 'bianco', 'blanc', 'weiss', 'weiß', 'pearl'], Grey: ['grey', 'gray', 'grigio', 'gris', 'grau', 'gunmetal'],
-  Silver: ['silver', 'argento', 'argent'], Purple: ['purple', 'viola', 'violet', 'lilac', 'lavender'],
-  Pink: ['pink', 'rosa', 'magenta', 'fuchsia'],
+  Red: ['red', 'rosso', 'rouge', 'rot', 'crimson', 'scarlet', 'burgundy', 'maroon', 'cherry', 'ruby', 'wine', 'merlot', 'cardinal'],
+  Orange: ['orange', 'arancio', 'tangerine', 'papaya', 'mango', 'apricot', 'pumpkin'],
+  Yellow: ['yellow', 'giallo', 'jaune', 'gelb', 'gold', 'champagne', 'amber', 'mustard', 'lemon', 'canary'],
+  Green: ['green', 'verde', 'vert', 'grün', 'gruen', 'lime', 'olive', 'mint', 'emerald', 'teal', 'sage', 'forest'],
+  Blue: ['blue', 'blu', 'azzurro', 'bleu', 'blau', 'navy', 'cobalt', 'turquoise', 'cyan', 'indigo', 'sapphire', 'aqua'],
+  Brown: ['brown', 'marrone', 'braun', 'tan', 'beige', 'bronze', 'copper', 'sand', 'khaki', 'mocha', 'coffee', 'sienna', 'umber', 'rust', 'chocolate', 'taupe'],
+  Black: ['black', 'nero', 'noir', 'schwarz', 'onyx', 'obsidian', 'jet'],
+  White: ['white', 'bianco', 'blanc', 'weiss', 'weiß', 'pearl', 'cream', 'ivory'],
+  Grey: ['grey', 'gray', 'grigio', 'gris', 'grau', 'gunmetal', 'charcoal', 'graphite', 'slate', 'nardo', 'titanium'],
+  Silver: ['silver', 'argento', 'argent', 'chrome', 'platinum', 'steel'],
+  Purple: ['purple', 'viola', 'violet', 'lilac', 'lavender', 'plum', 'amethyst'],
+  Pink: ['pink', 'rosa', 'magenta', 'fuchsia', 'rose'],
 };
 
 function hexToHSL(hex: unknown) {
@@ -73,9 +108,13 @@ function hueFamily({ h, s, l }: { h: number; s: number; l: number }): string | n
   if (l > 0.92) return 'White';
   if (l < 0.12) return 'Black';
   if (s < 0.18) return l > 0.55 ? 'Silver' : 'Grey';
-  if (h >= 15 && h < 50 && s < 0.65 && l < 0.45) return 'Brown';
-  if (h < 15 || h >= 345) return 'Red';
-  if (h < 45) return 'Orange';
+  if (h < 12 || h >= 345) return 'Red';
+  if (h < 50) {
+    // the warm band: tan, copper, sienna, sand and most browns live here too, so only a vivid, mid-light paint is Orange
+    const vivid = s >= 0.6 && l >= 0.38 && l <= 0.72;
+    if (h < 18) return vivid ? 'Red' : 'Brown';
+    return vivid ? 'Orange' : 'Brown';
+  }
   if (h < 70) return 'Yellow';
   if (h < 190) return 'Green';
   if (h < 260) return 'Blue';
@@ -86,8 +125,9 @@ function hueFamily({ h, s, l }: { h: number; s: number; l: number }): string | n
 
 type AnyCar = Catch['car'];
 export function carColorFamily(car: AnyCar | undefined): string | null {
-  const text = String((car && car.color) || '').toLowerCase();
-  for (const fam in COLOR_FAMILY_KEYWORDS) if (COLOR_FAMILY_KEYWORDS[fam].some((kw) => text.includes(kw))) return fam;
+  // whole words only: "Tangerine" is not "tan", "Titanium" is not "tan", "Rosso" is not "rose"
+  const words = String((car && car.color) || '').toLowerCase().split(/[^a-z\u00c0-\u024f]+/);
+  for (const fam in COLOR_FAMILY_KEYWORDS) if (COLOR_FAMILY_KEYWORDS[fam].some((kw) => words.includes(kw))) return fam;
   if (car && car.colorHex === '#8a92a8') return null;
   const hsl = hexToHSL(car && car.colorHex);
   return hsl ? hueFamily(hsl) : null;
@@ -106,6 +146,8 @@ export type Progress = { have: number; need: number; timerFrom?: number | null; 
 export type Quest = {
   t: string; desc?: string; xp: number; orbs: number; badge?: boolean; cat: string; kind: string;
   n?: number; hrs?: number; tier?: string; cidx?: number; bidx?: number; timerMs?: number; altDesc?: string;
+  /** For count quests: the catch rule, so the screen can list the cars that counted. */
+  pred?: (g: Catch) => unknown;
   exclusive?: { track: string; tier: string };
   chapterMilestone?: { chapterKey: string; label: string; grant: GrantFn };
   test: (startTs: number) => Progress;
@@ -173,11 +215,11 @@ export function buildQuests(
   const h = questHelpers(garage, profile, now);
   const C = SEASON_COLORS[season.idx], B = SEASON_BRANDS[season.idx];
   const colorQ = (n: number, c: string, xp: number, orbs: number, badge?: boolean): Quest => ({
-    t: `CATCH ${n} ${c.toUpperCase()} CARS`, xp, orbs, badge, cat: 'color', kind: 'color', n, cidx: C.indexOf(c),
+    t: `CATCH ${n} ${c.toUpperCase()} CARS`, xp, orbs, badge, cat: 'color', kind: 'color', n, cidx: C.indexOf(c), pred: (g) => colorMatchesFamily(g.car, c),
     test: (s) => ({ have: h.sinceCount(s, (g) => colorMatchesFamily(g.car, c)), need: n }),
   });
   const brandQ = (n: number, b: string, xp: number, orbs: number, badge?: boolean): Quest => ({
-    t: `CATCH ${n} ${b.toUpperCase()}${n > 1 ? 'S' : ''}`, xp, orbs, badge, cat: 'brand', kind: 'singleBrand', n, bidx: B.indexOf(b),
+    t: `CATCH ${n} ${b.toUpperCase()}${n > 1 ? 'S' : ''}`, xp, orbs, badge, cat: 'brand', kind: 'singleBrand', n, bidx: B.indexOf(b), pred: (g) => g.car.make === b,
     test: (s) => ({ have: h.sinceCount(s, (g) => g.car.make === b), need: n }),
   });
   const timerQ = (n: number, hrs: number, b: string, xp: number, orbs: number): Quest => ({
@@ -190,7 +232,7 @@ export function buildQuests(
     test: (s) => ({ have: h.bestRaritySince(s) >= RTIER[tier as keyof typeof RTIER] ? 1 : 0, need: 1 }),
   });
   const volumeQ = (n: number, xp: number, orbs: number, badge?: boolean): Quest => ({
-    t: `CATCH ${n} CARS THIS QUEST`, xp, orbs, badge, cat: 'volume', kind: 'volume',
+    t: `CATCH ${n} CARS THIS QUEST`, xp, orbs, badge, cat: 'volume', kind: 'volume', pred: () => true,
     test: (s) => ({ have: h.sinceCount(s, () => true), need: n }),
   });
   const brandsQ = (n: number, xp: number, orbs: number, badge?: boolean): Quest => ({
@@ -207,11 +249,11 @@ export function buildQuests(
     t: 'CATCH A DUPLICATE MODEL', xp, orbs, badge, cat: 'special', kind: 'dup', test: (s) => ({ have: h.hasDupSince(s) ? 1 : 0, need: 1 }),
   });
   const classQ = (n: number, label: string, rx: RegExp, xp: number, orbs: number, badge?: boolean): Quest => ({
-    t: `CATCH ${n} ${label.toUpperCase()}${n > 1 ? 'S' : ''}`, xp, orbs, badge, cat: 'class', kind: 'bodyClass',
+    t: `CATCH ${n} ${label.toUpperCase()}${n > 1 ? 'S' : ''}`, xp, orbs, badge, cat: 'class', kind: 'bodyClass', pred: (g) => rx.test(g.car.class || ''),
     test: (s) => ({ have: h.sinceCount(s, (g) => rx.test(g.car.class || '')), need: n }),
   });
   const countryQ = (n: number, label: string, rx: RegExp, xp: number, orbs: number, badge?: boolean): Quest => ({
-    t: `CATCH ${n} ${label.toUpperCase()} CAR${n > 1 ? 'S' : ''}`, xp, orbs, badge, cat: 'country', kind: 'origin',
+    t: `CATCH ${n} ${label.toUpperCase()} CAR${n > 1 ? 'S' : ''}`, xp, orbs, badge, cat: 'country', kind: 'origin', pred: (g) => rx.test(String(g.car.country || '')),
     test: (s) => ({ have: h.sinceCount(s, (g) => rx.test(String(g.car.country || ''))), need: n }),
   });
   const withExclusive = (q: Quest, track: string, tier: string) => Object.assign(q, { exclusive: { track, tier } });
@@ -289,7 +331,56 @@ export function buildQuests(
     evtQ('HARVEST HIGHWAY FINALE', "The season's grand finale — reaching this quest means every Fall quest before it is already done.", 300, 50, () => ({ have: 1, need: 1 }), { badge: true }),
   ];
 
-  const fall = season.event === 'fall';
+  const winterEvt = (): Quest[] => [
+    evtQ('SNOW DAY', 'Catch three white, silver, or grey cars.', 60, 12, (s) => ({ have: colorsAny(s, ['White', 'Silver', 'Grey']), need: 3 })),
+    evtQ('SALT ROADS', 'Catch three different brands after this quest activates.', 65, 12, (s) => ({ have: h.brandsSince(s), need: 3 })),
+    evtQ('SNOW PLOW', 'Catch a pickup, SUV, or van — something that could push a snowbank.', 55, 10, (s) => ({ have: h.sinceCount(s, (g) => /SUV|TRUCK|VAN|OFFROAD/i.test(g.car.class || '')), need: 1 })),
+    evtQ('ICE BLUE', 'Catch one blue car.', 60, 12, (s) => ({ have: h.sinceCount(s, (g) => colorMatchesFamily(g.car, 'Blue')), need: 1 })),
+    evtQ('MILESTONE — FIRST SNOW', 'Catch five cars during this chapter.', 90, 20, (s) => ({ have: h.sinceCount(s, () => true), need: 5 }), { badge: true }),
+    evtQ('WINTER WORLD', 'Catch cars from three different manufacturer countries.', 80, 14, (s) => ({ have: h.countriesSince(s), need: 3 })),
+    evtQ('BLACK ICE', 'Catch one black car.', 70, 14, (s) => ({ have: h.sinceCount(s, (g) => colorMatchesFamily(g.car, 'Black')), need: 1 })),
+    evtQ('TWIN FLAKES', 'Catch the same model twice during this quest.', 75, 14, (s) => ({ have: h.hasDupSince(s) ? 1 : 0, need: 1 })),
+    evtQ('FIRE AND ICE', 'Catch a red car AND a white car.', 70, 14, (s) => ({
+      have: [h.since(s).some((g) => colorMatchesFamily(g.car, 'Red')), h.since(s).some((g) => colorMatchesFamily(g.car, 'White'))].filter(Boolean).length, need: 2,
+    })),
+    evtQ('MILESTONE — ICE ROAD', 'Reach a 3-day spotting streak.', 110, 25, streakTest, streakAlt),
+    evtQ('WINTER VARIETY', 'Catch a sedan, an SUV, and a coupe or hatchback.', 100, 18, varietyTest),
+    evtQ('ALL-WHEEL TOUR', 'Catch five different brands after this quest activates.', 120, 18, (s) => ({ have: h.brandsSince(s), need: 5 })),
+    evtQ('RARE FROST', 'Catch a Rare-or-better car.', 110, 20, rareTest),
+    evtQ('SNOW SIBLINGS', 'Catch two cars from the same brand but different models.', 90, 18, (s) => ({ have: h.sameMakeDiffModelSince(s) ? 1 : 0, need: 1 })),
+    evtQ('MILESTONE — AURORA NIGHTS', 'Catch ten cars across quests 41–45.', 150, 30, (s) => ({ have: h.sinceCount(questStart40(s), () => true), need: 10 }), { badge: true }),
+    evtQ('POLAR EXPRESS', 'Catch one car each from an Asian, a European, and an American brand.', 130, 22, (s) => ({ have: h.regionsSince(s), need: 3 })),
+    evtQ('WINTER SHINY', 'Catch a Shiny.', 150, 25, shinyTest, shinyAlt),
+    evtQ('FIRST GREEN', 'Catch a green car — spring is on its way.', 90, 18, (s) => ({ have: h.sinceCount(s, (g) => colorMatchesFamily(g.car, 'Green')), need: 1 })),
+    evtQ('THAW RUSH', 'Catch eight cars after this quest activates, with at least four different brands among them.', 180, 30, finalTest),
+    evtQ('FROSTLINE FINALE', "The season's grand finale — reaching this quest means every Winter quest before it is already done.", 300, 50, () => ({ have: 1, need: 1 }), { badge: true }),
+  ];
+  const springEvt = (): Quest[] => [
+    evtQ('FRESH PAINT', 'Catch three green, yellow, or white cars.', 60, 12, (s) => ({ have: colorsAny(s, ['Green', 'Yellow', 'White']), need: 3 })),
+    evtQ('GARDEN ROUTE', 'Catch three different brands after this quest activates.', 65, 12, (s) => ({ have: h.brandsSince(s), need: 3 })),
+    evtQ('HAUL THE MULCH', 'Catch a pickup, SUV, or van.', 55, 10, (s) => ({ have: h.sinceCount(s, (g) => /SUV|TRUCK|VAN|OFFROAD/i.test(g.car.class || '')), need: 1 })),
+    evtQ('TULIP', 'Catch one red or pink car.', 60, 12, (s) => ({ have: colorsAny(s, ['Red', 'Pink']), need: 1 })),
+    evtQ('MILESTONE — FIRST SPROUT', 'Catch five cars during this chapter.', 90, 20, (s) => ({ have: h.sinceCount(s, () => true), need: 5 }), { badge: true }),
+    evtQ('WORLD IN BLOOM', 'Catch cars from three different manufacturer countries.', 80, 14, (s) => ({ have: h.countriesSince(s), need: 3 })),
+    evtQ('RAINY DAY', 'Catch one blue or grey car.', 70, 14, (s) => ({ have: colorsAny(s, ['Blue', 'Grey']), need: 1 })),
+    evtQ('TWIN BUDS', 'Catch the same model twice during this quest.', 75, 14, (s) => ({ have: h.hasDupSince(s) ? 1 : 0, need: 1 })),
+    evtQ('SUN AND RAIN', 'Catch a yellow car AND a blue car.', 70, 14, (s) => ({
+      have: [h.since(s).some((g) => colorMatchesFamily(g.car, 'Yellow')), h.since(s).some((g) => colorMatchesFamily(g.car, 'Blue'))].filter(Boolean).length, need: 2,
+    })),
+    evtQ('MILESTONE — FULL BLOOM', 'Reach a 3-day spotting streak.', 110, 25, streakTest, streakAlt),
+    evtQ('SPRING VARIETY', 'Catch a sedan, an SUV, and a coupe or hatchback.', 100, 18, varietyTest),
+    evtQ('ROAD TO SUMMER', 'Catch five different brands after this quest activates.', 120, 18, (s) => ({ have: h.brandsSince(s), need: 5 })),
+    evtQ('RARE BLOOM', 'Catch a Rare-or-better car.', 110, 20, rareTest),
+    evtQ('SAME ROOTS', 'Catch two cars from the same brand but different models.', 90, 18, (s) => ({ have: h.sameMakeDiffModelSince(s) ? 1 : 0, need: 1 })),
+    evtQ('MILESTONE — APRIL SHOWERS', 'Catch ten cars across quests 41–45.', 150, 30, (s) => ({ have: h.sinceCount(questStart40(s), () => true), need: 10 }), { badge: true }),
+    evtQ('THREE CONTINENTS', 'Catch one car each from an Asian, a European, and an American brand.', 130, 22, (s) => ({ have: h.regionsSince(s), need: 3 })),
+    evtQ('SPRING SHINY', 'Catch a Shiny.', 150, 25, shinyTest, shinyAlt),
+    evtQ('MEADOW GOLD', 'Catch a yellow or gold car.', 90, 18, (s) => ({ have: h.sinceCount(s, (g) => colorMatchesFamily(g.car, 'Yellow')), need: 1 })),
+    evtQ('MEMORIAL DAY RUSH', 'Catch eight cars after this quest activates, with at least four different brands among them.', 180, 30, finalTest),
+    evtQ('BLOOM RUN FINALE', "The season's grand finale — reaching this quest means every Spring quest before it is already done.", 300, 50, () => ({ have: 1, need: 1 }), { badge: true }),
+  ];
+
+  const ev = season.event;
   const arr: Quest[] = [
     colorQ(5, C[0], 15, 6),
     timerQ(2, 1, B[0], 40, 6),
@@ -321,16 +412,30 @@ export function buildQuests(
     brandQ(5, B[1], 150, 22),
     brandsQ(6, 160, 22),
     withExclusive(rarityQ('Mythic', 250, 40, true), 'logo', 'mythic'),
-    ...(fall ? fallEvt() : summerEvt()),
+    ...(ev === 'fall' ? fallEvt() : ev === 'winter' ? winterEvt() : ev === 'spring' ? springEvt() : summerEvt()),
   ];
 
-  if (fall) {
+  if (ev === 'fall') {
     withChapter(arr[12], 'leaves', 'FIRST LEAVES', (p) => grantOwnedCosmetic(p, 'mappin', 'map-marker-acorn'));
-    withChapter(arr[25], 'pumpkin', 'PUMPKIN RUN', (p) => { grantComingSoon(p, 'deckBack', 'flannelback', 'FLANNEL'); grantSummerTitle(p, 'HAYRIDE HERO'); });
+    withChapter(arr[25], 'pumpkin', 'PUMPKIN RUN', (p) => { grantOwnedCosmetic(p, 'mappin', 'map-marker-pumpkin'); grantComingSoon(p, 'deckBack', 'flannelback', 'FLANNEL'); grantSummerTitle(p, 'HAYRIDE HERO'); });
     withExclusive(arr[37], 'lb', 'harvest-gradient');
-    withChapter(arr[37], 'moon', 'HARVEST MOON', () => {});
+    withChapter(arr[37], 'moon', 'HARVEST MOON', (p) => grantOwnedCosmetic(p, 'effect', 'embers'));
     withExclusive(arr[49], 'profile', 'harvest-highway');
-    withChapter(arr[49], 'frost', 'HARVEST HIGHWAY', (p) => grantComingSoon(p, 'catchEffect', 'leafstorm', 'LEAF STORM'));
+    withChapter(arr[49], 'frost', 'HARVEST HIGHWAY', (p) => { grantOwnedCosmetic(p, 'mappin', 'map-marker-ghost'); grantOwnedCosmetic(p, 'effect', 'harvestmoon'); grantComingSoon(p, 'catchEffect', 'leafstorm', 'LEAF STORM'); });
+  } else if (ev === 'winter') {
+    withChapter(arr[12], 'snowfall', 'FIRST SNOW', (p) => grantOwnedCosmetic(p, 'mappin', 'map-marker-snowflake'));
+    withChapter(arr[25], 'icebound', 'ICE ROAD', (p) => { grantOwnedCosmetic(p, 'mappin', 'map-marker-mitten'); grantSummerTitle(p, 'ICE ROAD TRUCKER'); });
+    withExclusive(arr[37], 'lb', 'aurora-gradient');
+    withChapter(arr[37], 'aurora', 'AURORA NIGHTS', (p) => grantOwnedCosmetic(p, 'effect', 'snowfall'));
+    withExclusive(arr[49], 'profile', 'frostline');
+    withChapter(arr[49], 'thaw', 'FROSTLINE', (p) => { grantOwnedCosmetic(p, 'mappin', 'map-marker-snowman'); grantOwnedCosmetic(p, 'effect', 'aurora'); });
+  } else if (ev === 'spring') {
+    withChapter(arr[12], 'sprout', 'FIRST SPROUT', (p) => grantOwnedCosmetic(p, 'mappin', 'map-marker-tulip'));
+    withChapter(arr[25], 'bloom', 'FULL BLOOM', (p) => { grantOwnedCosmetic(p, 'mappin', 'map-marker-butterfly'); grantSummerTitle(p, 'BLOOM RUNNER'); });
+    withExclusive(arr[37], 'lb', 'bloom-gradient');
+    withChapter(arr[37], 'rain', 'APRIL SHOWERS', (p) => grantOwnedCosmetic(p, 'effect', 'petals'));
+    withExclusive(arr[49], 'profile', 'bloom-run');
+    withChapter(arr[49], 'meadow', 'BLOOM RUN', (p) => { grantOwnedCosmetic(p, 'mappin', 'map-marker-bee'); grantOwnedCosmetic(p, 'effect', 'rainbow'); });
   } else {
     withChapter(arr[12], 'beach', 'FIRST SPLASH', (p) => grantComingSoon(p, 'mapPin', 'beachball', 'BEACH BALL'));
     withChapter(arr[25], 'road', 'ROAD TRIPPER', (p) => { grantComingSoon(p, 'deckBack', 'roadatlas', 'ROAD ATLAS'); grantSummerTitle(p, 'ROAD TRIPPER'); });
