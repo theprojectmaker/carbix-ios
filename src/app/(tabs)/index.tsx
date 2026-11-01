@@ -73,6 +73,7 @@ export default function Scan() {
   const [reveal, setReveal] = useState<{ car: Car; thumb: string } | null>(null);
   // where the car is in the frozen shot, found on the phone before the AI answers; the lock frame sits on it
   const [lock, setLock] = useState<Box | null>(null);
+  const [aspect, setAspect] = useState(0); // width / height of the frozen shot, so boxes can be mapped through the cover crop
   const [zoomF, setZoomF] = useState(1);
   const pinch = useRef({ d: 0, z: 1 });
   const [callPicks, setCallPicks] = useState<string[]>(() => newPicks());
@@ -170,13 +171,16 @@ export default function Scan() {
   async function single(rawUri: string) {
     // a 12-megapixel photo decoded several times is what makes iOS kill the app; work from a small copy
     const small = await shrink(rawUri);
+    // freeze the picture and start the scan animation at once; the phone looks for the car while it plays, and the
+    // lock frame glides onto the car when it is found (no stall between the shutter and the scan)
+    setAspect(small.width > 0 && small.height > 0 ? small.width / small.height : 0);
+    setLock(null);
+    setShot(small.uri);
+    setPhase('reading');
+    setStatus('LOOKING FOR THE CAR...');
     const where = await findCar(small.uri);
     rememberScan({ ...small, where, at: Date.now() });
-    setLock(where);
-    setShot(small.uri);
-    play('scan');
-    setPhase('reading');
-    setStatus(where ? 'LOCKED ON. READING THE CAR...' : 'READING THE CAR...');
+    if (where) { setLock(where); setStatus('LOCKED ON. READING THE CAR...'); } else setStatus('READING THE CAR...');
     const r = await analyse(small.uri, where, small);
     if (r.car && r.thumb) {
       // the real app's identify sequence plays on the frozen shot, then the catch is saved
@@ -303,11 +307,11 @@ export default function Scan() {
   } else {
     viewport = (
       <>
-        {focused ? <CameraView ref={cam} style={StyleSheet.absoluteFill} facing={front ? 'front' : 'back'} enableTorch={torch} animateShutter={false} zoom={Math.max(0, Math.min(1, (zoomF - 1) / 9))} /> : null}
+        {focused && !shot ? <CameraView ref={cam} style={StyleSheet.absoluteFill} facing={front ? 'front' : 'back'} enableTorch={torch} animateShutter={false} zoom={Math.max(0, Math.min(1, (zoomF - 1) / 9))} /> : null}
         {shot ? (
           <>
             <Image source={{ uri: shot }} style={StyleSheet.absoluteFill} contentFit="cover" />
-            {reveal ? <IdentifyReveal shot={shot} car={reveal.car} onDone={finishReveal} haptics={g.settings.haptics} startBox={lock} /> : <ScanSweep haptics={g.settings.haptics} box={lock} />}
+            {reveal ? <IdentifyReveal shot={shot} car={reveal.car} onDone={finishReveal} haptics={g.settings.haptics} startBox={lock} aspect={aspect} /> : <ScanSweep haptics={g.settings.haptics} box={lock} aspect={aspect} />}
           </>
         ) : null}
         <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: '#fff', opacity: flash, zIndex: 20 }]} />

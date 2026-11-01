@@ -7,7 +7,7 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import type { Car, Rarity } from '@/engine/types';
-import type { Box } from '@/lib/car-finder';
+import { coverRect, padBox, type Box } from '@/lib/car-finder';
 import { play, playCaught } from '@/lib/sfx';
 import { fonts } from '@/theme/theme';
 
@@ -101,7 +101,7 @@ const Shot = memo(function Shot({ uri }: { uri: string }) {
  * confidence count-up and checklist, IDENTIFIED with a push-in and the car's silhouette, stat read-outs that count up,
  * then the card skeleton "minting" with your photo flying into its picture slot.
  */
-export function IdentifyReveal({ shot, car, onDone, haptics = true, startBox = null }: { shot: string; car: Car; onDone: () => void; haptics?: boolean; startBox?: Box | null }) {
+export function IdentifyReveal({ shot, car, onDone, haptics = true, startBox = null, aspect = 0 }: { shot: string; car: Car; onDone: () => void; haptics?: boolean; startBox?: Box | null; aspect?: number }) {
   const rc = RARC[car.rarity] ?? RARC.Common;
   const [size, setSize] = useState({ W: 0, H: 0 });
   const t = useSharedValue(0);
@@ -131,14 +131,13 @@ export function IdentifyReveal({ shot, car, onDone, haptics = true, startBox = n
   const { W, H } = size;
   const onLayout = (e: LayoutChangeEvent) => setSize({ W: e.nativeEvent.layout.width, H: e.nativeEvent.layout.height });
 
+  // boxes are fractions of the photo; map them through the cover crop so the frame sits on the car
   const box = useMemo(() => {
     const b = car.box;
-    if (W && b && b.w > 0.08 && b.h > 0.08 && b.x >= 0 && b.y >= 0) {
-      return { left: b.x * W, top: b.y * H, w: Math.min(b.w, 1 - b.x) * W, h: Math.min(b.h, 1 - b.y) * H };
-    }
-    if (W && startBox) return { left: startBox.x * W, top: startBox.y * H, w: startBox.w * W, h: startBox.h * H };
+    if (W && b && b.w > 0.08 && b.h > 0.08 && b.x >= 0 && b.y >= 0) return coverRect(b as Box, aspect, W, H);
+    if (W && startBox) return coverRect(startBox, aspect, W, H);
     return { left: W * 0.19, top: H * 0.3, w: W * 0.62, h: H * 0.4 };
-  }, [W, H, car.box, startBox]);
+  }, [W, H, car.box, startBox, aspect]);
 
 
   // start once measured
@@ -171,22 +170,27 @@ export function IdentifyReveal({ shot, car, onDone, haptics = true, startBox = n
   });
   // the lock-on frame starts as the generic frame the scan was showing, then its corners MORPH onto the car's own box
   // the frame starts exactly where the scan's lock frame was (on the car when the phone found it)
-  const pad = 0.06;
-  const gl = startBox ? Math.max(0, startBox.x - startBox.w * pad) * W : W * 0.11;
-  const gt = startBox ? Math.max(0, startBox.y - startBox.h * pad) * H : (H - Math.min(H * 0.46, W * 0.78 * 0.62)) / 2;
-  const gw = startBox ? Math.max(90, Math.min(W - gl, startBox.w * (1 + 2 * pad) * W)) : W * 0.78;
-  const gh = startBox ? Math.max(70, Math.min(H - gt, startBox.h * (1 + 2 * pad) * H)) : Math.min(H * 0.46, W * 0.78 * 0.62);
-  const frameStyle = useAnimatedStyle(() => {
+  const g0 = startBox ? coverRect(padBox(startBox, 0.06), aspect, W || 1, H || 1) : { left: W * 0.11, top: (H - Math.min(H * 0.46, W * 0.78 * 0.62)) / 2, w: W * 0.78, h: Math.min(H * 0.46, W * 0.78 * 0.62) };
+  const gl = g0.left, gt = g0.top, gw = g0.w, gh = g0.h;
+  // the frame is four corners moved by transform only (no layout pass per frame)
+  const frameStyle = useAnimatedStyle(() => ({ opacity: 1 - seg(t.get(), T.mint, T.mint + 150) }));
+  const frameRect = (): { l: number; tp: number; w: number; h: number } => {
+    'worklet';
     const p = settle(seg(t.get(), 0, 650));
+    return { l: gl + (box.left - gl) * p, tp: gt + (box.top - gt) * p, w: gw + (box.w - gw) * p, h: gh + (box.h - gh) * p };
+  };
+  const cornerStyle = (c: 'tl' | 'tr' | 'bl' | 'br') => useAnimatedStyle(() => { // eslint-disable-line react-hooks/rules-of-hooks
+    const f = frameRect();
+    const x = c[1] === 'l' ? f.l : f.l + f.w - 24;
+    const y = c[0] === 't' ? f.tp : f.tp + f.h - 24;
     return {
-      left: gl + (box.left - gl) * p, top: gt + (box.top - gt) * p,
-      width: gw + (box.w - gw) * p, height: gh + (box.h - gh) * p,
-      opacity: 1 - seg(t.get(), T.mint, T.mint + 150),
+      transform: [{ translateX: x }, { translateY: y }],
+      borderColor: interpolateColor(t.get(), [0, 500, T.found - 1, T.found, T.found + 260], ['#5dff9b', rc[0], rc[0], '#ffffff', rc[0]]),
     };
   });
-  const cornerColor = useAnimatedStyle(() => ({
-    borderColor: interpolateColor(t.get(), [0, 500, T.found - 1, T.found, T.found + 260], ['#5dff9b', rc[0], rc[0], '#ffffff', rc[0]]),
-  }));
+  const cTL = cornerStyle('tl'), cTR = cornerStyle('tr'), cBL = cornerStyle('bl'), cBR = cornerStyle('br');
+  const cornerFor = { tl: cTL, tr: cTR, bl: cBL, br: cBR } as const;
+  const tagStyle = useAnimatedStyle(() => { const f = frameRect(); return { transform: [{ translateX: f.l }, { translateY: Math.max(2, f.tp - 26) }] }; });
   const mintStyle = useAnimatedStyle(() => ({ opacity: seg(t.get(), T.mint, T.mint + 160) }));
   const flashStyle = useAnimatedStyle(() => ({ opacity: 0.2 * win(t.get(), T.found, T.found + 600, 60) }));
   const confBar = useAnimatedStyle(() => ({ transform: [{ scaleX: Math.max(0.001, (conf / 100) * ease(seg(t.get(), 50, 700))) }], transformOrigin: 'left center' } as never));
@@ -215,25 +219,25 @@ export function IdentifyReveal({ shot, car, onDone, haptics = true, startBox = n
           {/* shot + frame + silhouette, pushed in together */}
           <Animated.View style={[StyleSheet.absoluteFill, zoomStyle]}>
             <Shot uri={shot} />
-            <Animated.View style={[{ position: 'absolute' }, frameStyle]}>
+            <Animated.View style={[StyleSheet.absoluteFill, frameStyle]}>
               {(['tl', 'tr', 'bl', 'br'] as const).map((c) => (
                 <Animated.View
                   key={c}
                   style={[
                     {
-                      position: 'absolute', width: 22, height: 22,
-                      top: c[0] === 't' ? 0 : undefined, bottom: c[0] === 'b' ? 0 : undefined,
-                      left: c[1] === 'l' ? 0 : undefined, right: c[1] === 'r' ? 0 : undefined,
-                      borderTopWidth: c[0] === 't' ? 3 : 0, borderBottomWidth: c[0] === 'b' ? 3 : 0,
-                      borderLeftWidth: c[1] === 'l' ? 3 : 0, borderRightWidth: c[1] === 'r' ? 3 : 0,
+                      position: 'absolute', left: 0, top: 0, width: 24, height: 24,
+                      borderTopWidth: c[0] === 't' ? 4 : 0, borderBottomWidth: c[0] === 'b' ? 4 : 0,
+                      borderLeftWidth: c[1] === 'l' ? 4 : 0, borderRightWidth: c[1] === 'r' ? 4 : 0,
                     },
-                    cornerColor,
+                    cornerFor[c],
                   ]}
                 />
               ))}
-              <Fade t={t} a={T.found} b={T.mint - 100} style={{ position: 'absolute', left: 0, top: -20 }}>
-                {chip(<Text style={{ fontFamily: fonts.utilityBold, fontSize: 13, color: rc[2], letterSpacing: 1 }}>{String(car.model).toUpperCase()}</Text>, rc[0])}
-              </Fade>
+              <Animated.View style={[{ position: 'absolute', left: 0, top: 0 }, tagStyle]}>
+                <Fade t={t} a={T.found} b={T.mint - 100}>
+                  {chip(<Text style={{ fontFamily: fonts.display, fontSize: 18, color: rc[2], letterSpacing: 1 }}>{String(car.model).toUpperCase()}</Text>, rc[0])}
+                </Fade>
+              </Animated.View>
             </Animated.View>
           </Animated.View>
 

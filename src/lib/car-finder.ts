@@ -40,6 +40,25 @@ export function padBox(b: Box, pad: number): Box {
   return { x, y, w: x2 - x, h: y2 - y };
 }
 
+export type Rect = { left: number; top: number; w: number; h: number };
+
+/**
+ * Where a box (fractions of the photo) actually lands when the photo is drawn with contentFit="cover" into a W x H view.
+ * A photo whose shape differs from the view is cropped at the sides or the top, and a box measured on the whole photo
+ * has to be mapped through that crop or the lock-on frame sits beside the car (always the case for uploaded photos).
+ * `aspect` is the photo's width / height; 0 or unknown means it matches the view.
+ */
+export function coverRect(b: Box, aspect: number, W: number, H: number): Rect {
+  const va = W / H;
+  const a = aspect > 0 ? aspect : va;
+  const iw = a > va ? H * a : W;
+  const ih = a > va ? H : W / a;
+  const ox = (W - iw) / 2, oy = (H - ih) / 2;
+  const l = Math.max(0, ox + b.x * iw), t = Math.max(0, oy + b.y * ih);
+  const r = Math.min(W, ox + (b.x + b.w) * iw), bt = Math.min(H, oy + (b.y + b.h) * ih);
+  return { left: l, top: t, w: Math.max(60, r - l), h: Math.max(50, bt - t) };
+}
+
 /** A box given relative to a crop, expressed relative to the full image the crop came from. */
 export function uncrop(inner: Box, crop: Box): Box {
   return { x: crop.x + inner.x * crop.w, y: crop.y + inner.y * crop.h, w: inner.w * crop.w, h: inner.h * crop.h };

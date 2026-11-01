@@ -20,6 +20,10 @@ const FRAME: Record<Rarity, [string, string, string]> = {
   Mythic: ['#D8402F', '#E8705F', '#98261A'],
 };
 
+const CLASS_EST: Record<string, { rl: number; tq: number; wt: number }> = {
+  SEDAN: { rl: 6200, tq: 190, wt: 3300 }, SUV: { rl: 6000, tq: 260, wt: 4300 },
+};
+
 const hex = (s: string) => [1, 3, 5].map((i) => parseInt(s.slice(i, i + 2), 16));
 const mix = (a: string, b: string, t: number) => {
   const x = hex(a), y = hex(b);
@@ -27,27 +31,48 @@ const mix = (a: string, b: string, t: number) => {
 };
 
 const pad = (n: number) => String(n).padStart(4, '0');
-const money = (n: number) => (n >= 1e6 ? `$${(n / 1e6).toFixed(1)}M` : n >= 1000 ? `$${Math.round(n / 1000)}K` : `$${n}`);
+const money = (n: number) => (n >= 1000 ? `$${Math.round(n / 1000)}K` : `$${n}`);
 const MON = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
 const caughtDate = (ts: number) => {
   const d = new Date(ts);
-  return `${d.getDate()} ${MON[d.getMonth()]} ${d.getFullYear()}  ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+  return `${d.getDate()} ${MON[d.getMonth()]} ${d.getFullYear()} · ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
 };
 const serial = (g: Catch) =>
   `${String(g.car.model).replace(/[^A-Za-z0-9]/g, '').slice(0, 5).toUpperCase()}${String(g.id).slice(-1)}-${String(g.id).slice(-5, -1)}`;
 
-/** One line of the spec list: label left, value right, nothing else. */
-function Row({ k, v }: { k: string; v: string }) {
+/** 20 discrete slots, like the web's segmented stat track. */
+function Gauge({ label, value, max, text }: { label: string; value: number; max: number; text: string | number }) {
+  const filled = value > 0 ? Math.max(1, Math.round(Math.min(1, value / max) * 20)) : 0;
   return (
-    <View style={styles.row}>
-      <Text style={styles.rk}>{k}</Text>
-      <Text style={styles.rv} numberOfLines={1}>{v}</Text>
+    <View style={styles.gRow}>
+      <Text style={styles.gLabel}>{label}</Text>
+      <View style={{ flex: 1, flexDirection: 'row', gap: 1, height: 11, marginHorizontal: 8 }}>
+        {Array.from({ length: 20 }).map((_, i) => (
+          <View key={i} style={{ flex: 1, backgroundColor: i < filled ? '#CFC6A8' : '#262E42' }} />
+        ))}
+      </View>
+      <Text style={styles.gVal}>{text}</Text>
+    </View>
+  );
+}
+
+function Spec({ k, v, est, wide }: { k: string; v: string; est?: boolean; wide?: boolean }) {
+  return (
+    <View style={[styles.spec, wide ? { width: '100%' } : { width: '50%' }]}>
+      <Text style={styles.sk}>{k}</Text>
+      <Text style={styles.sv} numberOfLines={1}>
+        {v}
+        {est ? <Text style={styles.est}> EST</Text> : null}
+      </Text>
     </View>
   );
 }
 
 const Sec = ({ children }: { children: string }) => (
-  <Text style={styles.sec}>{children}</Text>
+  <View style={{ marginTop: 10, marginBottom: 4 }}>
+    <Text style={styles.sec}>{children}</Text>
+    <View style={{ height: 1, backgroundColor: 'rgba(255,255,255,.12)', marginTop: 3 }} />
+  </View>
 );
 
 /** A slow diagonal glint across epic, legendary and mythic cards, like the web's holo sheen. */
@@ -63,29 +88,19 @@ function Sheen() {
   );
 }
 
-/**
- * The catch card: metal frame in the rarity colour, name plate, your photo, three headline numbers, then two short
- * lists (the car, the catch). Only real facts are shown; nothing is estimated or padded.
- */
+/** The catch card — same construction as the web's tcardHTML(): metal frame, chrome plate, photo, spec sheet, serial plate. */
 export function CarCard({ g, units = 'mph' }: { g: Catch; units?: 'mph' | 'kmh' }) {
   const car = g.car;
   const entry = catalogMatch(car);
   const [fr, frl, frd] = FRAME[car.rarity] ?? FRAME.Common;
   const plate = mix(fr, '#666a72', 0.7);
-  const darkOnFrame = ['Common', 'Legendary'].includes(car.rarity);
-  const mph = car.topSpeedMph || entry?.top || 0;
-  const spd = units === 'kmh' ? Math.round(mph * 1.609) : mph;
-  const hp = car.horsepower || entry?.hp || 0;
-  const zts = String(car.zeroToSixty || entry?.zts || '').replace(/s$/i, '');
+  const spd = units === 'kmh' ? Math.round((car.topSpeedMph || 0) * 1.609) : car.topSpeedMph || 0;
+  const hp = car.horsepower || 0;
+  const zts = parseFloat(String(car.zeroToSixty)) || 0;
+  const ex = CLASS_EST[(car.class || 'SEDAN').toUpperCase()] ?? CLASS_EST.SEDAN;
   const tt = trimTier(car);
-  const about: [string, string][] = [];
-  if (car.engine || entry?.eng) about.push(['ENGINE', String(car.engine || entry?.eng)]);
-  if (car.drive) about.push(['DRIVE', String(car.drive)]);
-  if (car.class || entry?.cls) about.push(['BODY', String(car.class || entry?.cls).toUpperCase()]);
-  if (car.country) about.push(['FROM', String(car.country).toUpperCase()]);
-  if (car.yearRange || entry?.years) about.push(['YEARS', String(car.yearRange || entry?.years)]);
-  if (entry?.low && entry?.high) about.push(['VALUE', `${money(entry.low)} - ${money(entry.high)}`]);
-  const trim = (car.trim || '').toUpperCase();
+  const has = (v: unknown) => Boolean(v);
+  const e = (v: unknown, fb: number) => (has(v) ? String(v) : String(fb));
 
   return (
     <View
@@ -99,22 +114,22 @@ export function CarCard({ g, units = 'mph' }: { g: Catch; units?: 'mph' | 'kmh' 
       <View pointerEvents="none" style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: 2, backgroundColor: frd }} />
       <View pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: 2, backgroundColor: frd }} />
 
-      {/* name plate */}
-      <View style={[styles.plate, { backgroundColor: plate, paddingHorizontal: 10, paddingTop: 6, paddingBottom: 7 }]}>
+      {/* chrome name plate */}
+      <View style={[styles.plate, { backgroundColor: plate, flexDirection: 'row', alignItems: 'flex-end', gap: 8, paddingHorizontal: 10, paddingTop: 8, paddingBottom: 6 }]}>
         <View pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, top: 0, height: 2, backgroundColor: 'rgba(255,255,255,.45)' }} />
-        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-          <Text style={{ fontFamily: fonts.utilityBold, fontSize: 14, color: '#2b2f38', letterSpacing: 2 }}>{String(car.make).toUpperCase()}</Text>
-          <Text style={{ fontFamily: fonts.utilityBold, fontSize: 14, color: '#2b2f38' }}>{entry ? 'No. ' + pad(dexRank(entry.n)) : 'NEW'}</Text>
-        </View>
         <Text
           numberOfLines={1}
           adjustsFontSizeToFit
-          style={{ fontFamily: fonts.display, fontSize: 36, lineHeight: 38, color: '#F4F6FA', textShadowColor: 'rgba(16,20,31,.95)', textShadowOffset: { width: 2, height: 2 }, textShadowRadius: 0 }}>
+          style={{ fontFamily: fonts.display, fontSize: 36, lineHeight: 38, color: '#F4F6FA', flexShrink: 1, textShadowColor: 'rgba(16,20,31,.95)', textShadowOffset: { width: 2, height: 2 }, textShadowRadius: 0 }}>
           {String(car.model).toUpperCase()}
         </Text>
+        <Text style={{ fontFamily: fonts.utility, fontSize: 14, color: '#3c3f47', marginBottom: 3 }}>{String(car.make).toUpperCase()}</Text>
+        <View style={{ flex: 1 }} />
+        {g.shiny ? <Text style={{ fontFamily: fonts.utilityBold, fontSize: 13, color: '#7A5A10', backgroundColor: '#FFD84D', borderWidth: 2, borderColor: INK, paddingHorizontal: 4, paddingVertical: 1, marginBottom: 2 }}>SHINY</Text> : null}
+        <Text style={{ fontFamily: fonts.utility, fontSize: 16, color: '#3c3f47', marginBottom: 3 }}>{entry ? '#' + pad(dexRank(entry.n)) : '—'}</Text>
       </View>
 
-      {/* photo with corner brackets */}
+      {/* photo plate with corner brackets */}
       <View style={[styles.photo, g.shiny && { borderColor: '#C9A227' }]}>
         {g.photo ? <Image source={{ uri: g.photo }} style={StyleSheet.absoluteFill} contentFit="cover" /> : entry ? <Sprite entry={entry} size={230} /> : null}
         {g.photo && entry ? (
@@ -124,55 +139,59 @@ export function CarCard({ g, units = 'mph' }: { g: Catch; units?: 'mph' | 'kmh' 
         ) : null}
         <View pointerEvents="none" style={{ position: 'absolute', top: 4, left: 4, width: 14, height: 14, borderTopWidth: 3, borderLeftWidth: 3, borderColor: '#E4E7EC' }} />
         <View pointerEvents="none" style={{ position: 'absolute', bottom: 4, right: 4, width: 14, height: 14, borderBottomWidth: 3, borderRightWidth: 3, borderColor: '#E4E7EC' }} />
-        {g.shiny ? <Text style={{ position: 'absolute', top: 8, right: 8, fontFamily: fonts.utilityBold, fontSize: 13, color: '#7A5A10', backgroundColor: '#FFD84D', borderWidth: 2, borderColor: INK, paddingHorizontal: 5, paddingVertical: 1 }}>SHINY</Text> : null}
-      </View>
-
-      {/* rarity strip */}
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 4, backgroundColor: fr, borderWidth: 2, borderColor: INK, paddingHorizontal: 10, paddingVertical: 5 }}>
-        <Text style={{ fontFamily: fonts.utilityBold, fontSize: 14, color: darkOnFrame ? INK : '#fff', letterSpacing: 1.5 }}>{car.rarity.toUpperCase()}</Text>
-        <View style={{ flexDirection: 'row', gap: 3 }}>
-          {TIERS.map((t, i) => (
-            <View key={t} style={{ width: 8, height: 8, borderWidth: 1.5, borderColor: darkOnFrame ? INK : '#fff', backgroundColor: i <= (RTIER[car.rarity] ?? 0) ? (darkOnFrame ? INK : '#fff') : 'transparent' }} />
-          ))}
-        </View>
-        <Text style={{ fontFamily: fonts.utilityBold, fontSize: 14, color: darkOnFrame ? INK : '#fff', marginLeft: 'auto' }}>+{catchXP(car) + (g.shiny ? 100 : 0)} XP</Text>
       </View>
 
       {!entry ? (
         <View style={[styles.body, { alignItems: 'center', paddingVertical: 18 }]}>
           <Text style={{ fontFamily: fonts.display, fontSize: 22, color: '#E4E7EC' }}>NOT ADDED YET</Text>
-          <Text style={[styles.rk, { textAlign: 'center', marginTop: 4 }]}>THIS ONE IS NOT IN THE BIX. THE CATCH IS SAVED.</Text>
+          <Text style={[styles.sk, { textAlign: 'center', marginTop: 4 }]}>THIS ONE ISN&apos;T IN THE BIX — THE CATCH IS SAVED</Text>
         </View>
       ) : (
         <>
-          {/* three big numbers */}
           <View style={{ flexDirection: 'row', gap: 4, marginTop: 4 }}>
-            {[[hp ? String(hp) : '-', 'HORSEPOWER'], [spd ? String(spd) : '-', units === 'kmh' ? 'TOP KM/H' : 'TOP MPH'], [zts || '-', '0-60 SEC']].map(([v, k]) => (
-              <View key={k} style={{ flex: 1, backgroundColor: '#1a2133', borderWidth: 2, borderColor: INK, alignItems: 'center', paddingVertical: 8 }}>
-                <Text style={{ fontFamily: fonts.display, fontSize: 28, lineHeight: 30, color: '#F4F6FA' }}>{v}</Text>
-                <Text style={{ fontFamily: fonts.utility, fontSize: 12, color: '#8e98b8', letterSpacing: 1 }}>{k}</Text>
+            {[['POWER', hp ? String(hp) : '-', 'HP'], ['TOP', spd ? String(spd) : '-', units === 'kmh' ? 'KM/H' : 'MPH'], ['0-60', car.zeroToSixty ? String(car.zeroToSixty).replace(/s$/i, '') : '-', 'SEC']].map(([k, v, u]) => (
+              <View key={k} style={{ flex: 1, backgroundColor: '#1a2133', borderWidth: 2, borderColor: INK, alignItems: 'center', paddingVertical: 6 }}>
+                <Text style={{ fontFamily: fonts.display, fontSize: 24, lineHeight: 26, color: '#F4F6FA' }}>{v}</Text>
+                <Text style={{ fontFamily: fonts.utility, fontSize: 12, color: '#8e98b8', letterSpacing: 1 }}>{k}  {u}</Text>
               </View>
             ))}
           </View>
-
+          <View style={styles.trim}>
+            <Text style={{ fontFamily: fonts.utility, fontSize: 15, color: '#C9D2E6', letterSpacing: 1 }}>
+              {(car.trim || 'BASE').toUpperCase()}
+              {tt ? <Text style={{ color: '#C9A227' }}>  +{tt.xp} XP</Text> : null}
+            </Text>
+          </View>
           <View style={styles.body}>
-            <Sec>THE CAR</Sec>
-            {trim && trim !== 'STANDARD' && trim !== 'BASE' ? <Row k="TRIM" v={tt ? `${trim}  +${tt.xp} XP` : trim} /> : null}
-            {about.map(([k, v]) => <Row key={k} k={k} v={v} />)}
-            {car.color ? (
-              <View style={styles.row}>
-                <Text style={styles.rk}>COLOUR</Text>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexShrink: 1 }}>
-                  {car.colorHex && /^#[0-9a-f]{6}$/i.test(String(car.colorHex)) ? <View style={{ width: 12, height: 12, backgroundColor: String(car.colorHex), borderWidth: 1.5, borderColor: '#E4E7EC' }} /> : null}
-                  <Text style={styles.rv} numberOfLines={1}>{String(car.color).toUpperCase()}</Text>
-                </View>
+            <Text style={[styles.sk, { marginBottom: 8, letterSpacing: 1 }]}>
+              {[car.class, (car.country || '').toUpperCase(), car.yearRange].filter(Boolean).join(' · ') || '- -'}
+            </Text>
+            <View style={{ flexDirection: 'row', gap: 6, marginBottom: 8, alignItems: 'center' }}>
+              <View style={{ backgroundColor: fr, borderWidth: 2, borderColor: INK, paddingHorizontal: 7, paddingVertical: 2 }}>
+                <Text style={{ fontFamily: fonts.utilityBold, fontSize: 13, color: ['Common', 'Legendary'].includes(car.rarity) ? INK : '#fff' }}>{car.rarity.toUpperCase()}</Text>
               </View>
-            ) : null}
-
-            <Sec>THE CATCH</Sec>
-            <Row k="WHEN" v={caughtDate(g.ts)} />
-            {g.geo ? <Row k="WHERE" v={`${g.geo.lat.toFixed(3)}, ${g.geo.lng.toFixed(3)}`} /> : null}
-            <Row k="AI CONFIDENCE" v={`${car.confidence || 90}%`} />
+              <Text style={{ fontFamily: fonts.utilityBold, fontSize: 13, color: '#C9A227' }}>+{catchXP(car)} XP</Text>
+              {car.colorHex && /^#[0-9a-f]{6}$/i.test(String(car.colorHex)) ? <View style={{ width: 14, height: 14, backgroundColor: String(car.colorHex), borderWidth: 2, borderColor: '#E4E7EC', marginLeft: 'auto' }} /> : null}
+            </View>
+            <Gauge label="SPD" value={spd} max={220} text={spd || '—'} />
+            <Gauge label="HP" value={hp} max={750} text={hp || '—'} />
+            <Gauge label="0-60" value={zts ? Math.max(1, 13 - zts) : 0} max={11} text={car.zeroToSixty || '—'} />
+            <Sec>SPEC SHEET</Sec>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
+              <Spec wide k="ENGINE" v={car.engine || '—'} />
+              <Spec k="REDLINE" v={e(car.redlineRpm, ex.rl)} est={!has(car.redlineRpm)} />
+              <Spec k="TORQUE" v={e(car.torqueLbFt, ex.tq)} est={!has(car.torqueLbFt)} />
+              <Spec k="WEIGHT" v={e(car.weightLbs, ex.wt)} est={!has(car.weightLbs)} />
+              <Spec k="DRIVE" v={car.drive || '—'} />
+              <Spec k="PWR/WT" v={car.powerToWeight || (car.horsepower ? (car.horsepower / (car.weightLbs || ex.wt)).toFixed(3) : '—')} est={!car.powerToWeight} />
+              <Spec k="MSRP" v={car.msrpNew || '—'} />
+              {car.color ? <Spec k="COLOR" v={String(car.color)} /> : null}
+              <Spec wide k="MARKET" v={entry.low && entry.high ? `${money(entry.low)}-${money(entry.high)}` : car.marketUsed || '—'} />
+            </View>
+            <Sec>CAUGHT</Sec>
+            <Spec wide k="DATE" v={caughtDate(g.ts)} />
+            {g.geo ? <Spec wide k="WHERE" v={`${g.geo.lat.toFixed(3)}, ${g.geo.lng.toFixed(3)}`} /> : null}
+            <Spec wide k="AI READ" v={`${car.confidence || 90}%`} est />
           </View>
         </>
       )}
@@ -180,9 +199,13 @@ export function CarCard({ g, units = 'mph' }: { g: Catch; units?: 'mph' | 'kmh' 
       {RTIER[car.rarity] >= 3 ? <View pointerEvents="none" style={[StyleSheet.absoluteFill, { overflow: 'hidden' }]}><Sheen /></View> : null}
 
       {/* serial plate */}
-      <View style={[styles.plate, { backgroundColor: plate, marginTop: 4, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 10, paddingVertical: 6 }]}>
-        <Text style={{ fontFamily: fonts.utilityBold, fontSize: 14, color: '#2b2f38', letterSpacing: 1 }}>{serial(g)}</Text>
-        <Text style={{ fontFamily: fonts.utilityBold, fontSize: 14, color: '#2b2f38', letterSpacing: 1 }}>CARBIX</Text>
+      <View style={[styles.plate, { backgroundColor: plate, marginTop: 4, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 10, paddingVertical: 7 }]}>
+        <Text style={{ fontFamily: fonts.utility, fontSize: 15, color: '#3c3f47', letterSpacing: 1 }}>{serial(g)}</Text>
+        <View style={{ flexDirection: 'row', gap: 3 }}>
+          {TIERS.map((t, i) => (
+            <View key={t} style={{ width: 9, height: 9, borderWidth: 1.5, borderColor: INK, backgroundColor: i <= (RTIER[car.rarity] ?? 0) ? fr : 'transparent' }} />
+          ))}
+        </View>
       </View>
     </View>
   );
@@ -190,10 +213,15 @@ export function CarCard({ g, units = 'mph' }: { g: Catch; units?: 'mph' | 'kmh' 
 
 const styles = StyleSheet.create({
   plate: { borderWidth: 2, borderColor: INK, borderRadius: 2 },
-  photo: { borderWidth: 2, borderColor: INK, backgroundColor: '#0a0d14', overflow: 'hidden', aspectRatio: 16 / 9, alignItems: 'center', justifyContent: 'center', marginTop: 4 },
-  body: { backgroundColor: '#161c2c', borderWidth: 2, borderColor: INK, marginTop: 4, paddingHorizontal: 12, paddingTop: 4, paddingBottom: 10 },
-  sec: { fontFamily: fonts.utilityBold, fontSize: 13, color: '#C9A227', letterSpacing: 2, marginTop: 8, marginBottom: 2 },
-  row: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 12, paddingVertical: 4, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,.07)' },
-  rk: { fontFamily: fonts.utility, fontSize: 13, color: '#8e98b8', letterSpacing: 1 },
-  rv: { fontFamily: fonts.display, fontSize: 17, lineHeight: 19, color: '#E4E7EC', flexShrink: 1, textAlign: 'right' },
+  photo: { borderWidth: 2, borderColor: INK, backgroundColor: '#0a0d14', overflow: 'hidden', aspectRatio: 16 / 7, alignItems: 'center', justifyContent: 'center' },
+  trim: { backgroundColor: '#20273a', borderWidth: 2, borderColor: INK, marginTop: 4, paddingHorizontal: 10, paddingVertical: 8 },
+  body: { backgroundColor: '#161c2c', borderWidth: 2, borderColor: INK, marginTop: 4, paddingHorizontal: 11, paddingVertical: 10 },
+  gRow: { flexDirection: 'row', alignItems: 'center', marginVertical: 3 },
+  gLabel: { fontFamily: fonts.utility, fontSize: 13, color: '#8e98b8', width: 32 },
+  gVal: { fontFamily: fonts.utilityBold, fontSize: 14, color: '#E4E7EC', width: 44, textAlign: 'right' },
+  sec: { fontFamily: fonts.utilityBold, fontSize: 15, color: '#C9A227', letterSpacing: 1.5 },
+  spec: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 5, paddingRight: 14 },
+  sk: { fontFamily: fonts.utility, fontSize: 13, color: '#8e98b8' },
+  sv: { fontFamily: fonts.utilityBold, fontSize: 14, color: '#E4E7EC', flexShrink: 1, textAlign: 'right' },
+  est: { fontFamily: fonts.utility, fontSize: 13, color: '#8e98b8' },
 });
