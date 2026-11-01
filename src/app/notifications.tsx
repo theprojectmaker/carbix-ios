@@ -1,9 +1,9 @@
 import { router } from 'expo-router';
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 
 import { Screen } from '@/components/screen';
-import { Btn, PText } from '@/components/ui';
+import { Btn, Chip, PText } from '@/components/ui';
 import { clearInbox, markAllRead, useInbox, type Notice, type NoticeKind } from '@/lib/inbox';
 import { play } from '@/lib/sfx';
 import { fonts, palette, useTheme } from '@/theme/theme';
@@ -40,7 +40,10 @@ const dayOf = (ts: number) => {
 /** Everything that happened: invites, requests, level-ups, quests, trophies, reactions. Tap one to go there. */
 export default function Notifications() {
   const t = useTheme();
-  const { items, unread } = useInbox();
+  const { items: all, unread } = useInbox();
+  const [filter, setFilter] = useState<'all' | 'friends' | 'races' | 'progress'>('all');
+  const items = all.filter((n) => filter === 'all' || (filter === 'friends' ? n.kind === 'friend' || n.kind === 'feed' : filter === 'races' ? n.kind === 'race' : ['level', 'quest', 'trophy', 'daily', 'info'].includes(n.kind)));
+  const countOf = (f: typeof filter) => all.filter((n) => !n.read && (f === 'all' || (f === 'friends' ? n.kind === 'friend' || n.kind === 'feed' : f === 'races' ? n.kind === 'race' : ['level', 'quest', 'trophy', 'daily', 'info'].includes(n.kind)))).length;
 
   // opening the inbox is what marks it read, once the list has been seen
   useEffect(() => {
@@ -64,9 +67,15 @@ export default function Notifications() {
           {unread ? <Text style={{ fontFamily: fonts.utilityBold, fontSize: 10, color: t.muted, paddingBottom: 8 }}>{unread} NEW</Text> : null}
         </View>
 
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
+          {([['all', 'ALL'], ['friends', 'FRIENDS'], ['races', 'RACES'], ['progress', 'PROGRESS']] as const).map(([k, l]) => (
+            <Chip key={k} label={countOf(k) ? `${l} ${countOf(k)}` : l} on={filter === k} onPress={() => setFilter(k)} />
+          ))}
+        </View>
+
         {items.length === 0 ? (
           <View style={{ backgroundColor: palette.panel, borderWidth: 3, borderColor: INK, padding: 14, gap: 8 }}>
-            <Text style={{ fontFamily: fonts.display, fontSize: 22, color: palette.wht }}>NOTHING YET</Text>
+            <Text style={{ fontFamily: fonts.display, fontSize: 22, color: palette.wht }}>{filter === 'all' ? 'NOTHING YET' : 'NOTHING HERE YET'}</Text>
             <Text style={{ fontFamily: fonts.utility, fontSize: 9.5, color: palette.lcdDim, lineHeight: 14 }}>
               RACE INVITES, FRIEND REQUESTS, LEVEL-UPS, FINISHED QUESTS, TROPHIES AND REACTIONS ON YOUR CATCHES ALL LAND HERE.
             </Text>

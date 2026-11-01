@@ -245,7 +245,7 @@ function ShopView() {
             ) : e.owned ? (
               <Btn small tone="gold" label="WEAR IT" onPress={() => { play('click'); g.shopEquip(e.track, e.id); }} />
             ) : (
-              <Btn small tone="red" label={`BUY  ${e.price} ORBS`} onPress={() => { if (g.shopBuy(e.track, e.id)) play('caught-rare'); else play('error'); }} />
+              <Btn small tone="red" label={`BUY  ${e.price} ORBS`} onPress={() => { if (g.shopBuy(e.track, e.id)) play('coin'); else play('error'); }} />
             )}
           </View>
         ))}

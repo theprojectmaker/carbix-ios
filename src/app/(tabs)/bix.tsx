@@ -137,6 +137,8 @@ export default function Garage() {
             }}
           />
           <TopKey label="FILTER" on={menu} onPress={() => { play('click'); setMenu(!menu); }} />
+          <TopKey label="PHOTOS" onPress={() => { play('whoosh'); router.push('/gallery'); }} />
+          <TopKey label="STATS" onPress={() => { play('whoosh'); router.push('/stats'); }} />
         </View>
       </View>
 

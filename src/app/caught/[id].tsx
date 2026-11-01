@@ -8,7 +8,11 @@ import { CatchSparks } from '@/components/catch-sparks';
 import { Screen } from '@/components/screen';
 import { Btn } from '@/components/ui';
 import { CATALOG, catalogMatch } from '@/engine/data';
+import { identify, research } from '@/engine/api';
+import { stampCatchContext } from '@/engine/context';
+import { File } from 'expo-file-system';
 import { catchXP } from '@/engine/xp';
+import { lastScan } from '@/lib/last-scan';
 import { play } from '@/lib/sfx';
 import { useGame } from '@/state/game';
 import { fonts, palette, useTheme } from '@/theme/theme';
@@ -30,6 +34,33 @@ export default function Caught() {
   const c = g.garage.find((x) => String(x.id) === id);
   const [pop] = useState(() => new Animated.Value(0));
   const [flavor] = useState(() => FLAVOR[Math.floor(Math.random() * FLAVOR.length)]);
+  const [re, setRe] = useState<'' | 'busy' | 'fail'>('');
+
+  async function reanalyze() {
+    if (!c || re === 'busy') return;
+    const shot = lastScan();
+    if (!shot) { setRe('fail'); return; }
+    play('scan');
+    setRe('busy');
+    try {
+      const b64 = await new File(shot.uri).base64();
+      const r = await identify(b64, 'image/jpeg', `${c.car.make} ${c.car.model}`);
+      if (!r.ok || r.car.isCar === false) { setRe('fail'); play('error'); return; }
+      const car = r.car;
+      stampCatchContext(car);
+      if (!catalogMatch(car)) {
+        const x = await research(car.make, car.model, car.yearRange);
+        const st = (x?.stats ?? {}) as Record<string, number | string>;
+        if (!car.horsepower && st.horsepower) car.horsepower = Number(st.horsepower);
+        if (!car.topSpeedMph && st.topSpeedMph) car.topSpeedMph = Number(st.topSpeedMph);
+      }
+      g.replaceCar(c.id, car);
+      play('lock');
+      setRe('');
+    } catch {
+      setRe('fail');
+    }
+  }
 
   const prior = c ? g.garage.filter((x) => x.id !== c.id && x.car.make === c.car.make && x.car.model === c.car.model && x.ts < c.ts).length : 0;
   const isShiny = !!c?.shiny;
@@ -85,6 +116,9 @@ export default function Caught() {
               ALL ABOUT THIS CAR
             </Text>
           ) : null}
+          <Text onPress={reanalyze} style={{ fontFamily: fonts.utilityBold, fontSize: 10.5, color: re === 'fail' ? t.muted : palette.gold, padding: 4 }}>
+            {re === 'busy' ? 'LOOKING AGAIN...' : re === 'fail' ? 'COULD NOT REANALYZE' : 'NOT THIS CAR? LOOK AGAIN'}
+          </Text>
           <Text
             onPress={() =>
               Alert.alert('Discard this catch?', 'It will be removed from your garage.', [

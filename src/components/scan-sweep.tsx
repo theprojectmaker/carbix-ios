@@ -47,7 +47,7 @@ export function ScanSweep({ haptics = true, box = null }: { haptics?: boolean; b
     c.start(({ finished }) => {
       if (!finished) return;
       setLocked(true);
-      play('ping2');
+      play('lock');
       if (haptics) Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
       b.start();
     });

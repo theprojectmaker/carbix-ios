@@ -45,7 +45,7 @@ export function AppHeader() {
 
 function HBtn({ icon, onPress, a11y, dot }: { icon: React.ReactNode; onPress: () => void; a11y: string; dot?: boolean }) {
   return (
-    <Pressable onPress={() => { play('click'); onPress(); }} accessibilityRole="button" accessibilityLabel={a11y}>
+    <Pressable onPress={() => { play('whoosh'); onPress(); }} accessibilityRole="button" accessibilityLabel={a11y}>
       {({ pressed }) => (
         <Plate color={palette.navyDk} depth={2} pressed={pressed} style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}>
           {icon}

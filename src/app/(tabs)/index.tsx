@@ -20,6 +20,7 @@ import type { Car } from '@/engine/types';
 import { catalogMatch, fixStats } from '@/engine/data';
 import { findCar, padBox, uncrop, type Box } from '@/lib/car-finder';
 import { postCatch } from '@/lib/feed';
+import { rememberScan } from '@/lib/last-scan';
 import { play, playCaught } from '@/lib/sfx';
 import { useGame } from '@/state/game';
 import { useRace } from '@/state/race';
@@ -170,6 +171,7 @@ export default function Scan() {
     // a 12-megapixel photo decoded several times is what makes iOS kill the app; work from a small copy
     const small = await shrink(rawUri);
     const where = await findCar(small.uri);
+    rememberScan({ ...small, where, at: Date.now() });
     setLock(where);
     setShot(small.uri);
     play('scan');

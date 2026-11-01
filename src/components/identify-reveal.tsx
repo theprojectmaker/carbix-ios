@@ -69,6 +69,7 @@ function Count({ t, from, dur, value, unit, style, color }: { t: SharedValue<num
       const p = step / 12;
       const out = p >= 1 || !Number.isFinite(num) ? value + unit : (num * p).toFixed(dec) + tail + unit;
       runOnJS(setTxt)(out);
+      if (step % 3 === 1 && p < 1) runOnJS(play)('tick');
     },
   );
   return <Text style={[style, { color }]}>{txt}</Text>;

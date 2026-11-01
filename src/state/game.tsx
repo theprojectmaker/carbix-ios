@@ -51,6 +51,8 @@ type Game = {
   quests: () => ReturnType<typeof questsView>;
   addCatch: (car: Car, photo: string | null, geo?: { lat: number; lng: number } | null) => Catch;
   removeCatch: (id: number) => void;
+  /** Replaces the car on an existing catch (a reanalysis); XP and the Bix follow the new car. */
+  replaceCar: (id: number, car: Car) => void;
   /** Keeps asking the server about a scan's second look and corrects the catch if a better-supported car emerges. */
   secondLook: (entryId: number, scanId: string) => void;
   setSettings: (s: Partial<Settings>) => void;
@@ -307,6 +309,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     if (leveled) addNotice({ kind: 'level', title: `LEVEL ${lvNow}: ${rankFor(lvNow)}`, body: 'KEEP CATCHING TO CLIMB THE RANKS.', route: '/home' });
     for (const e of r.events) if (e.type === 'complete') addNotice({ kind: 'quest', title: `QUEST ${e.step} COMPLETE`, body: `+${e.xp} XP, +${e.orbs} ORBS. THE NEXT QUEST IS OPEN.`, route: '/season' });
     for (const ev of tr.events) addNotice({ kind: 'trophy', title: ev, route: '/trophies' });
+    if (tr.events.length) setTimeout(() => play('fanfare'), 900);
     for (const c of ch.won) addNotice({ kind: 'daily', title: `DAILY DONE: ${c.label}`, body: `+${c.xp} XP`, route: '/home' });
     if (lines.length) say([...lines.map((l) => ({ type: 'chapter', label: l }) as QuestEvent), ...r.events]);
     else say(r.events);
@@ -340,6 +343,13 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     };
     setTimeout(tick, 20000);
   }, [flash]);
+
+  const replaceCar = useCallback((id: number, car: Car) => {
+    fixStats(car);
+    const next = latest.current.garage.map((x) => (x.id === id ? { ...x, car } : x));
+    latest.current = { ...latest.current, garage: next };
+    setGarage(next);
+  }, []);
 
   const removeCatch = useCallback((id: number) => {
     play('trash');
@@ -475,9 +485,9 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       ready, garage, profile, settings, xp, level, rank: rankFor(level),
       nextLevelXp: xpForLevel(level + 1), prevLevelXp: xpForLevel(level),
       streak: streak(profile), bixPct: CATALOG.length ? (caught.size / CATALOG.length) * 100 : 0,
-      toast, notify: flash, shopBuy, shopEquip, iconBuy, iconWear, quests: () => questsView(garage, profile), caughtNs: caught, addCatch, removeCatch, secondLook, setSettings, setUsername, toggleStar, patchProfile, restore, linkAccount, recalcScore, replanNotifications, googleSignIn, syncState,
+      toast, notify: flash, shopBuy, shopEquip, iconBuy, iconWear, quests: () => questsView(garage, profile), caughtNs: caught, addCatch, removeCatch, replaceCar, secondLook, setSettings, setUsername, toggleStar, patchProfile, restore, linkAccount, recalcScore, replanNotifications, googleSignIn, syncState,
     };
-  }, [ready, garage, profile, settings, toast, flash, shopBuy, shopEquip, iconBuy, iconWear, addCatch, removeCatch, secondLook, setSettings, setUsername, toggleStar, patchProfile, restore, linkAccount, recalcScore, replanNotifications, googleSignIn, syncState]);
+  }, [ready, garage, profile, settings, toast, flash, shopBuy, shopEquip, iconBuy, iconWear, addCatch, removeCatch, replaceCar, secondLook, setSettings, setUsername, toggleStar, patchProfile, restore, linkAccount, recalcScore, replanNotifications, googleSignIn, syncState]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

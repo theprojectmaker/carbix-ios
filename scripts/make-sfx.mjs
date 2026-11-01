@@ -100,6 +100,18 @@ def('levelup', (m) => {
 def('trash', (m) => { m.tone(220, 0, 0.16, { type: 'sawtooth', vol: 0.09, slide: -140 }); m.tone(90, 0.18, 0.2, { type: 'sawtooth', vol: 0.08 }); });
 def('streak', (m) => [440, 554, 659].forEach((f, i) => m.tone(f, i * 0.06, 0.09, { vol: 0.08 })));
 def('swipe', (m) => m.tone(300, 0, 0.09, { type: 'triangle', vol: 0.06, slide: 260 }));
+// the scan frame snapping onto the car: a short double click and a rising ping
+def('lock', (m) => { m.tone(1200, 0, 0.03, { vol: 0.09 }); m.tone(900, 0.045, 0.03, { vol: 0.08 }); m.tone(1480, 0.1, 0.12, { vol: 0.07, slide: 500 }); });
+// a reaction landing on a post
+def('pop', (m) => { m.tone(520, 0, 0.05, { type: 'triangle', vol: 0.1, slide: 420 }); m.noise(0.0, 0.025, { vol: 0.08, freq: 2600, q: 1.4 }); });
+// orbs spent or earned
+def('coin', (m) => { m.tone(1568, 0, 0.07, { vol: 0.09 }); m.tone(2093, 0.07, 0.16, { vol: 0.09 }); });
+// a screen sliding open
+def('whoosh', (m) => m.noise(0, 0.16, { vol: 0.14, freq: 900, q: 0.7, drop: 400 }));
+// a trophy or a big milestone
+def('fanfare', (m) => { [523, 659, 784, 1047, 1319].forEach((f, i) => { m.tone(f, i * 0.09, 0.14, { vol: 0.1 }); m.tone(f / 2, i * 0.09, 0.14, { type: 'triangle', vol: 0.06 }); }); m.tone(1568, 0.5, 0.45, { vol: 0.1 }); m.tone(1319, 0.5, 0.45, { type: 'triangle', vol: 0.06 }); });
+// one step of a number counting up
+def('tick', (m) => m.tone(1800, 0, 0.018, { type: 'triangle', vol: 0.05 }));
 void tone;
 
 fs.mkdirSync('assets/sfx', { recursive: true });

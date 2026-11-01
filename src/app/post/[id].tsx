@@ -50,7 +50,7 @@ export default function PostScreen() {
 
   async function react(kind: ReactKind) {
     if (!post || sent[kind]) return;
-    play('click');
+    play('pop');
     setSent((s) => ({ ...s, [kind]: true }));
     const next = await reactTo(post.id, kind);
     if (next) setPost(next);

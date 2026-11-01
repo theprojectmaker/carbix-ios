@@ -42,11 +42,11 @@ async function getJSON(path: string, timeoutMs = 20000): Promise<Json> {
 }
 
 /** Sends one photo to the server-side vehicle ID. The AI keys never leave the server. */
-export async function identify(imageBase64: string, mimeType = 'image/jpeg'): Promise<
+export async function identify(imageBase64: string, mimeType = 'image/jpeg', avoid?: string): Promise<
   { ok: true; car: Car } | { ok: false; error: string }
 > {
   try {
-    const j = await postJSON('/api/identify', { imageBase64, mimeType });
+    const j = await postJSON('/api/identify', avoid ? { imageBase64, mimeType, avoid } : { imageBase64, mimeType });
     if (j.ok && j.car) return { ok: true, car: j.car as Car };
     return { ok: false, error: String(j.error || 'Could not identify that.') };
   } catch {
