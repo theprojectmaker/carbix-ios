@@ -103,8 +103,8 @@ export function CarCard({ g, units = 'mph' }: { g: Catch; units?: 'mph' | 'kmh' 
       <View style={[styles.plate, { backgroundColor: plate, paddingHorizontal: 10, paddingTop: 6, paddingBottom: 7 }]}>
         <View pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, top: 0, height: 2, backgroundColor: 'rgba(255,255,255,.45)' }} />
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-          <Text style={{ fontFamily: fonts.utilityBold, fontSize: 10, color: '#2b2f38', letterSpacing: 2 }}>{String(car.make).toUpperCase()}</Text>
-          <Text style={{ fontFamily: fonts.utilityBold, fontSize: 10, color: '#2b2f38' }}>{entry ? 'No. ' + pad(dexRank(entry.n)) : 'NEW'}</Text>
+          <Text style={{ fontFamily: fonts.utilityBold, fontSize: 14, color: '#2b2f38', letterSpacing: 2 }}>{String(car.make).toUpperCase()}</Text>
+          <Text style={{ fontFamily: fonts.utilityBold, fontSize: 14, color: '#2b2f38' }}>{entry ? 'No. ' + pad(dexRank(entry.n)) : 'NEW'}</Text>
         </View>
         <Text
           numberOfLines={1}
@@ -124,18 +124,18 @@ export function CarCard({ g, units = 'mph' }: { g: Catch; units?: 'mph' | 'kmh' 
         ) : null}
         <View pointerEvents="none" style={{ position: 'absolute', top: 4, left: 4, width: 14, height: 14, borderTopWidth: 3, borderLeftWidth: 3, borderColor: '#E4E7EC' }} />
         <View pointerEvents="none" style={{ position: 'absolute', bottom: 4, right: 4, width: 14, height: 14, borderBottomWidth: 3, borderRightWidth: 3, borderColor: '#E4E7EC' }} />
-        {g.shiny ? <Text style={{ position: 'absolute', top: 8, right: 8, fontFamily: fonts.utilityBold, fontSize: 9, color: '#7A5A10', backgroundColor: '#FFD84D', borderWidth: 2, borderColor: INK, paddingHorizontal: 5, paddingVertical: 1 }}>SHINY</Text> : null}
+        {g.shiny ? <Text style={{ position: 'absolute', top: 8, right: 8, fontFamily: fonts.utilityBold, fontSize: 13, color: '#7A5A10', backgroundColor: '#FFD84D', borderWidth: 2, borderColor: INK, paddingHorizontal: 5, paddingVertical: 1 }}>SHINY</Text> : null}
       </View>
 
       {/* rarity strip */}
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 4, backgroundColor: fr, borderWidth: 2, borderColor: INK, paddingHorizontal: 10, paddingVertical: 5 }}>
-        <Text style={{ fontFamily: fonts.utilityBold, fontSize: 10, color: darkOnFrame ? INK : '#fff', letterSpacing: 1.5 }}>{car.rarity.toUpperCase()}</Text>
+        <Text style={{ fontFamily: fonts.utilityBold, fontSize: 14, color: darkOnFrame ? INK : '#fff', letterSpacing: 1.5 }}>{car.rarity.toUpperCase()}</Text>
         <View style={{ flexDirection: 'row', gap: 3 }}>
           {TIERS.map((t, i) => (
             <View key={t} style={{ width: 8, height: 8, borderWidth: 1.5, borderColor: darkOnFrame ? INK : '#fff', backgroundColor: i <= (RTIER[car.rarity] ?? 0) ? (darkOnFrame ? INK : '#fff') : 'transparent' }} />
           ))}
         </View>
-        <Text style={{ fontFamily: fonts.utilityBold, fontSize: 10, color: darkOnFrame ? INK : '#fff', marginLeft: 'auto' }}>+{catchXP(car) + (g.shiny ? 100 : 0)} XP</Text>
+        <Text style={{ fontFamily: fonts.utilityBold, fontSize: 14, color: darkOnFrame ? INK : '#fff', marginLeft: 'auto' }}>+{catchXP(car) + (g.shiny ? 100 : 0)} XP</Text>
       </View>
 
       {!entry ? (
@@ -150,7 +150,7 @@ export function CarCard({ g, units = 'mph' }: { g: Catch; units?: 'mph' | 'kmh' 
             {[[hp ? String(hp) : '-', 'HORSEPOWER'], [spd ? String(spd) : '-', units === 'kmh' ? 'TOP KM/H' : 'TOP MPH'], [zts || '-', '0-60 SEC']].map(([v, k]) => (
               <View key={k} style={{ flex: 1, backgroundColor: '#1a2133', borderWidth: 2, borderColor: INK, alignItems: 'center', paddingVertical: 8 }}>
                 <Text style={{ fontFamily: fonts.display, fontSize: 28, lineHeight: 30, color: '#F4F6FA' }}>{v}</Text>
-                <Text style={{ fontFamily: fonts.utility, fontSize: 8.5, color: '#8e98b8', letterSpacing: 1 }}>{k}</Text>
+                <Text style={{ fontFamily: fonts.utility, fontSize: 12, color: '#8e98b8', letterSpacing: 1 }}>{k}</Text>
               </View>
             ))}
           </View>
@@ -181,8 +181,8 @@ export function CarCard({ g, units = 'mph' }: { g: Catch; units?: 'mph' | 'kmh' 
 
       {/* serial plate */}
       <View style={[styles.plate, { backgroundColor: plate, marginTop: 4, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 10, paddingVertical: 6 }]}>
-        <Text style={{ fontFamily: fonts.utilityBold, fontSize: 10, color: '#2b2f38', letterSpacing: 1 }}>{serial(g)}</Text>
-        <Text style={{ fontFamily: fonts.utilityBold, fontSize: 10, color: '#2b2f38', letterSpacing: 1 }}>CARBIX</Text>
+        <Text style={{ fontFamily: fonts.utilityBold, fontSize: 14, color: '#2b2f38', letterSpacing: 1 }}>{serial(g)}</Text>
+        <Text style={{ fontFamily: fonts.utilityBold, fontSize: 14, color: '#2b2f38', letterSpacing: 1 }}>CARBIX</Text>
       </View>
     </View>
   );
@@ -192,8 +192,8 @@ const styles = StyleSheet.create({
   plate: { borderWidth: 2, borderColor: INK, borderRadius: 2 },
   photo: { borderWidth: 2, borderColor: INK, backgroundColor: '#0a0d14', overflow: 'hidden', aspectRatio: 16 / 9, alignItems: 'center', justifyContent: 'center', marginTop: 4 },
   body: { backgroundColor: '#161c2c', borderWidth: 2, borderColor: INK, marginTop: 4, paddingHorizontal: 12, paddingTop: 4, paddingBottom: 10 },
-  sec: { fontFamily: fonts.utilityBold, fontSize: 9.5, color: '#C9A227', letterSpacing: 2, marginTop: 8, marginBottom: 2 },
+  sec: { fontFamily: fonts.utilityBold, fontSize: 13, color: '#C9A227', letterSpacing: 2, marginTop: 8, marginBottom: 2 },
   row: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 12, paddingVertical: 4, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,.07)' },
-  rk: { fontFamily: fonts.utility, fontSize: 9.5, color: '#8e98b8', letterSpacing: 1 },
+  rk: { fontFamily: fonts.utility, fontSize: 13, color: '#8e98b8', letterSpacing: 1 },
   rv: { fontFamily: fonts.display, fontSize: 17, lineHeight: 19, color: '#E4E7EC', flexShrink: 1, textAlign: 'right' },
 });

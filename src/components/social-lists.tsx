@@ -11,11 +11,11 @@ import { fonts, palette } from '@/theme/theme';
 
 function ModRow({ name, what }: { name: string; what: string }) {
   const g = useGame();
-  if (isSelf(g.profile, name)) return <Text style={{ fontFamily: fonts.utilityBold, fontSize: 8.5, color: palette.green }}>YOU</Text>;
+  if (isSelf(g.profile, name)) return <Text style={{ fontFamily: fonts.utilityBold, fontSize: 12, color: palette.green }}>YOU</Text>;
   return (
     <View style={{ flexDirection: 'row', gap: 14 }}>
-      <Text onPress={() => g.patchProfile((p) => withBlocked(p, name))} style={{ fontFamily: fonts.utilityBold, fontSize: 8.5, color: palette.red }}>BLOCK</Text>
-      <Text onPress={() => reportUser(name, what)} style={{ fontFamily: fonts.utilityBold, fontSize: 8.5, color: palette.lcdDim }}>REPORT</Text>
+      <Text onPress={() => g.patchProfile((p) => withBlocked(p, name))} style={{ fontFamily: fonts.utilityBold, fontSize: 12, color: palette.red }}>BLOCK</Text>
+      <Text onPress={() => reportUser(name, what)} style={{ fontFamily: fonts.utilityBold, fontSize: 12, color: palette.lcdDim }}>REPORT</Text>
     </View>
   );
 }
@@ -83,14 +83,14 @@ export function RankList() {
               </View>
               <View style={{ flex: 1 }}>
                 <Text onPress={() => openProfile(item.name)} style={{ fontFamily: fonts.display, fontSize: 21, color: palette.wht }} numberOfLines={1}>{item.displayName || item.name}</Text>
-                <Text style={{ fontFamily: fonts.utility, fontSize: 9, color: palette.lcdDim }}>LV.{lv} {rankFor(lv)}  -  {item.dexCount ?? item.caught ?? 0} IN THE BIX</Text>
+                <Text style={{ fontFamily: fonts.utility, fontSize: 13, color: palette.lcdDim }}>LV.{lv} {rankFor(lv)}  -  {item.dexCount ?? item.caught ?? 0} IN THE BIX</Text>
                 {item.name ? <ModRow name={item.name} what="leaderboard name" /> : null}
               </View>
               <View style={{ alignItems: 'flex-end', gap: 4 }}>
                 <Text style={{ fontFamily: fonts.display, fontSize: 22, color: palette.gold }}>{(item.xp ?? 0).toLocaleString()}</Text>
                 {item.name && !isSelf(gm.profile, item.name) && norm(item.name) !== 'spotter' ? (
-                  friends.includes(norm(item.name)) ? <Text style={{ fontFamily: fonts.utilityBold, fontSize: 8.5, color: palette.green }}>FRIEND</Text>
-                  : sent.includes(norm(item.name)) ? <Text style={{ fontFamily: fonts.utilityBold, fontSize: 8.5, color: palette.lcdDim }}>SENT</Text>
+                  friends.includes(norm(item.name)) ? <Text style={{ fontFamily: fonts.utilityBold, fontSize: 12, color: palette.green }}>FRIEND</Text>
+                  : sent.includes(norm(item.name)) ? <Text style={{ fontFamily: fonts.utilityBold, fontSize: 12, color: palette.lcdDim }}>SENT</Text>
                   : <Btn small tone="red" label="ADD" onPress={() => add(String(item.name))} />
                 ) : null}
               </View>

@@ -29,7 +29,7 @@ function Panel({ title, action, onAction, children }: { title: string; action?: 
         <Text style={{ fontFamily: fonts.display, fontSize: 22, color: palette.wht, letterSpacing: 1 }}>
           <Text style={{ color: palette.red }}>» </Text>{title}
         </Text>
-        {action ? <Text onPress={onAction} style={{ fontFamily: fonts.utilityBold, fontSize: 10, color: palette.red, padding: 4 }}>{action} ›</Text> : null}
+        {action ? <Text onPress={onAction} style={{ fontFamily: fonts.utilityBold, fontSize: 14, color: palette.red, padding: 4 }}>{action} ›</Text> : null}
       </View>
       {children}
     </View>
@@ -40,7 +40,7 @@ function Stat({ label, value }: { label: string; value: string }) {
   return (
     <View style={{ flex: 1, backgroundColor: 'rgba(20,28,39,.08)', borderWidth: 2, borderColor: INK, paddingVertical: 6, alignItems: 'center' }}>
       <Text style={{ fontFamily: fonts.display, fontSize: 22, color: INK }}>{value}</Text>
-      <Text style={{ fontFamily: fonts.utilityBold, fontSize: 8, color: '#5a6478', letterSpacing: 1 }}>{label}</Text>
+      <Text style={{ fontFamily: fonts.utilityBold, fontSize: 12, color: '#5a6478', letterSpacing: 1 }}>{label}</Text>
     </View>
   );
 }
@@ -106,7 +106,7 @@ export default function Home() {
               <RaceIcon size={30} />
               <View style={{ flex: 1 }}>
                 <Text style={{ fontFamily: fonts.display, fontSize: 20, color: INK }}>{race.invites[0].from} INVITED YOU TO A RACE</Text>
-                <Text style={{ fontFamily: fonts.utilityBold, fontSize: 9, color: INK }}>TAP TO JOIN</Text>
+                <Text style={{ fontFamily: fonts.utilityBold, fontSize: 13, color: INK }}>TAP TO JOIN</Text>
               </View>
             </View>
           </Pressable>
@@ -118,7 +118,7 @@ export default function Home() {
               <Text style={{ fontFamily: fonts.display, fontSize: 30, color: '#fff' }}>{g.streak}</Text>
               <View style={{ flex: 1 }}>
                 <Text style={{ fontFamily: fonts.display, fontSize: 19, color: '#fff' }}>YOUR {g.streak}-DAY STREAK ENDS AT MIDNIGHT</Text>
-                <Text style={{ fontFamily: fonts.utilityBold, fontSize: 9, color: 'rgba(255,255,255,.85)' }}>ONE SCAN KEEPS IT. TAP TO SCAN.</Text>
+                <Text style={{ fontFamily: fonts.utilityBold, fontSize: 13, color: 'rgba(255,255,255,.85)' }}>ONE SCAN KEEPS IT. TAP TO SCAN.</Text>
               </View>
             </View>
           </Pressable>
@@ -133,13 +133,13 @@ export default function Home() {
               </View>
               <View style={{ flex: 1, gap: 2 }}>
                 <Text style={{ fontFamily: fonts.display, fontSize: 24, color: INK }} numberOfLines={1}>{g.profile.displayName}</Text>
-                <Text style={{ fontFamily: fonts.utilityBold, fontSize: 11, color: palette.red }}>LV.{g.level} {g.rank}</Text>
-                <Text style={{ fontFamily: fonts.utility, fontSize: 9, color: '#5a6478' }}>{license ? 'TAP TO HIDE LICENSE' : 'TAP FOR YOUR LICENSE'}</Text>
+                <Text style={{ fontFamily: fonts.utilityBold, fontSize: 15, color: palette.red }}>LV.{g.level} {g.rank}</Text>
+                <Text style={{ fontFamily: fonts.utility, fontSize: 13, color: '#5a6478' }}>{license ? 'TAP TO HIDE LICENSE' : 'TAP FOR YOUR LICENSE'}</Text>
               </View>
             </View>
           </Pressable>
           <View style={{ paddingHorizontal: 12, gap: 5 }}>
-            <Text style={{ fontFamily: fonts.utility, fontSize: 9, color: palette.red }}>{nextRank ? `${toNext.toLocaleString()} XP TO ${nextRank[1]}` : 'MAX RANK'}</Text>
+            <Text style={{ fontFamily: fonts.utility, fontSize: 13, color: palette.red }}>{nextRank ? `${toNext.toLocaleString()} XP TO ${nextRank[1]}` : 'MAX RANK'}</Text>
             <Bar value={into / span} />
           </View>
           <View style={{ flexDirection: 'row', gap: 8, padding: 12 }}>
@@ -150,9 +150,9 @@ export default function Home() {
           </View>
           {license ? (
             <View style={{ borderTopWidth: 3, borderTopColor: INK, padding: 12, gap: 3 }}>
-              <Text style={{ fontFamily: fonts.display, fontSize: 18, color: palette.red }}>SPOTTER LICENSE  <Text style={{ fontFamily: fonts.utility, fontSize: 10, color: '#5a6478' }}>{lic}</Text></Text>
-              <Text style={{ fontFamily: fonts.utilityBold, fontSize: 10, color: INK }}>{g.profile.name}  -  {brands} BRANDS  -  ISSUED {g.profile.issued}</Text>
-              {(g.profile.title as string) ? <Text style={{ fontFamily: fonts.utility, fontSize: 11, color: palette.red }}>{g.profile.title as string}</Text> : null}
+              <Text style={{ fontFamily: fonts.display, fontSize: 25, color: palette.red }}>SPOTTER LICENSE  <Text style={{ fontFamily: fonts.utility, fontSize: 14, color: '#5a6478' }}>{lic}</Text></Text>
+              <Text style={{ fontFamily: fonts.utilityBold, fontSize: 14, color: INK }}>{g.profile.name}  -  {brands} BRANDS  -  ISSUED {g.profile.issued}</Text>
+              {(g.profile.title as string) ? <Text style={{ fontFamily: fonts.utility, fontSize: 15, color: palette.red }}>{g.profile.title as string}</Text> : null}
             </View>
           ) : null}
         </View>
@@ -177,7 +177,7 @@ export default function Home() {
             <Sprite entry={car} size={74} />
             <View style={{ flex: 1 }}>
               <Text style={{ fontFamily: fonts.display, fontSize: 20, color: palette.wht }} numberOfLines={1}>{car.make} {car.model}</Text>
-              <Text style={{ fontFamily: fonts.utility, fontSize: 9, color: palette.lcdDim }}>
+              <Text style={{ fontFamily: fonts.utility, fontSize: 13, color: palette.lcdDim }}>
                 CAR OF THE DAY - <Text style={{ color: TIER_COLOR[car.rarity] }}>{car.rarity.toUpperCase()}</Text>
               </Text>
             </View>
@@ -186,7 +186,7 @@ export default function Home() {
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, borderTopWidth: 1, borderTopColor: palette.line, paddingTop: 8 }}>
             <View style={{ width: 44, height: 44, backgroundColor: SPOT_HEX[spot] ?? '#888', borderWidth: 2, borderColor: INK }} />
             <View style={{ flex: 1 }}>
-              <Text style={{ fontFamily: fonts.utilityBold, fontSize: 9, color: palette.red }}>SPOTLIGHT</Text>
+              <Text style={{ fontFamily: fonts.utilityBold, fontSize: 13, color: palette.red }}>SPOTLIGHT</Text>
               <Text style={{ fontFamily: fonts.display, fontSize: 18, color: palette.wht }}>ANY {spot.toUpperCase()} CAR</Text>
             </View>
             <Text style={{ fontFamily: fonts.display, fontSize: 22, color: palette.gold }}>+50%</Text>
@@ -202,7 +202,7 @@ export default function Home() {
                   <Text style={{ fontFamily: fonts.display, fontSize: 19, color: palette.wht }}>{q.t}</Text>
                   <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                     <Text style={{ fontFamily: fonts.display, fontSize: 15, color: palette.gold }}>{Math.min(prog.have, prog.need)} / {prog.need}</Text>
-                    <Text style={{ fontFamily: fonts.utility, fontSize: 9, color: palette.lcdDim }}>{SEASON_EVENT_NAMES[season.event]} - {daysLeft}D UNTIL {season.next.toUpperCase()}</Text>
+                    <Text style={{ fontFamily: fonts.utility, fontSize: 13, color: palette.lcdDim }}>{SEASON_EVENT_NAMES[season.event]} - {daysLeft}D UNTIL {season.next.toUpperCase()}</Text>
                   </View>
                   <Bar value={prog.need ? Math.min(1, prog.have / prog.need) : 0} color={palette.green} />
                 </>
@@ -215,7 +215,7 @@ export default function Home() {
               {ch.map((c) => (
                 <View key={c.id} style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', borderTopWidth: 1, borderTopColor: palette.line, paddingTop: 8 }}>
                   <Text style={{ fontFamily: fonts.display, fontSize: 17, color: c.done ? palette.green : palette.wht, flex: 1 }}>{c.done ? '[X] ' : ''}{c.label}</Text>
-                  <Text style={{ fontFamily: fonts.utility, fontSize: 10, color: palette.gold }}>{c.prog}/{c.n} +{c.xp}</Text>
+                  <Text style={{ fontFamily: fonts.utility, fontSize: 14, color: palette.gold }}>{c.prog}/{c.n} +{c.xp}</Text>
                 </View>
               ))}
               <View style={{ flexDirection: 'row', gap: 10, paddingTop: 4 }}>
@@ -237,7 +237,7 @@ export default function Home() {
         <Panel title="FRIENDS" action="FEED" onAction={() => router.navigate('/social')}>
           {friendPosts.length === 0 ? (
             <>
-              <Text style={{ fontFamily: fonts.utility, fontSize: 10, color: palette.lcdDim }}>
+              <Text style={{ fontFamily: fonts.utility, fontSize: 14, color: palette.lcdDim }}>
                 ADD FRIENDS TO SEE WHAT THEY CATCH, RACE THEM AND DUEL THEIR BIX.
               </Text>
               <Btn small tone="navy" label="FIND FRIENDS" onPress={() => router.push('/friends')} />
@@ -251,7 +251,7 @@ export default function Home() {
                     {e ? <Sprite entry={e} size={54} /> : null}
                     <View style={{ flex: 1 }}>
                       <Text style={{ fontFamily: fonts.display, fontSize: 18, color: palette.wht }} numberOfLines={1}>{p.make} {p.model}</Text>
-                      <Text style={{ fontFamily: fonts.utility, fontSize: 9, color: palette.lcdDim }}>{String(p.name ?? '').toUpperCase()}  -  {ago(p.ts)}</Text>
+                      <Text style={{ fontFamily: fonts.utility, fontSize: 13, color: palette.lcdDim }}>{String(p.name ?? '').toUpperCase()}  -  {ago(p.ts)}</Text>
                     </View>
                     <Text style={{ fontFamily: fonts.display, fontSize: 22, color: palette.lcdDim }}>›</Text>
                   </View>
@@ -264,7 +264,7 @@ export default function Home() {
         {/* your latest */}
         <Panel title="YOUR LATEST" action="GARAGE" onAction={() => router.navigate('/bix')}>
           {recent.length === 0 ? (
-            <Text style={{ fontFamily: fonts.utility, fontSize: 10, color: palette.lcdDim }}>NOTHING CAUGHT YET.</Text>
+            <Text style={{ fontFamily: fonts.utility, fontSize: 14, color: palette.lcdDim }}>NOTHING CAUGHT YET.</Text>
           ) : (
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
               {recent.map((c) => {
@@ -274,7 +274,7 @@ export default function Home() {
                     <View style={{ width: 110, backgroundColor: '#161c2c', borderWidth: 2, borderColor: '#10141f', borderTopWidth: 5, borderTopColor: TIER_COLOR[c.car.rarity], alignItems: 'center', padding: 4 }}>
                       {e ? <Sprite entry={e} size={90} /> : null}
                       <Text numberOfLines={1} style={{ fontFamily: fonts.display, fontSize: 13, color: palette.wht }}>{c.car.model.toUpperCase()}</Text>
-                      <Text style={{ fontFamily: fonts.utility, fontSize: 8, color: palette.lcdDim }}>{ago(c.ts)}{c.shiny ? '  SHINY' : ''}</Text>
+                      <Text style={{ fontFamily: fonts.utility, fontSize: 12, color: palette.lcdDim }}>{ago(c.ts)}{c.shiny ? '  SHINY' : ''}</Text>
                     </View>
                   </Pressable>
                 );
@@ -294,11 +294,11 @@ export default function Home() {
 
         {!g.profile.googleLinked ? (
           <Panel title="SAVE YOUR GARAGE">
-            <Text style={{ fontFamily: fonts.utility, fontSize: 10, color: palette.lcdDim }}>SIGN IN WITH GOOGLE TO BACK UP YOUR GARAGE AND USE IT ON ANY PHONE.</Text>
+            <Text style={{ fontFamily: fonts.utility, fontSize: 14, color: palette.lcdDim }}>SIGN IN WITH GOOGLE TO BACK UP YOUR GARAGE AND USE IT ON ANY PHONE.</Text>
             <Btn small tone="red" label="SIGN IN" onPress={() => router.push('/settings')} />
           </Panel>
         ) : null}
-        <Text style={{ fontFamily: fonts.utility, fontSize: 9, color: t.muted, textAlign: 'center' }}>{SEASON_EVENT_NAMES[season.event]}  -  {season.name}  -  {daysLeft} DAYS UNTIL {season.next.toUpperCase()}</Text>
+        <Text style={{ fontFamily: fonts.utility, fontSize: 13, color: t.muted, textAlign: 'center' }}>{SEASON_EVENT_NAMES[season.event]}  -  {season.name}  -  {daysLeft} DAYS UNTIL {season.next.toUpperCase()}</Text>
       </ScrollView>
     </Screen>
   );
@@ -309,8 +309,8 @@ function GameTile({ title, sub, done, onPress }: { title: string; sub: string; d
     <Pressable style={{ flex: 1 }} onPress={() => { play('click'); onPress(); }} accessibilityRole="button">
       <View style={{ borderWidth: 2, borderColor: done ? palette.green : palette.line, padding: 10, alignItems: 'center', gap: 2 }}>
         <Text style={{ fontFamily: fonts.display, fontSize: 20, color: done ? palette.green : palette.wht }}>{title}</Text>
-        <Text style={{ fontFamily: fonts.utility, fontSize: 9, color: palette.lcdDim }}>{sub}</Text>
-        <Text style={{ fontFamily: fonts.utilityBold, fontSize: 10, color: done ? palette.green : palette.gold }}>{done ? 'DONE' : 'PLAY'}</Text>
+        <Text style={{ fontFamily: fonts.utility, fontSize: 13, color: palette.lcdDim }}>{sub}</Text>
+        <Text style={{ fontFamily: fonts.utilityBold, fontSize: 14, color: done ? palette.green : palette.gold }}>{done ? 'DONE' : 'PLAY'}</Text>
       </View>
     </Pressable>
   );

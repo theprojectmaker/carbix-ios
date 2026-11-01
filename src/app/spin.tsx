@@ -46,12 +46,12 @@ export default function Spin() {
         {doneToday && !go ? (
           <View style={{ backgroundColor: palette.panel, borderWidth: 3, borderColor: '#141C27', padding: 16, alignItems: 'center', gap: 6 }}>
             <Text style={{ fontFamily: fonts.display, fontSize: 24, color: '#fff' }}>YOU ALREADY SPUN TODAY</Text>
-            <Text style={{ fontFamily: fonts.prose, fontSize: 15, color: '#C9D2E6' }}>You won {(g.profile.spinLast as number) || 0} XP. Come back tomorrow.</Text>
+            <Text style={{ fontFamily: fonts.prose, fontSize: 21, color: '#C9D2E6' }}>You won {(g.profile.spinLast as number) || 0} XP. Come back tomorrow.</Text>
           </View>
         ) : (
           <View style={{ backgroundColor: palette.panel, borderWidth: 3, borderColor: '#141C27', padding: 20, alignItems: 'center', gap: 4 }}>
             <Text style={{ fontFamily: fonts.display, fontSize: 110, lineHeight: 114, color: landed && (shown ?? 0) >= 75 ? palette.gold : '#fff' }}>{shown ?? '-'}</Text>
-            <Text style={{ fontFamily: fonts.utilityBold, fontSize: 11, color: palette.lcdDim, letterSpacing: 2 }}>XP</Text>
+            <Text style={{ fontFamily: fonts.utilityBold, fontSize: 15, color: palette.lcdDim, letterSpacing: 2 }}>XP</Text>
           </View>
         )}
         {!doneToday && !go ? <Btn tone="red" label="SPIN" onPress={() => setGo(true)} /> : null}

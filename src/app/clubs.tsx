@@ -108,7 +108,7 @@ export function ClubsView({ embedded }: { embedded?: boolean }) {
 
         {club ? (
           <Panel title={club.name}>
-            <Text style={{ fontFamily: fonts.utility, fontSize: 9.5, color: palette.lcdDim }}>
+            <Text style={{ fontFamily: fonts.utility, fontSize: 13, color: palette.lcdDim }}>
               YOUR CLUB. INVITE CODE <Text style={{ fontFamily: fonts.utilityBold, color: palette.wht, letterSpacing: 2 }}>{club.code}</Text>. UP TO 20 SPOTTERS. COMBINED SEASON XP COUNTS ON THE BOARD.
             </Text>
             {members.map((m) => <Text key={m} style={{ fontFamily: fonts.display, fontSize: 17, color: palette.wht }}>{m}</Text>)}
@@ -128,18 +128,18 @@ export function ClubsView({ embedded }: { embedded?: boolean }) {
             </Panel>
           </>
         )}
-        {note ? <Text style={{ fontFamily: fonts.utilityBold, fontSize: 10, color: palette.red }}>{note}</Text> : null}
+        {note ? <Text style={{ fontFamily: fonts.utilityBold, fontSize: 14, color: palette.red }}>{note}</Text> : null}
 
         <Panel title="CLUBS BOARD">
           {board.length === 0 ? (
-            <Text style={{ fontFamily: fonts.utility, fontSize: 9.5, color: palette.lcdDim }}>NO CLUBS ON THE BOARD YET.</Text>
+            <Text style={{ fontFamily: fonts.utility, fontSize: 13, color: palette.lcdDim }}>NO CLUBS ON THE BOARD YET.</Text>
           ) : (
             board.map((b, i) => (
               <View key={b.code} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, borderTopWidth: 1, borderTopColor: palette.line, paddingTop: 8 }}>
                 <Text style={{ fontFamily: fonts.display, fontSize: 24, color: i < 3 ? palette.gold : palette.wht, width: 30 }}>{i + 1}</Text>
                 <View style={{ flex: 1 }}>
                   <Text style={{ fontFamily: fonts.display, fontSize: 19, color: b.code === club?.code ? palette.gold : palette.wht }}>{b.name}</Text>
-                  <Text style={{ fontFamily: fonts.utility, fontSize: 8.5, color: palette.lcdDim }}>{b.n} SPOTTER{b.n === 1 ? '' : 'S'}</Text>
+                  <Text style={{ fontFamily: fonts.utility, fontSize: 12, color: palette.lcdDim }}>{b.n} SPOTTER{b.n === 1 ? '' : 'S'}</Text>
                 </View>
                 <Text style={{ fontFamily: fonts.display, fontSize: 20, color: palette.gold }}>{b.xp.toLocaleString()}</Text>
               </View>

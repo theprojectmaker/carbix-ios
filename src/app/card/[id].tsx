@@ -62,7 +62,7 @@ export default function CardScreen() {
           <Btn style={{ flex: 1 }} tone="gold" label={sharing ? 'MAKING IMAGE...' : 'SHARE CARD'} disabled={sharing} onPress={share} />
           <Btn style={{ flex: 1 }} tone="navy" label="COMPARE" onPress={() => { const e = catalogMatch(c.car); router.push({ pathname: '/compare', params: e ? { a: String(e.n) } : {} }); }} />
         </View>
-        {note ? <Text style={{ fontFamily: fonts.utilityBold, fontSize: 10, color: palette.red }}>{note}</Text> : null}
+        {note ? <Text style={{ fontFamily: fonts.utilityBold, fontSize: 14, color: palette.red }}>{note}</Text> : null}
         <View style={{ flexDirection: 'row', gap: 10 }}>
           <Btn style={{ flex: 1 }} tone="red" label="DONE" onPress={() => router.back()} />
           <Btn

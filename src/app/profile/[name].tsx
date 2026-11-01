@@ -25,7 +25,7 @@ type Post = { id?: string; name?: string; make?: string; model?: string; rarity?
 const Stat = ({ label, value }: { label: string; value: string }) => (
   <View style={{ flex: 1, backgroundColor: '#161c2c', borderWidth: 2, borderColor: '#10141f', padding: 8, alignItems: 'center' }}>
     <Text style={{ fontFamily: fonts.display, fontSize: 24, color: palette.gold }}>{value}</Text>
-    <Text style={{ fontFamily: fonts.utilityBold, fontSize: 8, color: palette.lcdDim, letterSpacing: 1 }}>{label}</Text>
+    <Text style={{ fontFamily: fonts.utilityBold, fontSize: 12, color: palette.lcdDim, letterSpacing: 1 }}>{label}</Text>
   </View>
 );
 
@@ -81,7 +81,7 @@ export default function Profile() {
         {row === undefined ? (
           <Loading label="LOADING PROFILE" color={t.muted} />
         ) : row === null ? (
-          <Text style={{ fontFamily: fonts.utility, fontSize: 10, color: t.muted }}>THIS SPOTTER HAS NOT SHARED A PROFILE YET.</Text>
+          <Text style={{ fontFamily: fonts.utility, fontSize: 14, color: t.muted }}>THIS SPOTTER HAS NOT SHARED A PROFILE YET.</Text>
         ) : (
           <View style={{ backgroundColor: palette.panel, borderWidth: 3, borderColor: INK, padding: 12, gap: 10 }}>
             <Text style={{ fontFamily: fonts.display, fontSize: 24, color: palette.wht }}>LV.{lv} {rankFor(lv)}</Text>
@@ -91,7 +91,7 @@ export default function Profile() {
               <Stat label="DAY STREAK" value={String(row.streak ?? 0)} />
             </View>
             {row.bestModel ? (
-              <Text style={{ fontFamily: fonts.utility, fontSize: 9.5, color: palette.lcdDim }}>
+              <Text style={{ fontFamily: fonts.utility, fontSize: 13, color: palette.lcdDim }}>
                 BEST CATCH: <Text style={{ color: TIER_COLOR[row.bestRarity ?? 'Common'] }}>{String(row.bestModel).toUpperCase()}</Text>
               </Text>
             ) : null}
@@ -116,10 +116,10 @@ export default function Profile() {
           </View>
         ) : null}
 
-        {note ? <Text style={{ fontFamily: fonts.utilityBold, fontSize: 10, color: palette.gold }}>{note}</Text> : null}
+        {note ? <Text style={{ fontFamily: fonts.utilityBold, fontSize: 14, color: palette.gold }}>{note}</Text> : null}
 
         {me ? (
-          <Text style={{ fontFamily: fonts.utility, fontSize: 10, color: t.muted }}>THIS IS YOU.</Text>
+          <Text style={{ fontFamily: fonts.utility, fontSize: 14, color: t.muted }}>THIS IS YOU.</Text>
         ) : isFriend ? (
           <>
             <Btn tone="red" label={r.code ? 'INVITE TO MY RACE' : 'START A RACE TO INVITE'} onPress={invite} />

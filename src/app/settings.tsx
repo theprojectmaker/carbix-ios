@@ -28,7 +28,7 @@ function Section({ title, hint, children }: { title: string; hint?: string; chil
     <View style={{ backgroundColor: palette.panel, borderWidth: 3, borderColor: INK, padding: 12, gap: 10 }}>
       <View>
         <Text style={{ fontFamily: fonts.display, fontSize: 22, color: palette.wht }}><Text style={{ color: palette.red }}>» </Text>{title}</Text>
-        {hint ? <Text style={{ fontFamily: fonts.utility, fontSize: 9, color: palette.lcdDim, marginTop: 2 }}>{hint}</Text> : null}
+        {hint ? <Text style={{ fontFamily: fonts.utility, fontSize: 13, color: palette.lcdDim, marginTop: 2 }}>{hint}</Text> : null}
       </View>
       {children}
     </View>
@@ -40,7 +40,7 @@ function Toggle({ label, sub, value, onChange }: { label: string; sub?: string; 
     <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12, borderTopWidth: 1, borderTopColor: palette.line, paddingTop: 10 }}>
       <View style={{ flex: 1 }}>
         <Text style={{ fontFamily: fonts.display, fontSize: 19, color: palette.wht }}>{label}</Text>
-        {sub ? <Text style={{ fontFamily: fonts.utility, fontSize: 9, color: palette.lcdDim, marginTop: 1 }}>{sub}</Text> : null}
+        {sub ? <Text style={{ fontFamily: fonts.utility, fontSize: 13, color: palette.lcdDim, marginTop: 1 }}>{sub}</Text> : null}
       </View>
       <Switch value={value} onValueChange={onChange} trackColor={{ true: palette.red, false: '#3a4660' }} />
     </View>
@@ -139,7 +139,7 @@ export default function Settings() {
         <Section title="YOU" hint="THIS NAME SHOWS ON THE FEED AND LEADERBOARD.">
           <TextInput value={name} onChangeText={setName} autoCapitalize="none" autoCorrect={false} maxLength={16} style={input} />
           <Btn small label="SAVE NAME" onPress={() => { g.setUsername(name); setStatus('NAME SAVED.'); }} />
-          <Text style={{ fontFamily: fonts.utility, fontSize: 9, color: palette.lcdDim }}>
+          <Text style={{ fontFamily: fonts.utility, fontSize: 13, color: palette.lcdDim }}>
             TITLE: {String(g.profile.title || 'NONE').toUpperCase()}  -  {unlocked.length} OF {TITLES.length} UNLOCKED
           </Text>
           <Btn small tone="gold" label="CHOOSE A TITLE" onPress={() => router.push('/trophies')} />
@@ -159,7 +159,7 @@ export default function Settings() {
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderTopWidth: 1, borderTopColor: palette.line, paddingTop: 10 }}>
             <View style={{ flex: 1 }}>
               <Text style={{ fontFamily: fonts.display, fontSize: 19, color: palette.wht }}>UNITS</Text>
-              <Text style={{ fontFamily: fonts.utility, fontSize: 9, color: palette.lcdDim, marginTop: 1 }}>TOP SPEEDS ON CARDS AND IN COMPARE.</Text>
+              <Text style={{ fontFamily: fonts.utility, fontSize: 13, color: palette.lcdDim, marginTop: 1 }}>TOP SPEEDS ON CARDS AND IN COMPARE.</Text>
             </View>
             <View style={{ flexDirection: 'row' }}>
               <Chip label="MPH" on={g.settings.units !== 'kmh'} onPress={() => g.setSettings({ units: 'mph' })} />
@@ -205,12 +205,12 @@ export default function Settings() {
 
         <Section title="ACCOUNT AND BACKUP" hint="MOVE YOUR GARAGE BETWEEN PHONES, OR KEEP A COPY.">
           <Btn tone="red" label={g.profile.googleLinked ? 'SIGN IN WITH GOOGLE AGAIN' : 'SIGN IN WITH GOOGLE'} onPress={async () => { setStatus('OPENING GOOGLE...'); const r = await g.googleSignIn(); setStatus(r.ok ? 'SIGNED IN. YOUR GARAGE IS HERE.' : (r.error ?? 'COULD NOT SIGN IN.')); }} />
-          <Text style={{ fontFamily: fonts.utility, fontSize: 9.5, color: palette.lcdDim }}>
+          <Text style={{ fontFamily: fonts.utility, fontSize: 13, color: palette.lcdDim }}>
             A SIGN-IN SHEET POPS UP OVER THE APP. WHEN YOU ARE DONE IT CLOSES BY ITSELF AND YOUR WHOLE GARAGE COMES WITH YOU. NO CODE NEEDED. OR TYPE A CODE FROM THE WEBSITE (SETTINGS, ACCOUNT, LINK A DEVICE):
           </Text>
           <TextInput value={code} onChangeText={(s) => setCode(s.toUpperCase())} placeholder="ABC123" placeholderTextColor="#7f8ca6" autoCapitalize="characters" autoCorrect={false} maxLength={8} style={{ ...input, letterSpacing: 4 }} />
           <Btn small tone="red" label="USE CODE" onPress={link} />
-          {g.syncState ? <Text style={{ fontFamily: fonts.utility, fontSize: 9, color: palette.lcdDim }}>CLOUD: {g.syncState}</Text> : null}
+          {g.syncState ? <Text style={{ fontFamily: fonts.utility, fontSize: 13, color: palette.lcdDim }}>CLOUD: {g.syncState}</Text> : null}
           <Btn small tone="navy" label="RECALCULATE MY SCORE" onPress={() => { g.recalcScore(); setStatus('SCORE RECALCULATED FROM YOUR GARAGE. THE LEADERBOARD UPDATES IN A MOMENT.'); }} />
           <View style={{ flexDirection: 'row', gap: 8 }}>
             <Btn small style={{ flex: 1 }} tone="plain" label="EXPORT" onPress={exportBackup} />
@@ -220,7 +220,7 @@ export default function Settings() {
 
         <Section title="SAFETY" hint="HIDE SPOTTERS YOU DON'T WANT TO SEE. YOU CAN'T BLOCK YOURSELF.">
           {blocked.length === 0 ? (
-            <Text style={{ fontFamily: fonts.utility, fontSize: 9.5, color: palette.lcdDim }}>NOBODY BLOCKED. USE BLOCK OR REPORT UNDER ANY NAME IN THE FEED OR LEADERBOARD.</Text>
+            <Text style={{ fontFamily: fonts.utility, fontSize: 13, color: palette.lcdDim }}>NOBODY BLOCKED. USE BLOCK OR REPORT UNDER ANY NAME IN THE FEED OR LEADERBOARD.</Text>
           ) : (
             blocked.map((n) => (
               <View key={n} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderTopWidth: 1, borderTopColor: palette.line, paddingTop: 8 }}>
@@ -233,14 +233,14 @@ export default function Settings() {
         </Section>
 
         <Section title="ABOUT">
-          <Text style={{ fontFamily: fonts.utility, fontSize: 9.5, color: palette.lcdDim }}>
+          <Text style={{ fontFamily: fonts.utility, fontSize: 13, color: palette.lcdDim }}>
             CARBIX {version}  -  LICENCE {g.profile.lic.replace(/^MDX-/, 'CBX-')}
           </Text>
           <Btn small tone="plain" label="PRIVACY POLICY" onPress={() => WebBrowser.openBrowserAsync(PRIVACY_URL)} />
           <Btn small tone="red" label="DELETE ALL LOCAL DATA" onPress={wipe} />
         </Section>
 
-        {status ? <Text style={{ fontFamily: fonts.utilityBold, fontSize: 11, color: t.red }}>{status}</Text> : null}
+        {status ? <Text style={{ fontFamily: fonts.utilityBold, fontSize: 15, color: t.red }}>{status}</Text> : null}
         <Btn tone="plain" label="CLOSE" onPress={() => router.back()} />
       </ScrollView>
     </Screen>

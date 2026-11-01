@@ -73,7 +73,7 @@ export default function RaceScreen() {
           <Chip label="RACE" on={seg === 'race'} onPress={() => setSeg('race')} />
           <Chip label="LIVE CATCHES" on={seg === 'live'} onPress={() => setSeg('live')} />
         </View>
-        {r.error ? <Text style={{ fontFamily: fonts.utilityBold, fontSize: 11, color: t.red }}>{r.error.toUpperCase()}</Text> : null}
+        {r.error ? <Text style={{ fontFamily: fonts.utilityBold, fontSize: 15, color: t.red }}>{r.error.toUpperCase()}</Text> : null}
 
         {seg === 'race' && !race ? <InvitesPanel /> : null}
 
@@ -81,7 +81,7 @@ export default function RaceScreen() {
           !r.liveSession ? (
             <>
               <Panel title="START A LIVE SESSION">
-                <Text style={{ fontFamily: fonts.prose, fontSize: 15, color: '#C9D2E6' }}>
+                <Text style={{ fontFamily: fonts.prose, fontSize: 21, color: '#C9D2E6' }}>
                   Not a race. You scan like normal and keep all your XP. Everyone with the code sees each other&apos;s catches as they happen. Locations are never shared.
                 </Text>
                 <Btn tone="red" label={r.busy ? 'STARTING...' : 'START LIVE SESSION'} disabled={r.busy} onPress={r.createLive} />
@@ -103,15 +103,15 @@ export default function RaceScreen() {
           ) : (
             <>
               <Panel>
-                <Text style={{ fontFamily: fonts.utility, fontSize: 9, color: palette.lcdDim }}>LIVE SESSION CODE</Text>
+                <Text style={{ fontFamily: fonts.utility, fontSize: 13, color: palette.lcdDim }}>LIVE SESSION CODE</Text>
                 <Text style={{ fontFamily: fonts.display, fontSize: 40, color: palette.gold, letterSpacing: 6 }}>{r.liveSession.code}</Text>
-                <Text style={{ fontFamily: fonts.utility, fontSize: 9.5, color: palette.lcdDim }}>
+                <Text style={{ fontFamily: fonts.utility, fontSize: 13, color: palette.lcdDim }}>
                   {r.liveSession.players.length} SPOTTER{r.liveSession.players.length === 1 ? '' : 'S'} HERE: {r.liveSession.players.map((p) => p.name).join(', ')}
                 </Text>
               </Panel>
               <Panel title="CATCHES">
                 {r.liveSession.catches.length === 0 ? (
-                  <Text style={{ fontFamily: fonts.utility, fontSize: 9.5, color: palette.lcdDim }}>NOTHING YET. SCAN A CAR AND IT SHOWS UP HERE FOR EVERYONE.</Text>
+                  <Text style={{ fontFamily: fonts.utility, fontSize: 13, color: palette.lcdDim }}>NOTHING YET. SCAN A CAR AND IT SHOWS UP HERE FOR EVERYONE.</Text>
                 ) : (
                   r.liveSession.catches.filter((c) => !isBlocked(gm.profile, c.name)).slice(0, 20).map((c, i) => (
                     <View key={i} style={{ flexDirection: 'row', gap: 10, alignItems: 'center', borderTopWidth: 1, borderTopColor: palette.line, paddingTop: 8 }}>
@@ -120,7 +120,7 @@ export default function RaceScreen() {
                       </View>
                       <View style={{ flex: 1 }}>
                         <Text style={{ fontFamily: fonts.display, fontSize: 18, color: palette.wht }} numberOfLines={1}>{c.make} {c.model}</Text>
-                        <Text style={{ fontFamily: fonts.utility, fontSize: 9, color: palette.lcdDim }}>{c.name}  -  {c.rarity.toUpperCase()}  -  {ago(c.ts)}</Text>
+                        <Text style={{ fontFamily: fonts.utility, fontSize: 13, color: palette.lcdDim }}>{c.name}  -  {c.rarity.toUpperCase()}  -  {ago(c.ts)}</Text>
                       </View>
                     </View>
                   ))
@@ -132,13 +132,13 @@ export default function RaceScreen() {
         ) : !race ? (
           <>
             <Panel title="START A RACE">
-              <Text style={{ fontFamily: fonts.utility, fontSize: 9.5, color: palette.lcdDim }}>
+              <Text style={{ fontFamily: fonts.utility, fontSize: 13, color: palette.lcdDim }}>
                 UP TO 10 SPOTTERS. YOUR CATCHES SCORE WHILE THE RACE RUNS. LOCATION IS NEVER SHARED.
               </Text>
               {MODES.map((m) => (
                 <View key={m.key} style={{ borderWidth: 2, borderColor: mode === m.key ? palette.gold : palette.line, padding: 8 }}>
                   <Text onPress={() => setMode(m.key)} style={{ fontFamily: fonts.display, fontSize: 20, color: mode === m.key ? palette.gold : palette.wht }}>{m.label}</Text>
-                  <Text onPress={() => setMode(m.key)} style={{ fontFamily: fonts.utility, fontSize: 9, color: palette.lcdDim, marginTop: 2 }}>{m.blurb}</Text>
+                  <Text onPress={() => setMode(m.key)} style={{ fontFamily: fonts.utility, fontSize: 13, color: palette.lcdDim, marginTop: 2 }}>{m.blurb}</Text>
                 </View>
               ))}
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
@@ -165,18 +165,18 @@ export default function RaceScreen() {
             <Panel>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                 <View>
-                  <Text style={{ fontFamily: fonts.utility, fontSize: 9, color: palette.lcdDim }}>RACE CODE</Text>
+                  <Text style={{ fontFamily: fonts.utility, fontSize: 13, color: palette.lcdDim }}>RACE CODE</Text>
                   <Text style={{ fontFamily: fonts.display, fontSize: 40, color: palette.gold, letterSpacing: 6 }}>{race.code}</Text>
                 </View>
                 <View style={{ alignItems: 'flex-end' }}>
-                  <Text style={{ fontFamily: fonts.utility, fontSize: 9, color: palette.lcdDim }}>{MODES.find((m) => m.key === race.mode)?.label}</Text>
+                  <Text style={{ fontFamily: fonts.utility, fontSize: 13, color: palette.lcdDim }}>{MODES.find((m) => m.key === race.mode)?.label}</Text>
                   <Text style={{ fontFamily: fonts.display, fontSize: 34, color: palette.wht }}>
                     {race.status === 'lobby' ? `${race.durationMin} MIN` : race.status === 'running' ? clock((race.endTs ?? now) - now) : 'DONE'}
                   </Text>
                 </View>
               </View>
               {race.status === 'lobby' ? (
-                <Text style={{ fontFamily: fonts.utility, fontSize: 9.5, color: palette.lcdDim }}>
+                <Text style={{ fontFamily: fonts.utility, fontSize: 13, color: palette.lcdDim }}>
                   SHARE THE CODE. WHEN EVERYONE IS IN, THE HOST STARTS THE CLOCK.
                 </Text>
               ) : null}
@@ -184,7 +184,7 @@ export default function RaceScreen() {
                 <Text style={{ fontFamily: fonts.display, fontSize: 22, color: palette.gold }}>WINNER: {race.winnerName ?? 'NOBODY'}</Text>
               ) : null}
               {race.status === 'running' && race.mode === 'elimination' && race.nextCutTs ? (
-                <Text style={{ fontFamily: fonts.utilityBold, fontSize: 10, color: palette.red }}>NEXT CUT IN {clock(race.nextCutTs - now)}</Text>
+                <Text style={{ fontFamily: fonts.utilityBold, fontSize: 14, color: palette.red }}>NEXT CUT IN {clock(race.nextCutTs - now)}</Text>
               ) : null}
             </Panel>
 
@@ -198,7 +198,7 @@ export default function RaceScreen() {
                   return (
                     <View key={b.id} style={{ flexDirection: 'row', justifyContent: 'space-between', borderTopWidth: 1, borderTopColor: palette.line, paddingTop: 6 }}>
                       <Text style={{ fontFamily: fonts.display, fontSize: 18, color: done ? palette.green : palette.wht }}>{done ? '[X] ' : '[ ] '}{b.label}</Text>
-                      {b.hard ? <Text style={{ fontFamily: fonts.utility, fontSize: 9, color: palette.gold }}>HARD</Text> : null}
+                      {b.hard ? <Text style={{ fontFamily: fonts.utility, fontSize: 13, color: palette.gold }}>HARD</Text> : null}
                     </View>
                   );
                 })}
@@ -212,7 +212,7 @@ export default function RaceScreen() {
                   <Text style={{ fontFamily: fonts.display, fontSize: 19, color: p.out ? palette.lcdDim : p.you ? palette.gold : palette.wht, flex: 1 }} numberOfLines={1}>
                     {p.name}{p.host ? ' (HOST)' : ''}{p.out ? ' - CUT' : ''}
                   </Text>
-                  <Text style={{ fontFamily: fonts.utilityBold, fontSize: 10, color: palette.wht }}>
+                  <Text style={{ fontFamily: fonts.utilityBold, fontSize: 14, color: palette.wht }}>
                     {race.mode === 'scavenger' ? `${p.boxes?.length ?? 0}/${race.sheet?.length ?? 5} BOXES` : `${p.xp} XP`} · {p.caught} CARS
                   </Text>
                 </View>
@@ -222,7 +222,7 @@ export default function RaceScreen() {
             {race.catches.length ? (
               <Panel title="LIVE CATCHES">
                 {race.catches.slice(0, 8).map((c, i) => (
-                  <Text key={i} style={{ fontFamily: fonts.utility, fontSize: 9.5, color: palette.wht }}>
+                  <Text key={i} style={{ fontFamily: fonts.utility, fontSize: 13, color: palette.wht }}>
                     {c.name} CAUGHT A {c.make} {c.model} ({c.rarity.toUpperCase()}) +{c.xp}
                   </Text>
                 ))}

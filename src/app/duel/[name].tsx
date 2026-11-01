@@ -22,11 +22,11 @@ function Tile({ c, star, on, onStar }: { c: CatalogEntry; star?: boolean; on?: b
     <View style={{ width: '31.5%', backgroundColor: '#161c2c', borderWidth: 2, borderColor: '#10141f', borderTopWidth: 5, borderTopColor: TIER_COLOR[c.rarity], alignItems: 'center', padding: 4, opacity: star ? 1 : 0.7 }}>
       <Sprite entry={c} size={86} />
       <Text numberOfLines={1} style={{ fontFamily: fonts.display, fontSize: 13, color: palette.wht }}>{c.model.toUpperCase()}</Text>
-      <Text style={{ fontFamily: fonts.utilityBold, fontSize: 7.5, color: TIER_COLOR[c.rarity] }}>{c.rarity.toUpperCase()}</Text>
+      <Text style={{ fontFamily: fonts.utilityBold, fontSize: 12, color: TIER_COLOR[c.rarity] }}>{c.rarity.toUpperCase()}</Text>
       {star ? (
         <Pressable onPress={onStar} accessibilityRole="button" accessibilityLabel={`Target ${c.make} ${c.model}`}>
           <View style={{ marginTop: 4, backgroundColor: on ? palette.gold : '#2C3E58', borderWidth: 2, borderColor: INK, paddingHorizontal: 8, paddingVertical: 3 }}>
-            <Text style={{ fontFamily: fonts.utilityBold, fontSize: 8, color: on ? INK : '#fff' }}>{on ? 'TARGETED' : 'TARGET'}</Text>
+            <Text style={{ fontFamily: fonts.utilityBold, fontSize: 12, color: on ? INK : '#fff' }}>{on ? 'TARGETED' : 'TARGET'}</Text>
           </View>
         </Pressable>
       ) : null}
@@ -69,13 +69,13 @@ export default function Duel() {
     <Screen edges={['top', 'bottom']}>
       <ScrollView contentContainerStyle={{ padding: 14, gap: 12, paddingBottom: 30 }}>
         <Text style={{ fontFamily: fonts.display, fontSize: 34, color: palette.red }}>BIX DUEL</Text>
-        <Text style={{ fontFamily: fonts.utilityBold, fontSize: 10, color: palette.navyDk }}>YOU VS {String(name).toUpperCase()}</Text>
+        <Text style={{ fontFamily: fonts.utilityBold, fontSize: 14, color: palette.navyDk }}>YOU VS {String(name).toUpperCase()}</Text>
 
         {bits === undefined ? (
           <Loading label="LOADING THE DUEL" color={palette.navyDk} />
         ) : !d ? (
           <View style={{ backgroundColor: palette.panel, borderWidth: 3, borderColor: INK, padding: 12 }}>
-            <Text style={{ fontFamily: fonts.prose, fontSize: 15, color: '#C9D2E6' }}>
+            <Text style={{ fontFamily: fonts.prose, fontSize: 21, color: '#C9D2E6' }}>
               {String(name)} has not published their bix yet. Their garage shows up here after their next catch.
             </Text>
           </View>
@@ -84,15 +84,15 @@ export default function Duel() {
             <View style={{ backgroundColor: palette.panel, borderWidth: 3, borderColor: INK, flexDirection: 'row', padding: 12, alignItems: 'center' }}>
               <View style={{ flex: 1, alignItems: 'center' }}>
                 <Text style={{ fontFamily: fonts.display, fontSize: 40, color: palette.gold }}>{g.caughtNs.size}</Text>
-                <Text style={{ fontFamily: fonts.utilityBold, fontSize: 9, color: palette.lcdDim }}>YOU</Text>
+                <Text style={{ fontFamily: fonts.utilityBold, fontSize: 13, color: palette.lcdDim }}>YOU</Text>
               </View>
               <Text style={{ fontFamily: fonts.display, fontSize: 20, color: vcol, flex: 1.2, textAlign: 'center' }}>{verdict}</Text>
               <View style={{ flex: 1, alignItems: 'center' }}>
                 <Text style={{ fontFamily: fonts.display, fontSize: 40, color: palette.gold }}>{d.theirs.size}</Text>
-                <Text style={{ fontFamily: fonts.utilityBold, fontSize: 9, color: palette.lcdDim }}>{String(name).toUpperCase().slice(0, 10)}</Text>
+                <Text style={{ fontFamily: fonts.utilityBold, fontSize: 13, color: palette.lcdDim }}>{String(name).toUpperCase().slice(0, 10)}</Text>
               </View>
             </View>
-            <Text style={{ fontFamily: fonts.utility, fontSize: 9.5, color: palette.navyDk, textAlign: 'center' }}>
+            <Text style={{ fontFamily: fonts.utility, fontSize: 13, color: palette.navyDk, textAlign: 'center' }}>
               {d.both} IN BOTH GARAGES  -  {d.only.length} ONLY THEIRS  -  {d.yours.length} ONLY YOURS
             </Text>
 
@@ -104,7 +104,7 @@ export default function Duel() {
                 <Tile key={c.n} c={c} star on={stars.includes(c.n)} onStar={() => { play('click'); g.toggleStar(c.n); }} />
               ))}
             </View>
-            {d.only.length > 60 ? <Text style={{ fontFamily: fonts.utility, fontSize: 9, color: palette.navyDk }}>+{d.only.length - 60} MORE</Text> : null}
+            {d.only.length > 60 ? <Text style={{ fontFamily: fonts.utility, fontSize: 13, color: palette.navyDk }}>+{d.only.length - 60} MORE</Text> : null}
 
             {d.yours.length ? (
               <>
@@ -114,7 +114,7 @@ export default function Duel() {
                 </View>
               </>
             ) : null}
-            <Text style={{ fontFamily: fonts.utility, fontSize: 9, color: palette.navyDk }}>CATCH A TARGETED CAR FOR BONUS XP.</Text>
+            <Text style={{ fontFamily: fonts.utility, fontSize: 13, color: palette.navyDk }}>CATCH A TARGETED CAR FOR BONUS XP.</Text>
           </>
         )}
         <Btn tone="plain" label="CLOSE" onPress={() => router.back()} />

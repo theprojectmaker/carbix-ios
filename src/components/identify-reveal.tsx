@@ -232,7 +232,7 @@ export function IdentifyReveal({ shot, car, onDone, haptics = true, startBox = n
                 />
               ))}
               <Fade t={t} a={T.found} b={T.mint - 100} style={{ position: 'absolute', left: 0, top: -20 }}>
-                {chip(<Text style={{ fontFamily: fonts.utilityBold, fontSize: 9, color: rc[2], letterSpacing: 1 }}>{String(car.model).toUpperCase()}</Text>, rc[0])}
+                {chip(<Text style={{ fontFamily: fonts.utilityBold, fontSize: 13, color: rc[2], letterSpacing: 1 }}>{String(car.model).toUpperCase()}</Text>, rc[0])}
               </Fade>
             </Animated.View>
           </Animated.View>
@@ -244,7 +244,7 @@ export function IdentifyReveal({ shot, car, onDone, haptics = true, startBox = n
             <View style={{ backgroundColor: 'rgba(8,10,16,.72)', borderWidth: 2, borderColor: rc[0], paddingHorizontal: 10, paddingVertical: 7, gap: 3 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                 <View style={{ width: 8, height: 8, backgroundColor: rc[0] }} />
-                <Text style={{ fontFamily: fonts.utilityBold, fontSize: 10, color: rc[0], letterSpacing: 1.5 }}>IDENTIFYING...</Text>
+                <Text style={{ fontFamily: fonts.utilityBold, fontSize: 14, color: rc[0], letterSpacing: 1.5 }}>IDENTIFYING...</Text>
               </View>
               <Text style={{ fontFamily: fonts.display, fontSize: 24, color: '#fff' }} numberOfLines={1}>{String(car.make).toUpperCase()}</Text>
             </View>
@@ -253,21 +253,21 @@ export function IdentifyReveal({ shot, car, onDone, haptics = true, startBox = n
             <View style={{ gap: 3 }}>
               {checks.map((c, i) => (
                 <Fade key={i} t={t} a={260 + 170 * i} b={T.found + 60} style={{ alignSelf: 'flex-start' }}>
-                  <Text style={{ fontFamily: fonts.utility, fontSize: 9.5, color: rc[0], backgroundColor: 'rgba(8,10,16,.7)', paddingHorizontal: 6, paddingVertical: 2 }}>{c}</Text>
+                  <Text style={{ fontFamily: fonts.utility, fontSize: 13, color: rc[0], backgroundColor: 'rgba(8,10,16,.7)', paddingHorizontal: 6, paddingVertical: 2 }}>{c}</Text>
                 </Fade>
               ))}
             </View>
             <View style={{ backgroundColor: 'rgba(8,10,16,.78)', borderWidth: 2, borderColor: rc[0], padding: 8, gap: 5 }}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                <Text style={{ fontFamily: fonts.utilityBold, fontSize: 9, color: '#C9D2E6' }}>MATCH CONFIDENCE</Text>
-                <Pct t={t} conf={conf} style={{ fontFamily: fonts.utilityBold, fontSize: 9, color: rc[0], padding: 0, minWidth: 34, textAlign: 'right' }} />
+                <Text style={{ fontFamily: fonts.utilityBold, fontSize: 13, color: '#C9D2E6' }}>MATCH CONFIDENCE</Text>
+                <Pct t={t} conf={conf} style={{ fontFamily: fonts.utilityBold, fontSize: 13, color: rc[0], padding: 0, minWidth: 34, textAlign: 'right' }} />
               </View>
               <View style={{ height: 8, backgroundColor: '#222c3d' }}>
                 <Animated.View style={[{ height: 8, width: '100%', backgroundColor: rc[0] }, confBar]} />
               </View>
               {conf >= 96 ? (
                 <Fade t={t} a={700} b={T.found} style={{ alignSelf: 'flex-start' }}>
-                  <Text style={{ fontFamily: fonts.utilityBold, fontSize: 9, color: '#5dff9b' }}>CLEAN SCAN</Text>
+                  <Text style={{ fontFamily: fonts.utilityBold, fontSize: 13, color: '#5dff9b' }}>CLEAN SCAN</Text>
                 </Fade>
               ) : null}
             </View>
@@ -278,25 +278,25 @@ export function IdentifyReveal({ shot, car, onDone, haptics = true, startBox = n
             <View style={{ backgroundColor: 'rgba(8,10,16,.72)', borderWidth: 2, borderColor: rc[0], paddingHorizontal: 10, paddingVertical: 7, gap: 3 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                 <View style={{ width: 8, height: 8, backgroundColor: rc[0] }} />
-                <Text style={{ fontFamily: fonts.utilityBold, fontSize: 10, color: rc[0], letterSpacing: 1.5 }}>{conf < 65 ? 'UNCERTAIN' : 'IDENTIFIED'}</Text>
+                <Text style={{ fontFamily: fonts.utilityBold, fontSize: 14, color: rc[0], letterSpacing: 1.5 }}>{conf < 65 ? 'UNCERTAIN' : 'IDENTIFIED'}</Text>
               </View>
               <Text style={{ fontFamily: fonts.display, fontSize: 24, color: rc[0] }} numberOfLines={1}>{`${String(car.make).toUpperCase()} ${String(car.model).toUpperCase()}`}</Text>
             </View>
           </Fade>
           <Fade t={t} a={T.found} b={T.foundEnd} style={{ position: 'absolute', left: 0, right: 0, bottom: 14, alignItems: 'center' }}>
-            {chip(<Text style={{ fontFamily: fonts.utilityBold, fontSize: 11, color: rc[2], letterSpacing: 2 }}>{conf < 65 ? 'LOW CONFIDENCE - VERIFY?' : 'MATCH FOUND'}</Text>, rc[0])}
+            {chip(<Text style={{ fontFamily: fonts.utilityBold, fontSize: 15, color: rc[2], letterSpacing: 2 }}>{conf < 65 ? 'LOW CONFIDENCE - VERIFY?' : 'MATCH FOUND'}</Text>, rc[0])}
           </Fade>
 
           {/* phase 3: stat read-outs */}
           {stats.map((s, i) => (
             <Fade key={s.lbl} t={t} a={statAt(i)} b={statAt(i) + 780} style={{ position: 'absolute', left: 0, right: 0, bottom: 24, alignItems: 'center' }}>
               <View style={{ backgroundColor: 'rgba(8,10,16,.82)', borderWidth: 3, borderColor: rc[0], paddingHorizontal: 22, paddingVertical: 12, alignItems: 'center', minWidth: 230, gap: 4 }}>
-                <Text style={{ fontFamily: fonts.utilityBold, fontSize: 10, color: '#C9D2E6', letterSpacing: 2 }}>{s.lbl}</Text>
+                <Text style={{ fontFamily: fonts.utilityBold, fontSize: 14, color: '#C9D2E6', letterSpacing: 2 }}>{s.lbl}</Text>
                 <Count t={t} from={statAt(i)} dur={380} value={s.val} unit={s.unit} color={rc[0]} style={{ fontFamily: fonts.display, fontSize: 54, lineHeight: 58, textAlign: 'center', minWidth: 200 }} />
                 <View style={{ height: 8, width: '100%', backgroundColor: '#222c3d' }}>
                   <StatBar t={t} from={statAt(i)} color={rc[0]} />
                 </View>
-                <Text style={{ fontFamily: fonts.utility, fontSize: 8.5, color: '#8e98b8', letterSpacing: 1.5 }}>EXTRACTING DATA</Text>
+                <Text style={{ fontFamily: fonts.utility, fontSize: 12, color: '#8e98b8', letterSpacing: 1.5 }}>EXTRACTING DATA</Text>
               </View>
             </Fade>
           ))}
@@ -304,7 +304,7 @@ export function IdentifyReveal({ shot, car, onDone, haptics = true, startBox = n
           {/* phase 4: minting the card */}
           <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(8,10,16,.84)' }, mintStyle]}>
             <View style={{ position: 'absolute', top: 14, left: 0, right: 0, alignItems: 'center' }}>
-              <Text style={{ fontFamily: fonts.utilityBold, fontSize: 11, color: rc[0], letterSpacing: 2 }}>MINTING CATCH CARD</Text>
+              <Text style={{ fontFamily: fonts.utilityBold, fontSize: 15, color: rc[0], letterSpacing: 2 }}>MINTING CATCH CARD</Text>
             </View>
             <View style={{ position: 'absolute', left: cardLeft, top: cardTop, width: cardW, backgroundColor: rc[0], borderWidth: 3, borderColor: '#141C27', padding: 6, gap: 6 }}>
               <Fade t={t} a={skelA(0)} b={99999} style={{ height: 36, backgroundColor: 'rgba(0,0,0,.28)' }} />

@@ -124,11 +124,11 @@ export function ScanSweep({ haptics = true, box = null }: { haptics?: boolean; b
             ))}
             {locked ? (
               <View style={{ position: 'absolute', left: 0, top: -20, backgroundColor: LOCK, paddingHorizontal: 6, paddingVertical: 2 }}>
-                <Text style={{ fontFamily: fonts.utilityBold, fontSize: 9, letterSpacing: 1.5, color: '#0b1408' }}>{box ? 'LOCKED ON' : 'LOCK'}</Text>
+                <Text style={{ fontFamily: fonts.utilityBold, fontSize: 13, letterSpacing: 1.5, color: '#0b1408' }}>{box ? 'LOCKED ON' : 'LOCK'}</Text>
               </View>
             ) : (
               <View style={{ position: 'absolute', left: 0, top: -20, backgroundColor: 'rgba(8,10,16,.7)', paddingHorizontal: 6, paddingVertical: 2 }}>
-                <Text style={{ fontFamily: fonts.utilityBold, fontSize: 9, letterSpacing: 1.5, color: SCAN }}>READING</Text>
+                <Text style={{ fontFamily: fonts.utilityBold, fontSize: 13, letterSpacing: 1.5, color: SCAN }}>READING</Text>
               </View>
             )}
           </Animated.View>

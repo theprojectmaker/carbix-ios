@@ -19,7 +19,7 @@ function Row({ icon, title, body }: { icon: React.ReactNode; title: string; body
     <View style={{ width: 44, height: 44, backgroundColor: '#161c2c', borderWidth: 2, borderColor: '#10141f', alignItems: 'center', justifyContent: 'center' }}>{icon}</View>
     <View style={{ flex: 1 }}>
       <Text style={{ fontFamily: fonts.display, fontSize: 19, color: palette.wht }}>{title}</Text>
-      <Text style={{ fontFamily: fonts.utility, fontSize: 9.5, color: palette.lcdDim, lineHeight: 14 }}>{body}</Text>
+      <Text style={{ fontFamily: fonts.utility, fontSize: 13, color: palette.lcdDim, lineHeight: 14 }}>{body}</Text>
     </View>
   </View>
   );
@@ -58,7 +58,7 @@ export default function NotifyAsk() {
           <Row icon={<BellIcon size={28} />} title="A DAILY NUDGE" body="ONE REMINDER A DAY WITH THE CAR OF THE DAY. YOU PICK THE TIME IN SETTINGS." />
           <Row icon={<Text style={{ fontFamily: fonts.display, fontSize: 22, color: palette.gold }}>7</Text>} title="STREAK WARNINGS" body="A HEADS-UP IN THE EVENING WHEN YOUR STREAK IS ABOUT TO END." />
           <Row icon={<RaceIcon size={28} />} title="FRIENDS' BIG CATCHES" body="WHEN A FRIEND BAGS SOMETHING RARE OR BETTER." />
-          <Text style={{ fontFamily: fonts.utility, fontSize: 9, color: palette.lcdDim, lineHeight: 13, paddingTop: 4 }}>
+          <Text style={{ fontFamily: fonts.utility, fontSize: 13, color: palette.lcdDim, lineHeight: 13, paddingTop: 4 }}>
             NEVER MORE THAN A FEW A DAY. EVERY ONE CAN BE TURNED OFF IN SETTINGS.
           </Text>
         </View>

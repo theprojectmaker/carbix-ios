@@ -80,12 +80,12 @@ export default function Poster() {
       <ScrollView contentContainerStyle={{ padding: 14, gap: 12, paddingBottom: 30 }}>
         <PText style={{ fontSize: 44, lineHeight: 46, color: t.red }}>BIX POSTER</PText>
         <View style={{ backgroundColor: palette.panel, borderWidth: 3, borderColor: '#141C27', padding: 12, gap: 8 }}>
-          <Text style={{ fontFamily: fonts.prose, fontSize: 15, color: '#C9D2E6' }}>
+          <Text style={{ fontFamily: fonts.prose, fontSize: 21, color: '#C9D2E6' }}>
             Your whole garage as one wall poster: every car you caught in a grid, and every car still out there as one grey pixel underneath.
           </Text>
           {busy ? <Bar value={prog} color={palette.green} /> : null}
           <Btn tone="red" label={busy ? `DRAWING ${Math.round(prog * 100)}%` : png ? 'DRAW AGAIN' : 'DRAW MY POSTER'} disabled={busy} onPress={make} />
-          {err ? <Text style={{ fontFamily: fonts.utilityBold, fontSize: 10, color: palette.red }}>{err}</Text> : null}
+          {err ? <Text style={{ fontFamily: fonts.utilityBold, fontSize: 14, color: palette.red }}>{err}</Text> : null}
         </View>
         {png ? (
           <>

@@ -100,7 +100,7 @@ export default function Welcome() {
     done({ googleLinked: true });
   }
 
-  const label = { fontFamily: fonts.utilityBold, fontSize: 10, color: palette.lcdDim, letterSpacing: 1.5 } as const;
+  const label = { fontFamily: fonts.utilityBold, fontSize: 14, color: palette.lcdDim, letterSpacing: 1.5 } as const;
 
   return (
     <Screen edges={[]}>
@@ -108,7 +108,7 @@ export default function Welcome() {
         <ScrollView contentContainerStyle={{ padding: 16, paddingTop: (insets.top || 50) + 10, gap: 14, paddingBottom: (insets.bottom || 18) + 30 }} keyboardShouldPersistTaps="handled">
           <View>
             <Text style={{ fontFamily: fonts.display, fontSize: 52, lineHeight: 54, color: t.red }}>CARBIX</Text>
-            <Text style={{ fontFamily: fonts.utilityBold, fontSize: 11, color: t.muted, letterSpacing: 1.5 }}>SPOT REAL CARS. FILL YOUR BIX.</Text>
+            <Text style={{ fontFamily: fonts.utilityBold, fontSize: 15, color: t.muted, letterSpacing: 1.5 }}>SPOT REAL CARS. FILL YOUR BIX.</Text>
           </View>
 
           <View style={{ flexDirection: 'row', gap: 8 }}>
@@ -133,26 +133,26 @@ export default function Welcome() {
 
             <Pressable onPress={() => { play('click'); setAgree(!agree); }} accessibilityRole="checkbox" accessibilityState={{ checked: agree }} style={{ flexDirection: 'row', gap: 10, alignItems: 'center', paddingTop: 4 }}>
               <View style={{ width: 26, height: 26, borderWidth: 3, borderColor: INK, backgroundColor: agree ? palette.green : '#222c3d', alignItems: 'center', justifyContent: 'center' }}>
-                {agree ? <Text style={{ fontFamily: fonts.utilityBold, fontSize: 11, color: INK }}>OK</Text> : null}
+                {agree ? <Text style={{ fontFamily: fonts.utilityBold, fontSize: 15, color: INK }}>OK</Text> : null}
               </View>
-              <Text style={{ flex: 1, fontFamily: fonts.prose, fontSize: 14, color: '#C9D2E6' }}>
+              <Text style={{ flex: 1, fontFamily: fonts.prose, fontSize: 20, color: '#C9D2E6' }}>
                 I agree to the{' '}
                 <Text style={{ color: palette.gold }} onPress={() => WebBrowser.openBrowserAsync(TERMS_URL)}>Terms of Use</Text> and the{' '}
                 <Text style={{ color: palette.gold }} onPress={() => WebBrowser.openBrowserAsync(PRIVACY_URL)}>Privacy Policy</Text>.
               </Text>
             </Pressable>
 
-            {msg ? <Text style={{ fontFamily: fonts.utilityBold, fontSize: 10, color: palette.red }}>{msg}</Text> : null}
+            {msg ? <Text style={{ fontFamily: fonts.utilityBold, fontSize: 14, color: palette.red }}>{msg}</Text> : null}
             <Btn tone="red" label={busy ? 'ONE MOMENT...' : mode === 'create' ? 'CREATE ACCOUNT' : 'LOG IN'} disabled={busy} onPress={mode === 'create' ? create : login} />
           </View>
 
           <View style={{ backgroundColor: palette.panel, borderWidth: 3, borderColor: INK, padding: 14, gap: 10 }}>
             <Text style={{ fontFamily: fonts.display, fontSize: 22, color: palette.wht }}><Text style={{ color: palette.red }}>» </Text>CONNECT GOOGLE</Text>
-            <Text style={{ fontFamily: fonts.utility, fontSize: 9.5, color: palette.lcdDim }}>
+            <Text style={{ fontFamily: fonts.utility, fontSize: 13, color: palette.lcdDim }}>
               ALREADY PLAY WITH GOOGLE? SIGN IN AND YOUR WHOLE GARAGE, LEVEL AND NAME COME OVER. IT OPENS SAFARI AND BRINGS YOU BACK HERE BY ITSELF.
             </Text>
             <Btn tone="red" label={busy ? 'ONE MOMENT...' : 'SIGN IN WITH GOOGLE'} disabled={busy} onPress={googleSignIn} />
-            <Text style={{ fontFamily: fonts.utility, fontSize: 9, color: palette.lcdDim }}>DID NOT COME BACK? TYPE THE CODE SAFARI SHOWED:</Text>
+            <Text style={{ fontFamily: fonts.utility, fontSize: 13, color: palette.lcdDim }}>DID NOT COME BACK? TYPE THE CODE SAFARI SHOWED:</Text>
             {showCode ? (
               <>
                 <TextInput value={code} onChangeText={(s) => setCode(s.toUpperCase())} placeholder="ABC123" placeholderTextColor="#7f8ca6" autoCapitalize="characters" autoCorrect={false} maxLength={8} style={{ ...input, letterSpacing: 4 }} />

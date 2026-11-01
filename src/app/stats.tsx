@@ -27,7 +27,7 @@ function Panel({ title, children }: { title: string; children: React.ReactNode }
 const Big = ({ label, value }: { label: string; value: string }) => (
   <View style={{ flex: 1, minWidth: '30%', backgroundColor: '#161c2c', borderWidth: 2, borderColor: '#10141f', padding: 8, alignItems: 'center' }}>
     <Text style={{ fontFamily: fonts.display, fontSize: 24, color: palette.gold }} numberOfLines={1} adjustsFontSizeToFit>{value}</Text>
-    <Text style={{ fontFamily: fonts.utilityBold, fontSize: 8, color: palette.lcdDim, letterSpacing: 1 }}>{label}</Text>
+    <Text style={{ fontFamily: fonts.utilityBold, fontSize: 12, color: palette.lcdDim, letterSpacing: 1 }}>{label}</Text>
   </View>
 );
 
@@ -99,7 +99,7 @@ export default function Stats() {
               </View>
             ))}
           </View>
-          <Text style={{ fontFamily: fonts.utility, fontSize: 9.5, color: palette.lcdDim }}>
+          <Text style={{ fontFamily: fonts.utility, fontSize: 13, color: palette.lcdDim }}>
             THIS WEEK {s.last7}  -  LAST WEEK {s.prev7}  -  {s.last7 >= s.prev7 ? 'UP' : 'DOWN'} {Math.abs(s.last7 - s.prev7)}
             {s.bestDay ? `  -  BEST DAY ${s.bestDay[1]} CATCHES ON ${s.bestDay[0]}` : ''}
           </Text>
@@ -108,7 +108,7 @@ export default function Stats() {
         <Panel title="RARITY MIX">
           {TIERS.map((r) => (
             <View key={r} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-              <Text style={{ fontFamily: fonts.utilityBold, fontSize: 9, color: TIER_COLOR[r], width: 76 }}>{r.toUpperCase()}</Text>
+              <Text style={{ fontFamily: fonts.utilityBold, fontSize: 13, color: TIER_COLOR[r], width: 76 }}>{r.toUpperCase()}</Text>
               <View style={{ flex: 1, height: 12, backgroundColor: '#161c2c', borderWidth: 1, borderColor: '#10141f' }}>
                 <View style={{ width: `${((s.perTier[r] || 0) / maxTier) * 100}%`, height: '100%', backgroundColor: TIER_COLOR[r] }} />
               </View>
@@ -123,7 +123,7 @@ export default function Stats() {
               <Sprite entry={rarestE} size={110} shadow />
               <View style={{ flex: 1 }}>
                 <Text style={{ fontFamily: fonts.display, fontSize: 22, color: palette.wht }} numberOfLines={2}>{s.rarest.car.make} {s.rarest.car.model}</Text>
-                <Text style={{ fontFamily: fonts.utilityBold, fontSize: 10, color: TIER_COLOR[s.rarest.car.rarity] }}>{s.rarest.car.rarity.toUpperCase()}  -  +{catchXP(s.rarest.car)} XP</Text>
+                <Text style={{ fontFamily: fonts.utilityBold, fontSize: 14, color: TIER_COLOR[s.rarest.car.rarity] }}>{s.rarest.car.rarity.toUpperCase()}  -  +{catchXP(s.rarest.car)} XP</Text>
                 <Btn small tone="navy" label="OPEN CARD" onPress={() => router.push({ pathname: '/card/[id]', params: { id: String(s.rarest!.id) } })} />
               </View>
             </View>
@@ -131,7 +131,7 @@ export default function Stats() {
         ) : null}
 
         <Panel title="TOP BRANDS">
-          {s.topBrands.length === 0 ? <Text style={{ fontFamily: fonts.utility, fontSize: 9.5, color: palette.lcdDim }}>NOTHING YET.</Text> : s.topBrands.map(([b, n]) => (
+          {s.topBrands.length === 0 ? <Text style={{ fontFamily: fonts.utility, fontSize: 13, color: palette.lcdDim }}>NOTHING YET.</Text> : s.topBrands.map(([b, n]) => (
             <View key={b} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
               <Text style={{ fontFamily: fonts.display, fontSize: 16, color: palette.wht, width: 110 }} numberOfLines={1}>{b.toUpperCase()}</Text>
               <View style={{ flex: 1, height: 12, backgroundColor: '#161c2c', borderWidth: 1, borderColor: '#10141f' }}>
@@ -146,12 +146,12 @@ export default function Stats() {
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
             {s.topClasses.map(([k, n]) => (
               <View key={k} style={{ backgroundColor: '#161c2c', borderWidth: 2, borderColor: '#10141f', paddingHorizontal: 8, paddingVertical: 4, flexDirection: 'row', gap: 6 }}>
-                <Text style={{ fontFamily: fonts.utilityBold, fontSize: 9, color: palette.lcdDim }}>{k}</Text>
-                <Text style={{ fontFamily: fonts.utilityBold, fontSize: 9, color: palette.gold }}>{n}</Text>
+                <Text style={{ fontFamily: fonts.utilityBold, fontSize: 13, color: palette.lcdDim }}>{k}</Text>
+                <Text style={{ fontFamily: fonts.utilityBold, fontSize: 13, color: palette.gold }}>{n}</Text>
               </View>
             ))}
           </View>
-          <Text style={{ fontFamily: fonts.utility, fontSize: 9.5, color: palette.lcdDim }}>{s.xp.toLocaleString()} XP FROM CATCHES OVER {s.span} DAY{s.span === 1 ? '' : 'S'}.</Text>
+          <Text style={{ fontFamily: fonts.utility, fontSize: 13, color: palette.lcdDim }}>{s.xp.toLocaleString()} XP FROM CATCHES OVER {s.span} DAY{s.span === 1 ? '' : 'S'}.</Text>
         </Panel>
 
         <View style={{ flexDirection: 'row', gap: 8 }}>

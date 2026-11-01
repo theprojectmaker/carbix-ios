@@ -31,7 +31,7 @@ function Panel({ title, children }: { title?: string; children: React.ReactNode 
     <View style={{ backgroundColor: '#161c2c', borderWidth: 2, borderColor: INK, paddingHorizontal: 12, paddingVertical: 10, gap: 6 }}>
       {title ? (
         <View style={{ marginBottom: 2 }}>
-          <Text style={{ fontFamily: fonts.utilityBold, fontSize: 11, color: palette.gold, letterSpacing: 1.5 }}>{title}</Text>
+          <Text style={{ fontFamily: fonts.utilityBold, fontSize: 15, color: palette.gold, letterSpacing: 1.5 }}>{title}</Text>
           <View style={{ height: 1, backgroundColor: 'rgba(255,255,255,.12)', marginTop: 4 }} />
         </View>
       ) : null}
@@ -43,8 +43,8 @@ function Panel({ title, children }: { title?: string; children: React.ReactNode 
 function Row({ k, v }: { k: string; v: string }) {
   return (
     <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 12, borderTopWidth: 1, borderTopColor: palette.line, paddingTop: 6 }}>
-      <Text style={{ fontFamily: fonts.utility, fontSize: 10, color: palette.lcdDim }}>{k}</Text>
-      <Text style={{ fontFamily: fonts.utilityBold, fontSize: 10.5, color: palette.wht, flexShrink: 1, textAlign: 'right' }}>{v}</Text>
+      <Text style={{ fontFamily: fonts.utility, fontSize: 14, color: palette.lcdDim }}>{k}</Text>
+      <Text style={{ fontFamily: fonts.utilityBold, fontSize: 15, color: palette.wht, flexShrink: 1, textAlign: 'right' }}>{v}</Text>
     </View>
   );
 }
@@ -53,11 +53,11 @@ function Gauge({ label, value, max, text }: { label: string; value: number; max:
   const filled = value > 0 ? Math.max(1, Math.round(Math.min(1, value / max) * 20)) : 0;
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-      <Text style={{ fontFamily: fonts.utility, fontSize: 9.5, color: palette.lcdDim, width: 34 }}>{label}</Text>
+      <Text style={{ fontFamily: fonts.utility, fontSize: 13, color: palette.lcdDim, width: 34 }}>{label}</Text>
       <View style={{ flex: 1, flexDirection: 'row', gap: 1, height: 12 }}>
         {Array.from({ length: 20 }).map((_, i) => <View key={i} style={{ flex: 1, backgroundColor: i < filled ? '#CFC6A8' : '#262E42' }} />)}
       </View>
-      <Text style={{ fontFamily: fonts.utilityBold, fontSize: 10, color: palette.wht, width: 52, textAlign: 'right' }}>{text}</Text>
+      <Text style={{ fontFamily: fonts.utilityBold, fontSize: 14, color: palette.wht, width: 52, textAlign: 'right' }}>{text}</Text>
     </View>
   );
 }
@@ -68,14 +68,14 @@ function VsBar({ label, mine, avg, unit }: { label: string; mine: number; avg: n
   return (
     <View style={{ gap: 3 }}>
       <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-        <Text style={{ fontFamily: fonts.utility, fontSize: 9.5, color: palette.lcdDim }}>{label}</Text>
-        <Text style={{ fontFamily: fonts.utilityBold, fontSize: 10, color: better ? palette.green : palette.red }}>
+        <Text style={{ fontFamily: fonts.utility, fontSize: 13, color: palette.lcdDim }}>{label}</Text>
+        <Text style={{ fontFamily: fonts.utilityBold, fontSize: 14, color: better ? palette.green : palette.red }}>
           {Math.round(Math.abs(mine / avg - 1) * 100)}% {better ? 'ABOVE' : 'BELOW'} AVERAGE
         </Text>
       </View>
       <View style={{ height: 10, backgroundColor: '#222c3d' }}><View style={{ flex: 1, width: pct((mine / max) * 100), backgroundColor: better ? palette.green : palette.red }} /></View>
       <View style={{ height: 6, backgroundColor: '#222c3d' }}><View style={{ flex: 1, width: pct((avg / max) * 100), backgroundColor: '#8e98b8' }} /></View>
-      <Text style={{ fontFamily: fonts.utility, fontSize: 8, color: palette.lcdDim }}>THIS CAR {Math.round(mine)}{unit}  -  AVERAGE {Math.round(avg)}{unit}</Text>
+      <Text style={{ fontFamily: fonts.utility, fontSize: 12, color: palette.lcdDim }}>THIS CAR {Math.round(mine)}{unit}  -  AVERAGE {Math.round(avg)}{unit}</Text>
     </View>
   );
 }
@@ -114,20 +114,20 @@ export default function CarDetail() {
             <View style={{ marginBottom: 14 }}>
               <Sprite entry={e} caught={caught} size={300} tint="#56658A" shadow />
             </View>
-            <Text style={{ position: 'absolute', right: 10, top: 8, fontFamily: fonts.utility, fontSize: 11, color: '#8e98b8' }}>#{String(dexRank(e.n)).padStart(4, '0')}</Text>
+            <Text style={{ position: 'absolute', right: 10, top: 8, fontFamily: fonts.utility, fontSize: 15, color: '#8e98b8' }}>#{String(dexRank(e.n)).padStart(4, '0')}</Text>
           </View>
           <View style={{ padding: 12, gap: 6 }}>
-            <Text style={{ fontFamily: fonts.utility, fontSize: 10, color: '#8e98b8', letterSpacing: 1.5 }}>{e.make.toUpperCase()}</Text>
+            <Text style={{ fontFamily: fonts.utility, fontSize: 14, color: '#8e98b8', letterSpacing: 1.5 }}>{e.make.toUpperCase()}</Text>
             <Text style={{ fontFamily: fonts.display, fontSize: 36, lineHeight: 38, color: '#fff' }}>{caught ? e.model.toUpperCase() : '? ? ?'}</Text>
             <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
               <View style={{ backgroundColor: color, borderWidth: 2, borderColor: INK, paddingHorizontal: 8, paddingVertical: 3 }}>
-                <Text style={{ fontFamily: fonts.utilityBold, fontSize: 10, color: ['Common', 'Legendary'].includes(e.rarity) ? INK : '#fff' }}>{e.rarity.toUpperCase()}</Text>
+                <Text style={{ fontFamily: fonts.utilityBold, fontSize: 14, color: ['Common', 'Legendary'].includes(e.rarity) ? INK : '#fff' }}>{e.rarity.toUpperCase()}</Text>
               </View>
-              <Text style={{ fontFamily: fonts.utilityBold, fontSize: 10, color: caught ? palette.green : palette.lcdDim }}>
+              <Text style={{ fontFamily: fonts.utilityBold, fontSize: 14, color: caught ? palette.green : palette.lcdDim }}>
                 {caught ? `CAUGHT ${mine.length} TIME${mine.length === 1 ? '' : 'S'}` : 'NOT CAUGHT YET'}
               </Text>
             </View>
-            <Text style={{ fontFamily: fonts.prose, fontSize: 15, color: '#C9D2E6' }}>{RARITY_TEXT[e.rarity]}</Text>
+            <Text style={{ fontFamily: fonts.prose, fontSize: 21, color: '#C9D2E6' }}>{RARITY_TEXT[e.rarity]}</Text>
           </View>
         </View>
 
@@ -162,9 +162,9 @@ export default function CarDetail() {
                   <View style={{ position: 'absolute', top: 0, bottom: 0, left: pct(Math.max(0, ((y0 - 1900) / 130) * 100)), width: pct(Math.max(2, ((y1 - y0 + 1) / 130) * 100)), backgroundColor: color }} />
                 </View>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                  <Text style={{ fontFamily: fonts.utility, fontSize: 8.5, color: palette.lcdDim }}>1900</Text>
-                  <Text style={{ fontFamily: fonts.utilityBold, fontSize: 9, color: palette.wht }}>{y0} TO {/present/i.test(e.years || '') ? 'NOW' : y1}  ({y1 - y0 + 1} YEARS)</Text>
-                  <Text style={{ fontFamily: fonts.utility, fontSize: 8.5, color: palette.lcdDim }}>2030</Text>
+                  <Text style={{ fontFamily: fonts.utility, fontSize: 12, color: palette.lcdDim }}>1900</Text>
+                  <Text style={{ fontFamily: fonts.utilityBold, fontSize: 13, color: palette.wht }}>{y0} TO {/present/i.test(e.years || '') ? 'NOW' : y1}  ({y1 - y0 + 1} YEARS)</Text>
+                  <Text style={{ fontFamily: fonts.utility, fontSize: 12, color: palette.lcdDim }}>2030</Text>
                 </View>
               </Panel>
             ) : null}
@@ -181,7 +181,7 @@ export default function CarDetail() {
           </>
         ) : (
           <Panel title="HOW TO UNLOCK">
-            <Text style={{ fontFamily: fonts.prose, fontSize: 15, color: '#C9D2E6' }}>
+            <Text style={{ fontFamily: fonts.prose, fontSize: 21, color: '#C9D2E6' }}>
               Spot this car on the road and scan it. Its full spec sheet, value and history unlock when you catch it.
             </Text>
             <Row k="BODY CLASS" v={e.cls} />
@@ -200,7 +200,7 @@ export default function CarDetail() {
                     <View style={{ width: 104, backgroundColor: '#161c2c', borderWidth: 2, borderColor: got ? TIER_COLOR[s.rarity] : '#10141f', alignItems: 'center', padding: 4 }}>
                       <Sprite entry={s} caught={got} size={90} tint="#56658A" />
                       <Text numberOfLines={1} style={{ fontFamily: fonts.display, fontSize: 13, color: palette.wht }}>{got ? s.make + ' ' + s.model : '? ? ?'}</Text>
-                      <Text style={{ fontFamily: fonts.utilityBold, fontSize: 8, color: palette.gold }}>{s.hp} HP</Text>
+                      <Text style={{ fontFamily: fonts.utilityBold, fontSize: 12, color: palette.gold }}>{s.hp} HP</Text>
                     </View>
                   </Pressable>
                 );
@@ -210,7 +210,7 @@ export default function CarDetail() {
         ) : null}
 
         <Panel title={`MORE ${e.make.toUpperCase()}`}>
-          <Text style={{ fontFamily: fonts.utilityBold, fontSize: 10, color: palette.gold }}>
+          <Text style={{ fontFamily: fonts.utilityBold, fontSize: 14, color: palette.gold }}>
             {gotMake.length} OF {sameMake.length} CAUGHT
           </Text>
           <View style={{ height: 12, borderWidth: 2, borderColor: INK, backgroundColor: '#222c3d' }}>
@@ -238,11 +238,11 @@ export default function CarDetail() {
                   </View>
                   <View style={{ flex: 1, gap: 2 }}>
                     <Text style={{ fontFamily: fonts.display, fontSize: 17, color: palette.wht }}>{new Date(c.ts).toLocaleDateString()}{c.shiny ? '  SHINY' : ''}</Text>
-                    <Text style={{ fontFamily: fonts.utility, fontSize: 9, color: palette.lcdDim }}>
+                    <Text style={{ fontFamily: fonts.utility, fontSize: 13, color: palette.lcdDim }}>
                       {c.car.color ? String(c.car.color).toUpperCase() + '  ' : ''}{c.geo ? `${c.geo.lat.toFixed(2)}, ${c.geo.lng.toFixed(2)}` : 'NO LOCATION'}
                     </Text>
                   </View>
-                  <Text style={{ fontFamily: fonts.utilityBold, fontSize: 10, color: palette.red }}>CARD</Text>
+                  <Text style={{ fontFamily: fonts.utilityBold, fontSize: 14, color: palette.red }}>CARD</Text>
                 </View>
               </Pressable>
             ))}

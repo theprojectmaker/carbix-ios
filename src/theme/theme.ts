@@ -32,14 +32,15 @@ const dark = {
   muted: '#A6B2C8',
 };
 
-/* Jersey 25 for headlines, Pixelify Sans for every label and body line (it stays readable at 9-10px, where
-   Silkscreen turned into noise), Silkscreen kept as `retro` for the few stamped badges, Press Start for the LCD. */
+/* One typeface: Jersey 25 for headlines, labels and body alike (labels were Silkscreen, then Pixelify Sans, and both
+   turned to mush at small sizes). Label sizes across the app were raised ~40% to suit. Silkscreen stays as `retro`
+   for the few stamped badges, Press Start for the LCD. */
 export const fonts = {
   display: 'Jersey25_400Regular',
   pixel: 'PressStart2P_400Regular',
-  utility: 'PixelifySans_500Medium',
-  utilityBold: 'PixelifySans_700Bold',
-  prose: 'PixelifySans_400Regular',
+  utility: 'Jersey25_400Regular',
+  utilityBold: 'Jersey25_400Regular',
+  prose: 'Jersey25_400Regular',
   retro: 'Silkscreen_700Bold',
 };
 

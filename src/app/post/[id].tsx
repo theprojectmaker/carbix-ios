@@ -19,7 +19,7 @@ const INK = '#141C27';
 const Stat = ({ label, value }: { label: string; value: string }) => (
   <View style={{ flex: 1, minWidth: '30%', backgroundColor: '#161c2c', borderWidth: 2, borderColor: '#10141f', padding: 8, alignItems: 'center' }}>
     <Text style={{ fontFamily: fonts.display, fontSize: 20, color: palette.gold }} numberOfLines={1}>{value}</Text>
-    <Text style={{ fontFamily: fonts.utilityBold, fontSize: 8, color: palette.lcdDim, letterSpacing: 1 }}>{label}</Text>
+    <Text style={{ fontFamily: fonts.utilityBold, fontSize: 12, color: palette.lcdDim, letterSpacing: 1 }}>{label}</Text>
   </View>
 );
 
@@ -65,7 +65,7 @@ export default function PostScreen() {
           <>
             <View>
               <Text onPress={() => post.name && router.push({ pathname: '/profile/[name]', params: { name: post.name } })}
-                style={{ fontFamily: fonts.utilityBold, fontSize: 11, color: t.muted, letterSpacing: 1 }}>
+                style={{ fontFamily: fonts.utilityBold, fontSize: 15, color: t.muted, letterSpacing: 1 }}>
                 {mine ? 'YOU' : String(post.name ?? '@spotter').toUpperCase()} CAUGHT
               </Text>
               <PText style={{ fontSize: 34, lineHeight: 36, color: t.red }}>{post.make} {post.model}</PText>
@@ -78,15 +78,15 @@ export default function PostScreen() {
                 <Sprite entry={e} size={200} shadow />
               ) : null}
               <View style={{ position: 'absolute', left: 8, top: 8, backgroundColor: color, borderWidth: 2, borderColor: INK, paddingHorizontal: 7, paddingVertical: 2 }}>
-                <Text style={{ fontFamily: fonts.utilityBold, fontSize: 10, color: ['Common', 'Legendary'].includes(post.rarity ?? 'Common') ? INK : '#fff' }}>{(post.rarity ?? 'Common').toUpperCase()}</Text>
+                <Text style={{ fontFamily: fonts.utilityBold, fontSize: 14, color: ['Common', 'Legendary'].includes(post.rarity ?? 'Common') ? INK : '#fff' }}>{(post.rarity ?? 'Common').toUpperCase()}</Text>
               </View>
               {post.shiny ? (
                 <View style={{ position: 'absolute', right: 8, top: 8, backgroundColor: palette.gold, borderWidth: 2, borderColor: INK, paddingHorizontal: 7, paddingVertical: 2 }}>
-                  <Text style={{ fontFamily: fonts.utilityBold, fontSize: 10, color: INK }}>SHINY</Text>
+                  <Text style={{ fontFamily: fonts.utilityBold, fontSize: 14, color: INK }}>SHINY</Text>
                 </View>
               ) : null}
             </View>
-            <Text style={{ fontFamily: fonts.utility, fontSize: 9.5, color: t.muted }}>CAUGHT {ago(post.ts)}</Text>
+            <Text style={{ fontFamily: fonts.utility, fontSize: 13, color: t.muted }}>CAUGHT {ago(post.ts)}</Text>
 
             <View style={{ backgroundColor: palette.panel, borderWidth: 3, borderColor: INK, padding: 12, gap: 10 }}>
               <Text style={{ fontFamily: fonts.display, fontSize: 22, color: palette.wht }}><Text style={{ color: palette.red }}>» </Text>THE CAR</Text>
@@ -97,13 +97,13 @@ export default function PostScreen() {
                     <Stat label="TOP SPEED" value={e.top ? `${e.top} MPH` : '?'} />
                     <Stat label="YEARS" value={String(e.years ?? '?')} />
                   </View>
-                  <Text style={{ fontFamily: fonts.utility, fontSize: 9.5, color: palette.lcdDim }}>
+                  <Text style={{ fontFamily: fonts.utility, fontSize: 13, color: palette.lcdDim }}>
                     {[e.cls].filter(Boolean).join('  -  ').toUpperCase()}
                   </Text>
                   <Btn small tone="navy" label="FULL CAR PAGE" onPress={() => router.push({ pathname: '/car/[n]', params: { n: String(e.n) } })} />
                 </>
               ) : (
-                <Text style={{ fontFamily: fonts.utility, fontSize: 9.5, color: palette.lcdDim }}>NOT IN THE BIX YET, SO THERE ARE NO STATS TO SHOW.</Text>
+                <Text style={{ fontFamily: fonts.utility, fontSize: 13, color: palette.lcdDim }}>NOT IN THE BIX YET, SO THERE ARE NO STATS TO SHOW.</Text>
               )}
             </View>
 

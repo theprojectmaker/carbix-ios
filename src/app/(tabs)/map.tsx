@@ -7,14 +7,13 @@ import { StyleSheet, Text, View } from 'react-native';
 import MapView, { Marker, type Region } from 'react-native-maps';
 
 import { Image } from 'expo-image';
-
-import { classicPinURI, pinImageURI } from '@/components/pin-image';
+import { pinBitmap } from '@/components/pin-image';
 import { Screen } from '@/components/screen';
 import { Btn, PText, Sprite } from '@/components/ui';
 import { catalogMatch } from '@/engine/data';
 import { equippedTier } from '@/engine/shop';
 import type { Catch, Rarity } from '@/engine/types';
-import { TIER_COLOR } from '@/engine/xp';
+import { RTIER, TIER_COLOR } from '@/engine/xp';
 import { play } from '@/lib/sfx';
 import { useGame } from '@/state/game';
 import { fonts, palette, useTheme } from '@/theme/theme';
@@ -53,13 +52,7 @@ export default function MapTab() {
 
   const pins = useMemo(() => g.garage.filter((c) => c.geo), [g.garage]);
   const pinId = equippedTier(g.profile, 'mappin') ?? 'classic';
-  // one small bitmap per rarity, drawn once: a marker is then a single image, not a tree of views
-  const pinURIs = useMemo(() => {
-    const m: Record<string, string | null> = {};
-    for (const r of ['Common', 'Uncommon', 'Rare', 'Epic', 'Legendary', 'Mythic']) m[r] = pinImageURI(pinId, r) ?? classicPinURI(TIER_COLOR[r as Rarity]);
-    return m;
-  }, [pinId]);
-  // zoomed out, nearby catches collapse into one numbered dot; zoomed in they spread back out
+  // zoomed out, nearby catches collapse into one pin carrying a count; zoomed in they spread back out
   const zoomStep = Math.round(zoomV);
   const clusters = useMemo(() => {
     if (pins.length <= 40 || zoomStep >= 15) return pins.map((c) => ({ key: String(c.id), lat: c.geo!.lat, lng: c.geo!.lng, items: [c] }));
@@ -164,27 +157,27 @@ export default function MapTab() {
           onMapReady={fit}
           onRegionChange={(r) => { if (!drag.isOn()) setZoomV(zoomOf(r.longitudeDelta)); }}
           onPress={() => setSel(null)}>
-          {clusters.map((cl) => cl.items.length === 1 ? (
-            <Marker
-              key={cl.key}
-              coordinate={{ latitude: cl.lat, longitude: cl.lng }}
-              anchor={{ x: 0.5, y: 1 }}
-              tracksViewChanges={false}
-              onPress={(e) => { e.stopPropagation(); play('tab'); setSel(cl.items[0]); }}>
-              {pinURIs[cl.items[0].car.rarity] ? <Image source={{ uri: pinURIs[cl.items[0].car.rarity]! }} style={{ width: 34, height: 44 }} contentFit="contain" /> : null}
-            </Marker>
-          ) : (
-            <Marker
-              key={cl.key}
-              coordinate={{ latitude: cl.lat, longitude: cl.lng }}
-              anchor={{ x: 0.5, y: 0.5 }}
-              tracksViewChanges={false}
-              onPress={(e) => { e.stopPropagation(); play('tab'); map.current?.animateToRegion({ latitude: cl.lat, longitude: cl.lng, latitudeDelta: 360 / Math.pow(2, zoomStep + 2) * 1.3, longitudeDelta: 360 / Math.pow(2, zoomStep + 2) }, 350); }}>
-              <View style={{ width: 38, height: 38, borderRadius: 19, backgroundColor: palette.navy, borderWidth: 3, borderColor: INK, alignItems: 'center', justifyContent: 'center' }}>
-                <Text style={{ fontFamily: fonts.display, fontSize: 17, color: '#fff' }}>{cl.items.length}</Text>
-              </View>
-            </Marker>
-          ))}
+          {clusters.map((cl) => {
+            const n = cl.items.length;
+            const best = cl.items.reduce((m, c) => (RTIER[c.car.rarity] > RTIER[m.car.rarity] ? c : m), cl.items[0]);
+            const bm = pinBitmap(pinId, best.car.rarity, n);
+            if (!bm) return null;
+            return (
+              <Marker
+                key={cl.key + ':' + n}
+                coordinate={{ latitude: cl.lat, longitude: cl.lng }}
+                anchor={{ x: bm.anchorX, y: 1 }}
+                tracksViewChanges={false}
+                onPress={(e) => {
+                  e.stopPropagation();
+                  play('tab');
+                  if (n === 1) setSel(cl.items[0]);
+                  else map.current?.animateToRegion({ latitude: cl.lat, longitude: cl.lng, latitudeDelta: (360 / Math.pow(2, zoomStep + 2)) * 1.3, longitudeDelta: 360 / Math.pow(2, zoomStep + 2) }, 350);
+                }}>
+                <Image source={{ uri: bm.uri }} style={{ width: bm.w * 2.2, height: bm.h * 2.2 }} contentFit="contain" />
+              </Marker>
+            );
+          })}
         </MapView>
         ) : null}
 
@@ -202,7 +195,7 @@ export default function MapTab() {
         {pins.length === 0 ? (
           <View style={{ position: 'absolute', left: 12, right: 70, bottom: 12, backgroundColor: palette.panel, borderWidth: 3, borderColor: INK, padding: 10 }}>
             <Text style={{ fontFamily: fonts.display, fontSize: 17, color: palette.wht }}>NO PINS YET</Text>
-            <Text style={{ fontFamily: fonts.utility, fontSize: 9, color: palette.lcdDim, marginTop: 3 }}>
+            <Text style={{ fontFamily: fonts.utility, fontSize: 13, color: palette.lcdDim, marginTop: 3 }}>
               ALLOW LOCATION WHEN YOU CATCH A CAR AND IT LANDS HERE.
             </Text>
             <View style={{ marginTop: 8 }}>
@@ -216,7 +209,7 @@ export default function MapTab() {
             {selEntry ? <Sprite entry={selEntry} size={78} /> : null}
             <View style={{ flex: 1 }}>
               <Text style={{ fontFamily: fonts.display, fontSize: 20, color: palette.wht }} numberOfLines={1}>{sel.car.make} {sel.car.model}</Text>
-              <Text style={{ fontFamily: fonts.utility, fontSize: 9, color: palette.lcdDim }}>
+              <Text style={{ fontFamily: fonts.utility, fontSize: 13, color: palette.lcdDim }}>
                 <Text style={{ color: TIER_COLOR[sel.car.rarity as Rarity] }}>{sel.car.rarity.toUpperCase()}</Text> · {new Date(sel.ts).toLocaleDateString()}
               </Text>
             </View>

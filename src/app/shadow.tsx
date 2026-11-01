@@ -84,14 +84,14 @@ export default function Shadow() {
       <View style={{ flex: 1, padding: 16, gap: 14 }}>
         <View style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between' }}>
           <PText style={{ fontSize: 40, lineHeight: 42, color: t.red }}>SHADOW GAME</PText>
-          {!over ? <Text style={{ fontFamily: fonts.utilityBold, fontSize: 11, color: t.muted, marginBottom: 6 }}>{i + 1} OF {ROUNDS}  -  {right} RIGHT</Text> : null}
+          {!over ? <Text style={{ fontFamily: fonts.utilityBold, fontSize: 15, color: t.muted, marginBottom: 6 }}>{i + 1} OF {ROUNDS}  -  {right} RIGHT</Text> : null}
         </View>
 
         {over ? (
           <View style={{ backgroundColor: palette.panel, borderWidth: 3, borderColor: INK, padding: 16, gap: 10, alignItems: 'center' }}>
             <Text style={{ fontFamily: fonts.display, fontSize: 44, lineHeight: 46, color: palette.gold }}>{done && !revealed && right === 0 ? (g.profile.shadowLast as number) || 0 : right}/{ROUNDS}</Text>
             <Text style={{ fontFamily: fonts.display, fontSize: 20, color: palette.wht }}>{done && !revealed && right === 0 ? 'YOU ALREADY PLAYED TODAY' : right === ROUNDS ? 'PERFECT. YOU KNOW YOUR CARS.' : right >= 3 ? 'NICE EYE.' : 'TOUGH SHADOWS TODAY.'}</Text>
-            <Text style={{ fontFamily: fonts.utility, fontSize: 10, color: palette.lcdDim, letterSpacing: 1 }}>+{(g.profile.shadowXP as number) || 0} XP  -  NEW SHADOWS TOMORROW</Text>
+            <Text style={{ fontFamily: fonts.utility, fontSize: 14, color: palette.lcdDim, letterSpacing: 1 }}>+{(g.profile.shadowXP as number) || 0} XP  -  NEW SHADOWS TOMORROW</Text>
             <Btn tone="red" label="BACK HOME" onPress={() => router.back()} />
           </View>
         ) : (
@@ -101,7 +101,7 @@ export default function Shadow() {
               {revealed ? (
                 <Text style={{ fontFamily: fonts.display, fontSize: 22, color: TIER_COLOR[r.answer.rarity], marginTop: 8 }}>{r.answer.make.toUpperCase()} {r.answer.model.toUpperCase()}</Text>
               ) : (
-                <Text style={{ fontFamily: fonts.utilityBold, fontSize: 10, color: palette.lcdDim, letterSpacing: 2, marginTop: 8 }}>WHICH CAR IS THIS?</Text>
+                <Text style={{ fontFamily: fonts.utilityBold, fontSize: 14, color: palette.lcdDim, letterSpacing: 2, marginTop: 8 }}>WHICH CAR IS THIS?</Text>
               )}
             </View>
             <View style={{ gap: 8 }}>
@@ -117,7 +117,7 @@ export default function Shadow() {
                 );
               })}
             </View>
-            <Text style={{ fontFamily: fonts.utility, fontSize: 9.5, color: t.muted, textAlign: 'center' }}>15 XP PER RIGHT ANSWER. 25 MORE FOR FIVE OUT OF FIVE.</Text>
+            <Text style={{ fontFamily: fonts.utility, fontSize: 13, color: t.muted, textAlign: 'center' }}>15 XP PER RIGHT ANSWER. 25 MORE FOR FIVE OUT OF FIVE.</Text>
           </>
         )}
         <View style={{ flex: 1 }} />

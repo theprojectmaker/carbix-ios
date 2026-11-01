@@ -38,7 +38,7 @@ export default function Gallery() {
       <View style={{ paddingHorizontal: 14, paddingTop: 8, gap: 6 }}>
         <View style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between' }}>
           <PText style={{ fontSize: 44, lineHeight: 46, color: t.red }}>GALLERY</PText>
-          <Text style={{ fontFamily: fonts.utilityBold, fontSize: 10, color: t.muted, paddingBottom: 8 }}>{shots.length} PHOTO{shots.length === 1 ? '' : 'S'}</Text>
+          <Text style={{ fontFamily: fonts.utilityBold, fontSize: 14, color: t.muted, paddingBottom: 8 }}>{shots.length} PHOTO{shots.length === 1 ? '' : 'S'}</Text>
         </View>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
           <Chip label="ALL" on={!tier} onPress={() => setTier('')} />
@@ -78,7 +78,7 @@ export default function Gallery() {
           </View>
           <View>
             <Text style={{ fontFamily: fonts.display, fontSize: 26, color: '#fff' }} numberOfLines={1}>{open.car.make} {open.car.model}</Text>
-            <Text style={{ fontFamily: fonts.utility, fontSize: 9.5, color: palette.lcdDim }}>
+            <Text style={{ fontFamily: fonts.utility, fontSize: 13, color: palette.lcdDim }}>
               <Text style={{ color: TIER_COLOR[open.car.rarity] }}>{open.car.rarity.toUpperCase()}</Text>  -  {when(open.ts)}{open.shiny ? '  -  SHINY' : ''}  -  {idx + 1} / {shots.length}
             </Text>
           </View>

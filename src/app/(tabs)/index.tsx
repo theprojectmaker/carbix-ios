@@ -281,7 +281,7 @@ export default function Scan() {
     <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-start', gap: 10, marginBottom: 10 }}>
       <PText style={{ fontSize: 48, lineHeight: 50 }}>SCAN</PText>
       <Plate color={t.navy} depth={0} style={{ paddingHorizontal: 9, paddingVertical: 5 }}>
-        <Text style={{ fontFamily: fonts.utility, fontSize: 11.4, color: t.wht, letterSpacing: 1 }} numberOfLines={1}>
+        <Text style={{ fontFamily: fonts.utility, fontSize: 16, color: t.wht, letterSpacing: 1 }} numberOfLines={1}>
           {busy ? 'WORKING…' : <Tip />}
         </Text>
       </Plate>
@@ -330,12 +330,12 @@ export default function Scan() {
         ) : null}
         {!shot ? (
           <View style={{ position: 'absolute', left: 10, top: 10 }} pointerEvents="none">
-            <Text style={{ fontFamily: fonts.utilityBold, fontSize: 11, color: '#fff', backgroundColor: 'rgba(15,19,30,.82)', borderWidth: 2, borderColor: 'rgba(230,226,214,.55)', paddingHorizontal: 7, paddingVertical: 4 }}>{zoomF.toFixed(1)}x</Text>
+            <Text style={{ fontFamily: fonts.utilityBold, fontSize: 15, color: '#fff', backgroundColor: 'rgba(15,19,30,.82)', borderWidth: 2, borderColor: 'rgba(230,226,214,.55)', paddingHorizontal: 7, paddingVertical: 4 }}>{zoomF.toFixed(1)}x</Text>
           </View>
         ) : null}
         {!shot && g.settings.callshot ? (
           <View style={{ position: 'absolute', left: 8, right: 8, bottom: 50, flexDirection: 'row', flexWrap: 'wrap', gap: 5, justifyContent: 'center' }}>
-            <Text style={{ flexBasis: '100%', textAlign: 'center', fontFamily: fonts.utility, fontSize: 9.5, color: '#cfd6e4', letterSpacing: 1 }}>{callPick ? `CALLED: ${callPick.toUpperCase()}` : 'CALL YOUR SHOT. WHAT IS IT?'}</Text>
+            <Text style={{ flexBasis: '100%', textAlign: 'center', fontFamily: fonts.utility, fontSize: 13, color: '#cfd6e4', letterSpacing: 1 }}>{callPick ? `CALLED: ${callPick.toUpperCase()}` : 'CALL YOUR SHOT. WHAT IS IT?'}</Text>
             {!callPick ? [...callPicks, 'OTHER'].map((b) => <Stog key={b} label={b.toUpperCase()} on={false} onPress={() => { play('click'); setCallPick(b); }} />) : null}
           </View>
         ) : null}
@@ -344,7 +344,7 @@ export default function Scan() {
             {[1, 2, 3, 5].map((f) => (
               <Pressable key={f} onPress={() => { play('click'); setZoomF(f); }} accessibilityRole="button" accessibilityLabel={`Zoom ${f}x`}>
                 <View style={{ backgroundColor: Math.abs(zoomF - f) < 0.25 ? '#D8402F' : 'rgba(15,19,30,.82)', borderWidth: 2, borderColor: 'rgba(230,226,214,.55)', paddingHorizontal: 8, paddingVertical: 5 }}>
-                  <Text style={{ fontFamily: fonts.utilityBold, fontSize: 10, color: '#fff' }}>{f}x</Text>
+                  <Text style={{ fontFamily: fonts.utilityBold, fontSize: 14, color: '#fff' }}>{f}x</Text>
                 </View>
               </Pressable>
             ))}
@@ -362,7 +362,7 @@ export default function Scan() {
         ) : null}
         {auto ? (
           <View style={styles.autoRing}>
-            <Text style={{ fontFamily: fonts.utility, fontSize: 10.2, color: '#fff', letterSpacing: 1 }}>HOLD… {hold || 3}</Text>
+            <Text style={{ fontFamily: fonts.utility, fontSize: 14, color: '#fff', letterSpacing: 1 }}>HOLD… {hold || 3}</Text>
           </View>
         ) : null}
         <View style={styles.toggles}>
@@ -388,9 +388,9 @@ export default function Scan() {
         {race.live && race.race ? (
           <Pressable onPress={() => router.push('/race')}>
             <View style={{ backgroundColor: t.red, borderWidth: 3, borderColor: '#141C27', paddingHorizontal: 10, paddingVertical: 6, flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 }}>
-              <Text style={{ fontFamily: fonts.utilityBold, fontSize: 11, color: '#fff' }}>RACE {race.code}</Text>
-              <Text style={{ fontFamily: fonts.utilityBold, fontSize: 11, color: '#fff' }}><MinLeft endTs={race.race.endTs} /> MIN LEFT</Text>
-              <Text style={{ fontFamily: fonts.utilityBold, fontSize: 11, color: '#fff' }}>{race.race.players.find((p) => p.you)?.xp ?? 0} XP</Text>
+              <Text style={{ fontFamily: fonts.utilityBold, fontSize: 15, color: '#fff' }}>RACE {race.code}</Text>
+              <Text style={{ fontFamily: fonts.utilityBold, fontSize: 15, color: '#fff' }}><MinLeft endTs={race.race.endTs} /> MIN LEFT</Text>
+              <Text style={{ fontFamily: fonts.utilityBold, fontSize: 15, color: '#fff' }}>{race.race.players.find((p) => p.you)?.xp ?? 0} XP</Text>
             </View>
           </Pressable>
         ) : null}
@@ -404,7 +404,7 @@ export default function Scan() {
           <Btn tone="red" style={{ minWidth: 150 }} label={busy ? 'READING…' : 'CAPTURE'} onPress={capture} disabled={busy || !perm?.granted} />
           <Btn small tone="navy" style={{ width: 84 }} label="BURST" onPress={burst} disabled={busy} />
         </View>
-        <Text style={{ textAlign: 'center', marginTop: 12, fontFamily: fonts.utility, fontSize: 12.6, color: phase === 'error' ? t.red : t.navy, minHeight: 18 }}>{status}</Text>
+        <Text style={{ textAlign: 'center', marginTop: 12, fontFamily: fonts.utility, fontSize: 18, color: phase === 'error' ? t.red : t.navy, minHeight: 18 }}>{status}</Text>
       </View>
     </Screen>
   );
@@ -418,7 +418,7 @@ function Stog({ label, on, onPress }: { label: string; on: boolean; onPress: () 
           backgroundColor: on ? '#D8402F' : 'rgba(15,19,30,.82)', borderWidth: 2,
           borderColor: on ? '#ff9a8c' : 'rgba(230,226,214,.55)', borderRadius: 3, paddingHorizontal: 7, paddingVertical: 6,
         }}>
-        <Text style={{ fontFamily: fonts.utility, fontSize: 10.2, letterSpacing: 1, color: on ? '#fff' : '#c9d2e6' }}>{label}</Text>
+        <Text style={{ fontFamily: fonts.utility, fontSize: 14, letterSpacing: 1, color: on ? '#fff' : '#c9d2e6' }}>{label}</Text>
       </View>
     </Pressable>
   );
@@ -427,8 +427,8 @@ function Stog({ label, on, onPress }: { label: string; on: boolean; onPress: () 
 function Copt({ label, val, onPress }: { label: string; val: string; onPress: () => void }) {
   return (
     <Pressable onPress={() => { play('click'); onPress(); }} accessibilityRole="button" style={styles.copt}>
-      <Text style={{ fontFamily: fonts.utility, fontSize: 10.2, color: '#c9d2e6', letterSpacing: 1 }}>{label}</Text>
-      <Text style={{ fontFamily: fonts.utility, fontSize: 10.2, color: '#C9A227' }}>{val}</Text>
+      <Text style={{ fontFamily: fonts.utility, fontSize: 14, color: '#c9d2e6', letterSpacing: 1 }}>{label}</Text>
+      <Text style={{ fontFamily: fonts.utility, fontSize: 14, color: '#C9A227' }}>{val}</Text>
     </Pressable>
   );
 }

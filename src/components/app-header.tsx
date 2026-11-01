@@ -51,7 +51,7 @@ function HBtn({ icon, onPress, a11y, dot, badge }: { icon: React.ReactNode; onPr
         <Plate color={palette.navyDk} depth={2} pressed={pressed} style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}>
           {icon}
           {dot ? <View style={{ position: 'absolute', top: 3, right: 3, width: 14, height: 14, borderRadius: 7, backgroundColor: palette.gold, borderWidth: 3, borderColor: INK }} /> : null}
-          {badge ? <View style={{ position: 'absolute', bottom: -5, right: -5, minWidth: 20, paddingHorizontal: 3, height: 16, backgroundColor: palette.gold, borderWidth: 2, borderColor: INK, alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontFamily: fonts.utilityBold, fontSize: 9, color: INK }}>{badge}</Text></View> : null}
+          {badge ? <View style={{ position: 'absolute', bottom: -5, right: -5, minWidth: 20, paddingHorizontal: 3, height: 16, backgroundColor: palette.gold, borderWidth: 2, borderColor: INK, alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontFamily: fonts.utilityBold, fontSize: 13, color: INK }}>{badge}</Text></View> : null}
         </Plate>
       )}
     </Pressable>

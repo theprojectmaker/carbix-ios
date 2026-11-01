@@ -62,9 +62,9 @@ export default function Badges() {
                 <BadgeIcon cat={b.cat} dim={!b.ok} />
                 <Text numberOfLines={2} style={{ flex: 1, fontFamily: fonts.display, fontSize: 16, lineHeight: 17, color: b.ok ? '#fff' : '#8e98b8' }}>{b.nm}</Text>
               </View>
-              <Text numberOfLines={2} style={{ fontFamily: fonts.utility, fontSize: 8.5, color: palette.lcdDim }}>{b.desc.toUpperCase()}</Text>
+              <Text numberOfLines={2} style={{ fontFamily: fonts.utility, fontSize: 12, color: palette.lcdDim }}>{b.desc.toUpperCase()}</Text>
               {b.ok ? (
-                <Text style={{ fontFamily: fonts.utilityBold, fontSize: 9, color: palette.green }}>EARNED</Text>
+                <Text style={{ fontFamily: fonts.utilityBold, fontSize: 13, color: palette.green }}>EARNED</Text>
               ) : (
                 <View style={{ height: 8, backgroundColor: '#222c3d' }}>
                   <View style={{ flex: 1, width: `${Math.max(2, b.prog * 100)}%`, backgroundColor: '#5C7AA0' }} />
@@ -73,7 +73,7 @@ export default function Badges() {
             </View>
           ))}
         </View>
-        {rows.length > 160 ? <Text style={{ fontFamily: fonts.utility, fontSize: 9, color: t.muted, textAlign: 'center' }}>SHOWING 160 OF {rows.length}. PICK A CATEGORY TO SEE THE REST.</Text> : null}
+        {rows.length > 160 ? <Text style={{ fontFamily: fonts.utility, fontSize: 13, color: t.muted, textAlign: 'center' }}>SHOWING 160 OF {rows.length}. PICK A CATEGORY TO SEE THE REST.</Text> : null}
         <Btn tone="plain" label="CLOSE" onPress={() => router.back()} />
       </ScrollView>
     </Screen>

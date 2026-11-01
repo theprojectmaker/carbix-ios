@@ -21,10 +21,10 @@ function Pick({ e, label, on, onPress }: { e?: CatalogEntry; label: string; on: 
   return (
   <Pressable style={{ flex: 1 }} onPress={onPress} accessibilityRole="button" accessibilityLabel={`Pick ${label}`}>
     <View style={{ backgroundColor: palette.panel, borderWidth: 3, borderColor: on ? palette.gold : INK, padding: 8, alignItems: 'center', gap: 4 }}>
-      <Text style={{ fontFamily: fonts.utilityBold, fontSize: 9, color: on ? palette.gold : palette.lcdDim, letterSpacing: 1.5 }}>{label}{on ? '  -  TAP A CAR BELOW' : ''}</Text>
+      <Text style={{ fontFamily: fonts.utilityBold, fontSize: 13, color: on ? palette.gold : palette.lcdDim, letterSpacing: 1.5 }}>{label}{on ? '  -  TAP A CAR BELOW' : ''}</Text>
       {e ? <Sprite entry={e} size={120} shadow /> : <View style={{ height: 84 }} />}
       <Text style={{ fontFamily: fonts.display, fontSize: 17, color: palette.wht, textAlign: 'center' }} numberOfLines={2}>{e ? `${e.make} ${e.model}` : 'PICK ONE'}</Text>
-      {e ? <Text style={{ fontFamily: fonts.utilityBold, fontSize: 8.5, color: TIER_COLOR[e.rarity] }}>{e.rarity.toUpperCase()}</Text> : null}
+      {e ? <Text style={{ fontFamily: fonts.utilityBold, fontSize: 12, color: TIER_COLOR[e.rarity] }}>{e.rarity.toUpperCase()}</Text> : null}
     </View>
   </Pressable>
   );
@@ -89,18 +89,18 @@ export default function Compare() {
                   return (
                     <View key={r.label} style={{ flexDirection: 'row', alignItems: 'center', borderTopWidth: 1, borderTopColor: palette.line, paddingTop: 6 }}>
                       <Text style={{ flex: 1, fontFamily: fonts.display, fontSize: 18, color: aWins ? palette.gold : palette.wht }}>{r.fmt(r.a)}</Text>
-                      <Text style={{ fontFamily: fonts.utilityBold, fontSize: 8.5, color: palette.lcdDim, letterSpacing: 1, width: 90, textAlign: 'center' }}>{r.label}</Text>
+                      <Text style={{ fontFamily: fonts.utilityBold, fontSize: 12, color: palette.lcdDim, letterSpacing: 1, width: 90, textAlign: 'center' }}>{r.label}</Text>
                       <Text style={{ flex: 1, fontFamily: fonts.display, fontSize: 18, color: bWins ? palette.gold : palette.wht, textAlign: 'right' }}>{r.fmt(r.b)}</Text>
                     </View>
                   );
                 })}
-                <Text style={{ fontFamily: fonts.utilityBold, fontSize: 10, color: palette.gold, textAlign: 'center', paddingTop: 4 }}>
+                <Text style={{ fontFamily: fonts.utilityBold, fontSize: 14, color: palette.gold, textAlign: 'center', paddingTop: 4 }}>
                   {wins.a === wins.b ? 'DEAD HEAT' : wins.a > wins.b ? `${A.model.toUpperCase()} WINS ${wins.a}-${wins.b}` : `${B.model.toUpperCase()} WINS ${wins.b}-${wins.a}`}
                 </Text>
               </View>
             ) : null}
 
-            <Text style={{ fontFamily: fonts.utilityBold, fontSize: 10, color: t.muted, letterSpacing: 1.5 }}>YOUR CARS  -  TAP TO SET {side.toUpperCase()}</Text>
+            <Text style={{ fontFamily: fonts.utilityBold, fontSize: 14, color: t.muted, letterSpacing: 1.5 }}>YOUR CARS  -  TAP TO SET {side.toUpperCase()}</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6 }}>
               {mine.map((e) => (
                 <Pressable key={e.n} onPress={() => { play('tab'); if (side === 'a') setA(e.n); else setB(e.n); setSide(side === 'a' ? 'b' : 'a'); }} accessibilityRole="button" accessibilityLabel={`${e.make} ${e.model}`}>

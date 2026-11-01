@@ -44,7 +44,7 @@ export default function Showroom() {
       <Screen edges={['top', 'bottom']}>
         <View style={{ flex: 1, padding: 16, gap: 12, justifyContent: 'center' }}>
           <PText style={{ fontSize: 30, color: t.red }}>THE SHOWROOM IS EMPTY</PText>
-          <Text style={{ fontFamily: fonts.prose, fontSize: 16, color: t.muted }}>Catch a car and it parks here.</Text>
+          <Text style={{ fontFamily: fonts.prose, fontSize: 22, color: t.muted }}>Catch a car and it parks here.</Text>
           <Btn tone="red" label="SCAN A CAR" onPress={() => { router.back(); router.navigate('/'); }} />
           <Btn tone="plain" label="CLOSE" onPress={() => router.back()} />
         </View>
@@ -57,7 +57,7 @@ export default function Showroom() {
       <View style={{ flex: 1, backgroundColor: '#0f1522' }}>
         <View style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', paddingHorizontal: 16, paddingTop: 8 }}>
           <PText style={{ fontSize: 40, lineHeight: 42, color: '#fff' }}>SHOWROOM</PText>
-          <Text style={{ fontFamily: fonts.utilityBold, fontSize: 11, color: '#8e98b8', marginBottom: 6 }}>{idx + 1} OF {cars.length}</Text>
+          <Text style={{ fontFamily: fonts.utilityBold, fontSize: 15, color: '#8e98b8', marginBottom: 6 }}>{idx + 1} OF {cars.length}</Text>
         </View>
 
         <FlatList
@@ -75,14 +75,14 @@ export default function Showroom() {
               {/* the stage */}
               <View style={{ height: 300, backgroundColor: '#161d2e', borderWidth: 3, borderColor: INK, overflow: 'hidden', justifyContent: 'flex-end' }}>
                 <View style={{ position: 'absolute', top: 14, left: 14, right: 14, flexDirection: 'row', justifyContent: 'space-between' }}>
-                  <Text style={{ fontFamily: fonts.utilityBold, fontSize: 10, color: '#8e98b8', letterSpacing: 2 }}>{item.e.make.toUpperCase()}</Text>
-                  <Text style={{ fontFamily: fonts.utilityBold, fontSize: 10, color: TIER_COLOR[item.e.rarity], letterSpacing: 2 }}>{item.e.rarity.toUpperCase()}{item.count > 1 ? `  x${item.count}` : ''}</Text>
+                  <Text style={{ fontFamily: fonts.utilityBold, fontSize: 14, color: '#8e98b8', letterSpacing: 2 }}>{item.e.make.toUpperCase()}</Text>
+                  <Text style={{ fontFamily: fonts.utilityBold, fontSize: 14, color: TIER_COLOR[item.e.rarity], letterSpacing: 2 }}>{item.e.rarity.toUpperCase()}{item.count > 1 ? `  x${item.count}` : ''}</Text>
                 </View>
                 {/* spotlight cone */}
                 <View style={{ position: 'absolute', left: '20%', right: '20%', top: 0, bottom: 70, backgroundColor: 'rgba(255,241,168,.06)' }} />
                 <View style={{ height: 80, backgroundColor: '#232b40', borderTopWidth: 3, borderTopColor: '#2f3a52' }} />
-                <View style={{ position: 'absolute', left: 0, right: 0, bottom: 52, alignItems: 'center' }}>
-                  <Sprite entry={item.e} size={Math.min(320, PAGE_W - 60)} shadow />
+                <View style={{ position: 'absolute', left: 0, right: 0, bottom: 28, alignItems: 'center' }}>
+                  <Sprite entry={item.e} size={Math.min(320, PAGE_W - 60)} bottom shadow crisp />
                 </View>
               </View>
               <Text style={{ fontFamily: fonts.display, fontSize: 34, lineHeight: 36, color: '#fff', marginTop: 10 }} numberOfLines={1} adjustsFontSizeToFit>{item.e.model.toUpperCase()}</Text>
@@ -90,7 +90,7 @@ export default function Showroom() {
                 {[[item.e.hp ? String(item.e.hp) : '-', 'HP'], [item.e.top ? String(item.e.top) : '-', 'MPH'], [item.e.zts ? String(item.e.zts).replace(/s$/i, '') : '-', '0-60'], [item.e.years ? String(item.e.years).slice(0, 4) : '-', 'FROM']].map(([v, k]) => (
                   <View key={k} style={{ flex: 1, backgroundColor: '#1a2133', borderWidth: 2, borderColor: INK, alignItems: 'center', paddingVertical: 8 }}>
                     <Text style={{ fontFamily: fonts.display, fontSize: 24, lineHeight: 26, color: '#F4F6FA' }}>{v}</Text>
-                    <Text style={{ fontFamily: fonts.utility, fontSize: 8.5, color: '#8e98b8', letterSpacing: 1 }}>{k}</Text>
+                    <Text style={{ fontFamily: fonts.utility, fontSize: 12, color: '#8e98b8', letterSpacing: 1 }}>{k}</Text>
                   </View>
                 ))}
               </View>
@@ -111,7 +111,7 @@ export default function Showroom() {
                 <View style={{ width: i === idx ? 14 : 8, height: 8, backgroundColor: i === idx ? '#fff' : TIER_COLOR[c.e.rarity], borderWidth: 1, borderColor: INK }} />
               </Pressable>
             ))}
-            {cars.length > 24 ? <Text style={{ fontFamily: fonts.utility, fontSize: 9, color: '#8e98b8' }}>+{cars.length - 24}</Text> : null}
+            {cars.length > 24 ? <Text style={{ fontFamily: fonts.utility, fontSize: 13, color: '#8e98b8' }}>+{cars.length - 24}</Text> : null}
           </View>
         </View>
       </View>

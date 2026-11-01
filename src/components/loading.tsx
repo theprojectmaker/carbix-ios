@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Image } from 'expo-image';
+import { PixelSprite } from '@/components/pixel-sprite';
 import React, { useEffect, useState } from 'react';
 import { Animated, Easing, Text, View } from 'react-native';
 
@@ -28,7 +28,7 @@ export function Loading({ label = 'LOADING', color = palette.lcdDim, size = 10 }
           />
         ))}
       </View>
-      <Text style={{ fontFamily: fonts.utilityBold, fontSize: 10, color, letterSpacing: 1.5 }}>{label}</Text>
+      <Text style={{ fontFamily: fonts.utilityBold, fontSize: 14, color, letterSpacing: 1.5 }}>{label}</Text>
     </View>
   );
 }
@@ -73,7 +73,7 @@ export function LoadingScreen({ fontsReady, note = 'LOADING YOUR GARAGE' }: { fo
         </Animated.View>
         <Animated.View style={{ position: 'absolute', left: 0, right: 0, bottom: 20, alignItems: 'center', transform: [{ translateY: bob.interpolate({ inputRange: [0, 1], outputRange: [0, -3] }) }] }}>
           {car ? (
-            <Image source={{ uri: car }} style={{ width: 150, height: 84 }} contentFit="contain" contentPosition="bottom" cachePolicy="disk" transition={0} />
+            <PixelSprite uri={car} width={160} height={90} bottom />
           ) : (
             <PixelCar />
           )}

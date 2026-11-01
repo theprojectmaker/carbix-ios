@@ -28,7 +28,7 @@ export function InvitesPanel() {
       {r.invites.map((i) => (
         <View key={i.from + i.code} style={{ gap: 6, borderTopWidth: 1, borderTopColor: palette.line, paddingTop: 8 }}>
           <Text style={{ fontFamily: fonts.display, fontSize: 19, color: palette.wht }}>{i.from} invited you to a race</Text>
-          <Text style={{ fontFamily: fonts.utility, fontSize: 9, color: palette.lcdDim }}>CODE {i.code} · {ago(i.ts)}</Text>
+          <Text style={{ fontFamily: fonts.utility, fontSize: 13, color: palette.lcdDim }}>CODE {i.code} · {ago(i.ts)}</Text>
           <View style={{ flexDirection: 'row', gap: 8 }}>
             <Btn small style={{ flex: 1 }} tone="red" label="JOIN" disabled={r.busy || !!r.code}
               onPress={async () => { await r.join(i.code); r.dismissInvite(i.code); }} />
@@ -36,7 +36,7 @@ export function InvitesPanel() {
           </View>
         </View>
       ))}
-      {r.code ? <Text style={{ fontFamily: fonts.utility, fontSize: 9, color: palette.lcdDim }}>LEAVE YOUR CURRENT RACE TO JOIN ANOTHER.</Text> : null}
+      {r.code ? <Text style={{ fontFamily: fonts.utility, fontSize: 13, color: palette.lcdDim }}>LEAVE YOUR CURRENT RACE TO JOIN ANOTHER.</Text> : null}
     </View>
   );
 }
@@ -64,10 +64,10 @@ export function InviteFriendsPanel() {
     <View style={box}>
       <Text style={head}><Text style={{ color: palette.red }}>» </Text>INVITE FRIENDS</Text>
       {friends === null ? (
-        <Text style={{ fontFamily: fonts.utility, fontSize: 9.5, color: palette.lcdDim }}>LOADING...</Text>
+        <Text style={{ fontFamily: fonts.utility, fontSize: 13, color: palette.lcdDim }}>LOADING...</Text>
       ) : friends.length === 0 ? (
         <>
-          <Text style={{ fontFamily: fonts.utility, fontSize: 9.5, color: palette.lcdDim }}>NO FRIENDS YET. ADD SOME AND THEY CAN BE INVITED.</Text>
+          <Text style={{ fontFamily: fonts.utility, fontSize: 13, color: palette.lcdDim }}>NO FRIENDS YET. ADD SOME AND THEY CAN BE INVITED.</Text>
           <Btn small tone="navy" label="ADD FRIENDS" onPress={() => router.push('/friends')} />
         </>
       ) : (

@@ -16,7 +16,7 @@ const MEDCOL = { GOLD: '#C9A227', SILVER: '#AFC5CE', BRONZE: '#8C5A2B' };
 function Panel({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <View style={{ backgroundColor: '#161c2c', borderWidth: 2, borderColor: INK, padding: 12, gap: 6 }}>
-      <Text style={{ fontFamily: fonts.utilityBold, fontSize: 11, color: palette.gold, letterSpacing: 1.5 }}>{title}</Text>
+      <Text style={{ fontFamily: fonts.utilityBold, fontSize: 15, color: palette.gold, letterSpacing: 1.5 }}>{title}</Text>
       <View style={{ height: 1, backgroundColor: 'rgba(255,255,255,.12)' }} />
       {children}
     </View>
@@ -26,7 +26,7 @@ function Row({ l, r, c }: { l: string; r: string; c?: string }) {
   return (
     <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 10 }}>
       <Text style={{ flex: 1, fontFamily: fonts.display, fontSize: 17, color: palette.wht }}>{l}</Text>
-      <Text style={{ fontFamily: fonts.utilityBold, fontSize: 10, color: c ?? palette.gold, alignSelf: 'center' }}>{r}</Text>
+      <Text style={{ fontFamily: fonts.utilityBold, fontSize: 14, color: c ?? palette.gold, alignSelf: 'center' }}>{r}</Text>
     </View>
   );
 }
@@ -76,7 +76,7 @@ export default function Trophies() {
             ) : null}
             {plaques.length ? <Panel title="LINEAGE PLAQUES">{plaques.map((p) => <Row key={p.label} l={p.label} r={`${p.n} CAUGHT`} />)}</Panel> : null}
             {!medals.length && !plaques.length && !stamps.length ? (
-              <Text style={{ fontFamily: fonts.prose, fontSize: 15, color: t.muted }}>Catch more cars to earn medallions, plaques and stamps.</Text>
+              <Text style={{ fontFamily: fonts.prose, fontSize: 21, color: t.muted }}>Catch more cars to earn medallions, plaques and stamps.</Text>
             ) : null}
           </>
         ) : null}
@@ -108,7 +108,7 @@ export default function Trophies() {
                     disabled={!ok}
                     onPress={() => { play('tab'); g.patchProfile((p) => ({ ...p, title: tt.name })); }}
                   />
-                  <Text style={{ fontFamily: fonts.utility, fontSize: 8.5, color: palette.lcdDim }}>{ok ? 'UNLOCKED' : `LOCKED - ${tt.hint.toUpperCase()}`}</Text>
+                  <Text style={{ fontFamily: fonts.utility, fontSize: 12, color: palette.lcdDim }}>{ok ? 'UNLOCKED' : `LOCKED - ${tt.hint.toUpperCase()}`}</Text>
                 </View>
               );
             })}

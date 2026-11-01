@@ -97,17 +97,17 @@ export function FeedList() {
                     {e ? <Sprite entry={e} size={86} /> : null}
                   </View>
                   <View style={{ flex: 1, gap: 3 }}>
-                    <Text style={{ fontFamily: fonts.utility, fontSize: 9, color: palette.lcdDim }} numberOfLines={1}>
+                    <Text style={{ fontFamily: fonts.utility, fontSize: 13, color: palette.lcdDim }} numberOfLines={1}>
                       {mine ? 'YOU' : String(item.name ?? '@spotter').toUpperCase()} CAUGHT
                     </Text>
                     <Text style={{ fontFamily: fonts.display, fontSize: 21, color: palette.wht }} numberOfLines={1}>{item.make} {item.model}</Text>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                       <View style={{ backgroundColor: color, borderWidth: 2, borderColor: INK, paddingHorizontal: 5, paddingVertical: 1 }}>
-                        <Text style={{ fontFamily: fonts.utilityBold, fontSize: 8.5, color: ['Common', 'Legendary'].includes(item.rarity ?? 'Common') ? INK : '#fff' }}>{(item.rarity ?? 'Common').toUpperCase()}</Text>
+                        <Text style={{ fontFamily: fonts.utilityBold, fontSize: 12, color: ['Common', 'Legendary'].includes(item.rarity ?? 'Common') ? INK : '#fff' }}>{(item.rarity ?? 'Common').toUpperCase()}</Text>
                       </View>
-                      {item.shiny ? <Text style={{ fontFamily: fonts.utilityBold, fontSize: 8.5, color: palette.gold }}>SHINY</Text> : null}
-                      <Text style={{ fontFamily: fonts.utility, fontSize: 9, color: palette.lcdDim }}>{ago(item.ts)}</Text>
-                      {n > 0 ? <Text style={{ fontFamily: fonts.utilityBold, fontSize: 9, color: palette.gold }}>{n} REACTION{n === 1 ? '' : 'S'}</Text> : null}
+                      {item.shiny ? <Text style={{ fontFamily: fonts.utilityBold, fontSize: 12, color: palette.gold }}>SHINY</Text> : null}
+                      <Text style={{ fontFamily: fonts.utility, fontSize: 13, color: palette.lcdDim }}>{ago(item.ts)}</Text>
+                      {n > 0 ? <Text style={{ fontFamily: fonts.utilityBold, fontSize: 13, color: palette.gold }}>{n} REACTION{n === 1 ? '' : 'S'}</Text> : null}
                     </View>
                   </View>
                   <Text style={{ fontFamily: fonts.display, fontSize: 24, color: palette.lcdDim }}>›</Text>

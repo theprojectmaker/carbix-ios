@@ -69,7 +69,7 @@ export default function Friends() {
 
         {g.profile.username === 'spotter' ? (
           <Panel title="PICK A USERNAME FIRST">
-            <Text style={{ fontFamily: fonts.utility, fontSize: 9.5, color: palette.lcdDim, lineHeight: 14 }}>FRIENDS FIND EACH OTHER BY USERNAME. YOURS IS STILL THE DEFAULT ONE.</Text>
+            <Text style={{ fontFamily: fonts.utility, fontSize: 13, color: palette.lcdDim, lineHeight: 14 }}>FRIENDS FIND EACH OTHER BY USERNAME. YOURS IS STILL THE DEFAULT ONE.</Text>
             <Btn small tone="red" label="SET MY USERNAME" onPress={() => router.push('/settings')} />
           </Panel>
         ) : null}
@@ -85,8 +85,8 @@ export default function Friends() {
             style={{ backgroundColor: '#2C3E58', borderWidth: 3, borderColor: INK, color: '#fff', fontFamily: fonts.display, fontSize: 22, paddingHorizontal: 12, paddingVertical: 10 }}
           />
           <Btn tone="red" label="SEND REQUEST" disabled={busy || !name.trim()} onPress={send} />
-          {note ? <Text style={{ fontFamily: fonts.utilityBold, fontSize: 9.5, color: palette.gold }}>{note}</Text> : null}
-          <Text style={{ fontFamily: fonts.utility, fontSize: 9, color: palette.lcdDim }}>THEY HAVE TO ACCEPT BEFORE YOU ARE FRIENDS. YOU CAN ALSO TAP ADD NEXT TO ANYONE ON THE LEADERBOARD.</Text>
+          {note ? <Text style={{ fontFamily: fonts.utilityBold, fontSize: 13, color: palette.gold }}>{note}</Text> : null}
+          <Text style={{ fontFamily: fonts.utility, fontSize: 13, color: palette.lcdDim }}>THEY HAVE TO ACCEPT BEFORE YOU ARE FRIENDS. YOU CAN ALSO TAP ADD NEXT TO ANYONE ON THE LEADERBOARD.</Text>
         </Panel>
 
         {state && state.incoming.length ? (
@@ -107,7 +107,7 @@ export default function Friends() {
           {!state ? (
             <Loading label="FINDING YOUR FRIENDS" />
           ) : state.friends.length === 0 ? (
-            <Text style={{ fontFamily: fonts.utility, fontSize: 9.5, color: palette.lcdDim }}>NO FRIENDS YET. ADD SOMEONE ABOVE.</Text>
+            <Text style={{ fontFamily: fonts.utility, fontSize: 13, color: palette.lcdDim }}>NO FRIENDS YET. ADD SOMEONE ABOVE.</Text>
           ) : (
             state.friends.map((f) => (
               <View key={f} style={{ gap: 6, borderTopWidth: 1, borderTopColor: palette.line, paddingTop: 8 }}>
@@ -121,7 +121,7 @@ export default function Friends() {
             ))
           )}
           {state && state.outgoing.length ? (
-            <Text style={{ fontFamily: fonts.utility, fontSize: 9, color: palette.lcdDim }}>WAITING ON: {state.outgoing.join(', ')}</Text>
+            <Text style={{ fontFamily: fonts.utility, fontSize: 13, color: palette.lcdDim }}>WAITING ON: {state.outgoing.join(', ')}</Text>
           ) : null}
         </Panel>
 

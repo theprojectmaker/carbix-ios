@@ -1,7 +1,6 @@
 import { Jersey25_400Regular } from '@expo-google-fonts/jersey-25';
-import { PixelifySans_400Regular, PixelifySans_500Medium, PixelifySans_700Bold } from '@expo-google-fonts/pixelify-sans';
 import { PressStart2P_400Regular } from '@expo-google-fonts/press-start-2p';
-import { Silkscreen_400Regular, Silkscreen_700Bold } from '@expo-google-fonts/silkscreen';
+import { Silkscreen_700Bold } from '@expo-google-fonts/silkscreen';
 import { useFonts } from 'expo-font';
 import { Redirect, Stack, router, usePathname } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
@@ -27,7 +26,7 @@ function Shell() {
   const { ready, profile, garage } = useGame();
   const pathname = usePathname();
   const [fontsLoaded] = useFonts({
-    Jersey25_400Regular, PixelifySans_400Regular, PixelifySans_500Medium, PixelifySans_700Bold, PressStart2P_400Regular, Silkscreen_400Regular, Silkscreen_700Bold,
+    Jersey25_400Regular, PressStart2P_400Regular, Silkscreen_700Bold,
   });
   useEffect(() => {
     if (fontsLoaded && ready) {

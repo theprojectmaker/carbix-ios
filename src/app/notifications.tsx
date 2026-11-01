@@ -64,7 +64,7 @@ export default function Notifications() {
       <ScrollView contentContainerStyle={{ padding: 14, gap: 12, paddingBottom: 30 }}>
         <View style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between' }}>
           <PText style={{ fontSize: 44, lineHeight: 46, color: t.red }}>INBOX</PText>
-          {unread ? <Text style={{ fontFamily: fonts.utilityBold, fontSize: 10, color: t.muted, paddingBottom: 8 }}>{unread} NEW</Text> : null}
+          {unread ? <Text style={{ fontFamily: fonts.utilityBold, fontSize: 14, color: t.muted, paddingBottom: 8 }}>{unread} NEW</Text> : null}
         </View>
 
         <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
@@ -76,25 +76,25 @@ export default function Notifications() {
         {items.length === 0 ? (
           <View style={{ backgroundColor: palette.panel, borderWidth: 3, borderColor: INK, padding: 14, gap: 8 }}>
             <Text style={{ fontFamily: fonts.display, fontSize: 22, color: palette.wht }}>{filter === 'all' ? 'NOTHING YET' : 'NOTHING HERE YET'}</Text>
-            <Text style={{ fontFamily: fonts.utility, fontSize: 9.5, color: palette.lcdDim, lineHeight: 14 }}>
+            <Text style={{ fontFamily: fonts.utility, fontSize: 13, color: palette.lcdDim, lineHeight: 14 }}>
               RACE INVITES, FRIEND REQUESTS, LEVEL-UPS, FINISHED QUESTS, TROPHIES AND REACTIONS ON YOUR CATCHES ALL LAND HERE.
             </Text>
           </View>
         ) : (
           groups.map((grp) => (
             <View key={grp.day} style={{ gap: 8 }}>
-              <Text style={{ fontFamily: fonts.utilityBold, fontSize: 10, color: t.muted, letterSpacing: 1.5 }}>{grp.day}</Text>
+              <Text style={{ fontFamily: fonts.utilityBold, fontSize: 14, color: t.muted, letterSpacing: 1.5 }}>{grp.day}</Text>
               {grp.list.map((n) => {
                 const k = KIND[n.kind] ?? KIND.info;
                 const inner = (
                   <View style={{ backgroundColor: palette.panel, borderWidth: 3, borderColor: n.read ? INK : k.color, borderLeftWidth: 10, borderLeftColor: k.color, padding: 10, gap: 4 }}>
                     <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <Text style={{ fontFamily: fonts.utilityBold, fontSize: 8.5, color: k.color, letterSpacing: 1.5 }}>{k.label}</Text>
-                      <Text style={{ fontFamily: fonts.utility, fontSize: 8.5, color: palette.lcdDim }}>{when(n.ts)}</Text>
+                      <Text style={{ fontFamily: fonts.utilityBold, fontSize: 12, color: k.color, letterSpacing: 1.5 }}>{k.label}</Text>
+                      <Text style={{ fontFamily: fonts.utility, fontSize: 12, color: palette.lcdDim }}>{when(n.ts)}</Text>
                     </View>
                     <Text style={{ fontFamily: fonts.display, fontSize: 19, color: palette.wht }}>{n.title}</Text>
-                    {n.body ? <Text style={{ fontFamily: fonts.utility, fontSize: 9.5, color: palette.lcdDim, lineHeight: 14 }}>{n.body}</Text> : null}
-                    {n.route ? <Text style={{ fontFamily: fonts.utilityBold, fontSize: 9, color: palette.red }}>OPEN ›</Text> : null}
+                    {n.body ? <Text style={{ fontFamily: fonts.utility, fontSize: 13, color: palette.lcdDim, lineHeight: 14 }}>{n.body}</Text> : null}
+                    {n.route ? <Text style={{ fontFamily: fonts.utilityBold, fontSize: 13, color: palette.red }}>OPEN ›</Text> : null}
                   </View>
                 );
                 return n.route ? (

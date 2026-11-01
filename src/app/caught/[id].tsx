@@ -93,7 +93,7 @@ export default function Caught() {
             <Chip text={`+${xp} XP`} bg={palette.gold} fg="#141C27" />
             {c.shiny ? <Chip text="SHINY" bg="#FFD84D" fg="#7A5A10" /> : null}
           </View>
-          <Text style={{ fontFamily: fonts.utility, fontSize: 9.5, letterSpacing: 1, color: t.muted, textAlign: 'center' }}>
+          <Text style={{ fontFamily: fonts.utility, fontSize: 13, letterSpacing: 1, color: t.muted, textAlign: 'center' }}>
             BIX {g.caughtNs.size} / {CATALOG.length}{conf}
           </Text>
         </View>
@@ -113,11 +113,11 @@ export default function Caught() {
         </View>
         <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 22, paddingVertical: 2 }}>
           {hit ? (
-            <Text onPress={() => router.push({ pathname: '/car/[n]', params: { n: String(hit.n) } })} style={{ fontFamily: fonts.utilityBold, fontSize: 10.5, color: t.red, padding: 4 }}>
+            <Text onPress={() => router.push({ pathname: '/car/[n]', params: { n: String(hit.n) } })} style={{ fontFamily: fonts.utilityBold, fontSize: 15, color: t.red, padding: 4 }}>
               ALL ABOUT THIS CAR
             </Text>
           ) : null}
-          <Text onPress={reanalyze} style={{ fontFamily: fonts.utilityBold, fontSize: 10.5, color: re === 'fail' ? t.muted : palette.gold, padding: 4 }}>
+          <Text onPress={reanalyze} style={{ fontFamily: fonts.utilityBold, fontSize: 15, color: re === 'fail' ? t.muted : palette.gold, padding: 4 }}>
             {re === 'busy' ? 'LOOKING AGAIN...' : re === 'fail' ? 'COULD NOT REANALYZE' : 'NOT THIS CAR? LOOK AGAIN'}
           </Text>
           <Text
@@ -127,7 +127,7 @@ export default function Caught() {
                 { text: 'Discard', style: 'destructive', onPress: () => { g.removeCatch(c.id); router.dismissAll(); router.navigate('/'); } },
               ])
             }
-            style={{ fontFamily: fonts.utility, fontSize: 10.5, color: t.muted, padding: 4 }}>
+            style={{ fontFamily: fonts.utility, fontSize: 15, color: t.muted, padding: 4 }}>
             WRONG CAR? DISCARD
           </Text>
         </View>
@@ -140,7 +140,7 @@ export default function Caught() {
 function Chip({ text, bg, fg }: { text: string; bg: string; fg: string }) {
   return (
     <View style={{ backgroundColor: bg, borderWidth: 2, borderColor: '#141C27', paddingHorizontal: 8, paddingVertical: 4 }}>
-      <Text style={{ fontFamily: fonts.utilityBold, fontSize: 10, color: fg, letterSpacing: 1 }}>{text}</Text>
+      <Text style={{ fontFamily: fonts.utilityBold, fontSize: 14, color: fg, letterSpacing: 1 }}>{text}</Text>
     </View>
   );
 }
