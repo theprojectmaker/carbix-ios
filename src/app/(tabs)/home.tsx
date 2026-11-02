@@ -10,6 +10,7 @@ import { Bar, Btn, PText, Sprite } from '@/components/ui';
 import { cotd, evalChallenges, SPOT_HEX, spotlightColor } from '@/engine/daily';
 import { CATALOG, CATALOG_BY_N, catalogMatch } from '@/engine/data';
 import { currentSeason, SEASON_EVENT_NAMES } from '@/engine/quests';
+import { bingoState } from '@/engine/games';
 import { dateKeyET } from '@/engine/store';
 import { RANKS, TIER_COLOR, xpForLevel } from '@/engine/xp';
 import { loadFeed, visiblePosts, type FeedPost } from '@/lib/feed';
@@ -83,6 +84,8 @@ export default function Home() {
   const streakAtRisk = g.streak >= 2 && !caughtToday && new Date().getHours() >= 15;
   const spinDone = g.profile.spinDay === today;
   const shadowDone = g.profile.shadowDay === today;
+  const bingo = bingoState(g.garage, today);
+  const hiloBest = (g.profile.hiloBest as number) || 0;
 
   // what your friends caught lately
   useEffect(() => {
@@ -222,6 +225,10 @@ export default function Home() {
                 <GameTile title="EXAM" sub={examDone ? `DONE ${(g.profile.examLast as number) || 0}/5` : '5 QUESTIONS'} done={examDone} onPress={() => router.push('/exam')} />
                 <GameTile title="SPIN" sub={spinDone ? `+${(g.profile.spinLast as number) || 0} XP` : 'FREE SPIN'} done={spinDone} onPress={() => router.push('/spin')} />
                 <GameTile title="SHADOW" sub={shadowDone ? `${(g.profile.shadowLast as number) || 0}/5 RIGHT` : 'GUESS 5 CARS'} done={shadowDone} onPress={() => router.push('/shadow')} />
+              </View>
+              <View style={{ flexDirection: 'row', gap: 10 }}>
+                <GameTile title="BINGO" sub={`${bingo.done.filter(Boolean).length}/9 - ${bingo.lines.length} LINES`} done={bingo.full} onPress={() => router.push('/bingo')} />
+                <GameTile title="HI-LO" sub={hiloBest ? `BEST ${hiloBest}` : 'HIGHER OR LOWER'} done={false} onPress={() => router.push('/hilo')} />
               </View>
             </Panel>
           </>

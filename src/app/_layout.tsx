@@ -84,6 +84,8 @@ function Shell() {
         <Stack.Screen name="season" options={{ presentation: 'modal' }} />
         <Stack.Screen name="race" options={{ presentation: 'modal' }} />
         <Stack.Screen name="race-live" options={{ presentation: 'modal' }} />
+        <Stack.Screen name="bingo" options={{ presentation: 'modal' }} />
+        <Stack.Screen name="hilo" options={{ presentation: 'modal' }} />
       </Stack>
       {needsWelcome && pathname !== '/signed-in' ? <Redirect href="/welcome" /> : null}
       <ToastHost />

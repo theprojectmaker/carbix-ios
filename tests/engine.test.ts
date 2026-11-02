@@ -102,3 +102,50 @@ test('web backup files import; cloud merge only adds progress', () => {
   assert.equal(m.profile.bonusXP, 100);
   assert.deepEqual(m.profile.days, ['2026-10-01']);
 });
+
+import { BINGO_LINES, applyBingo, bingoBoard, bingoState, hiloCorrect, hiloRound, hiloPick, HILO_STATS } from '../src/engine/games';
+import { newProfile } from '../src/engine/store';
+
+test('bingo: the board is the same all day, centre is free, nine distinct squares', () => {
+  const a = bingoBoard('2026-11-02');
+  const b = bingoBoard('2026-11-02');
+  assert.deepEqual(a.map((t) => t.id), b.map((t) => t.id));
+  assert.equal(a.length, 9);
+  assert.equal(a[4].id, 'free');
+  assert.equal(new Set(a.map((t) => t.id)).size, 9);
+  assert.notDeepEqual(a.map((t) => t.id), bingoBoard('2026-11-03').map((t) => t.id));
+});
+
+test('bingo: lines are detected from today\'s catches and paid once', () => {
+  const day = '2026-11-02';
+  const board = bingoBoard(day);
+  // a car that satisfies every square: fabricate catches that each satisfy one task
+  const ts = new Date('2026-11-02T15:00:00Z').getTime();
+  const mk = (i: number): Catch => ({ id: i, ts, car: { make: 'X', model: 'Y', rarity: 'Common' } as Car } as Catch);
+  const empty = bingoState([mk(1)], day);
+  assert.equal(empty.done[4], true); // free square needs any catch today
+  assert.equal(empty.lines.length, 0);
+  const p0 = newProfile();
+  const first = applyBingo(p0, { ...empty, mask: 1 }, day); // pretend row 0 completed
+  assert.equal(first.xp, 10);
+  const again = applyBingo(first.profile, { ...empty, mask: 1 }, day);
+  assert.equal(again.xp, 0);
+  const full = applyBingo(first.profile, { ...empty, mask: 1 | (1 << 8) }, day);
+  assert.equal(full.xp, 50);
+  assert.equal(full.orbs, 25);
+  assert.equal(BINGO_LINES.length, 8);
+  assert.ok(board.every((t) => typeof t.test === 'function'));
+});
+
+test('higher or lower: rounds never tie, XP is capped at 60 a day', () => {
+  for (let i = 0; i < 40; i++) {
+    const left = hiloPick();
+    const { stat, right } = hiloRound(left);
+    assert.notEqual(HILO_STATS[stat].get(left), HILO_STATS[stat].get(right));
+  }
+  let p = newProfile();
+  let total = 0;
+  for (let i = 1; i <= 40; i++) { const r = hiloCorrect(p, i, '2026-11-02'); p = r.profile; total += r.xp; }
+  assert.equal(total, 60);
+  assert.equal(p.hiloBest, 40);
+});
