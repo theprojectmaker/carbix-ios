@@ -52,14 +52,17 @@ export default function Garage() {
   const [q, setQ] = useState('');
   const [tier, setTier] = useState<Rarity | ''>('');
   const [caughtOnly, setCaughtOnly] = useState(false);
+  const [starsOnly, setStarsOnly] = useState(false);
+  const starList = g.profile.stars as number[] | undefined;
+  const stars = useMemo(() => starList || [], [starList]);
 
   const rows = useMemo(() => {
     const nq = norm(q);
     const list = (tier === 'Grail' ? GRAIL_CATALOG : ORDERED).filter(
-      (c) => (!tier || c.rarity === tier) && (!caughtOnly || g.caughtNs.has(c.n)) && (!nq || norm(c.make + c.model).includes(nq)),
+      (c) => (!tier || c.rarity === tier) && (!caughtOnly || g.caughtNs.has(c.n)) && (!starsOnly || stars.includes(c.n)) && (!nq || norm(c.make + c.model).includes(nq)),
     );
     return list;
-  }, [q, tier, caughtOnly, g.caughtNs]);
+  }, [q, tier, caughtOnly, starsOnly, stars, g.caughtNs]);
 
   const counts = useMemo(() => {
     const m = new Map<number, number>();
@@ -116,6 +119,7 @@ export default function Garage() {
         </View>
         <View style={{ flexDirection: 'row', gap: 6 }}>
           <TopKey label="DECK" on={caughtOnly} onPress={() => { play('click'); setCaughtOnly(!caughtOnly); }} />
+          <TopKey label="STARS" on={starsOnly} onPress={() => { play('click'); setStarsOnly(!starsOnly); }} />
           <TopKey
             label="RAND"
             onPress={() => {

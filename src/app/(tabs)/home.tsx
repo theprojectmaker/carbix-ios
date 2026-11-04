@@ -87,7 +87,7 @@ export default function Home() {
   const shadowDone = g.profile.shadowDay === today;
   const bingo = bingoState(g.garage, today);
   const chase = useMemo(() => brandChase(g.caughtNs), [g.caughtNs]);
-  const wantedNs = ((g.profile.wanted as number[] | undefined) || []).filter((n) => !g.caughtNs.has(n));
+  const wantedNs = ((g.profile.stars as number[] | undefined) || []).filter((n) => !g.caughtNs.has(n));
   const wanted = wantedNs.map((n) => CATALOG_BY_N.get(n)).filter((e): e is NonNullable<typeof e> => !!e).slice(0, 8);
   const week = useMemo(() => weekReview(g.garage, now, catalogMatch), [g.garage, now]);
   const hiloBest = (g.profile.hiloBest as number) || 0;
@@ -268,7 +268,7 @@ export default function Home() {
         ) : null}
 
         {wanted.length ? (
-          <Panel title="WANTED">
+          <Panel title="STARRED TARGETS">
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
               {wanted.map((e) => (
                 <Pressable key={e.n} onPress={() => { play('tab'); router.push({ pathname: '/car/[n]', params: { n: String(e.n) } }); }} accessibilityRole="button">
