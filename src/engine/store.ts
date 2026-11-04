@@ -176,21 +176,35 @@ export function parseBackup(text: string): { garage: Catch[]; profile: Profile }
   return { garage, profile };
 }
 
-/** SHINY HOUR: one hour a day, the same for everyone, when the shiny odds are doubled. It starts between 10am and 5pm Eastern. */
+/**
+ * SHINY HOUR (the website calls it Chrome Hour): three surprise 60-minute windows a week where shiny odds double.
+ * The schedule is a seeded shuffle of the week, so every device and the website compute the same windows with no server.
+ * Keep this identical to chromeWindows() in motordex/public/index.html; tests compare the two.
+ */
 export const SHINY_HOUR_BOOST = 2;
-export function shinyHourOn(utcDay: string): { startTs: number; endTs: number } {
+const weekStartUTC = (ts: number) => {
+  const d = new Date(ts);
+  return Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate() - ((d.getUTCDay() + 6) % 7)); // Monday
+};
+export function shinyWindows(ts: number): { startTs: number; endTs: number }[] {
+  const start = weekStartUTC(ts);
+  const key = 'W' + new Date(start).toISOString().slice(0, 10);
   let h = 2166136261;
-  const seed = 'shinyhour:' + utcDay;
-  for (let i = 0; i < seed.length; i++) h = Math.imul(h ^ seed.charCodeAt(i), 16777619);
-  const hour = 15 + ((h >>> 0) % 8); // 15:00 to 22:00 UTC
-  const startTs = Date.parse(utcDay + 'T00:00:00Z') + hour * 3600e3;
-  return { startTs, endTs: startTs + 3600e3 };
+  for (const ch of key) { h ^= ch.charCodeAt(0); h = Math.imul(h, 16777619) >>> 0; }
+  const rnd = () => { h ^= h << 13; h >>>= 0; h ^= h >>> 17; h ^= h << 5; h >>>= 0; return h / 4294967296; };
+  const pool = [0, 1, 2, 3, 4, 5, 6];
+  for (let i = 6; i > 0; i--) {
+    const j = Math.floor(rnd() * (i + 1));
+    const t = pool[i]; pool[i] = pool[j]; pool[j] = t;
+  }
+  return pool.slice(0, 3).sort((x, y) => x - y).map((d) => {
+    const hour = 17 + Math.floor(rnd() * 7);
+    const startTs = start + d * 864e5 + hour * 3600e3;
+    return { startTs, endTs: startTs + 3600e3 };
+  });
 }
 /** The Shiny Hour on now, or the next one to come. */
 export function shinyHour(now = Date.now()): { live: boolean; startTs: number; endTs: number } {
-  const today = new Date(now).toISOString().slice(0, 10);
-  const w = shinyHourOn(today);
-  if (now < w.endTs) return { live: now >= w.startTs, ...w };
-  const next = shinyHourOn(new Date(Date.parse(today + 'T00:00:00Z') + 86400e3).toISOString().slice(0, 10));
-  return { live: false, ...next };
+  const w = shinyWindows(now).find((x) => now < x.endTs) ?? shinyWindows(now + 7 * 864e5)[0];
+  return { live: now >= w.startTs && now < w.endTs, ...w };
 }

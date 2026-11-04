@@ -183,17 +183,37 @@ test('card battle: a deal has five cards a side and five stats; 0-60 is won by t
   assert.equal(finishBattle(p, false, '2026-12-03').profile.battleStreak, 0);
 });
 
-import { shinyHour, shinyHourOn, SHINY_BASE } from '../src/engine/store';
-test('shiny hour: one hour a day, same for everyone, doubles the base odds', () => {
-  const w = shinyHourOn('2026-12-03');
-  assert.equal(w.endTs - w.startTs, 3600e3);
-  const h = new Date(w.startTs).getUTCHours();
-  assert.ok(h >= 15 && h <= 22);
+import { shinyHour, shinyWindows, SHINY_BASE } from '../src/engine/store';
+test('shiny hour: three one-hour windows a week, doubling the base odds', () => {
+  const ws = shinyWindows(Date.parse('2026-12-03T12:00:00Z'));
+  assert.equal(ws.length, 3);
+  for (const w of ws) assert.equal(w.endTs - w.startTs, 3600e3);
+  const w = ws[1];
   assert.equal(shinyHour(w.startTs + 60e3).live, true);
   assert.equal(shinyHour(w.endTs + 60e3).live, false);
-  assert.ok(shinyHour(w.endTs + 60e3).startTs > w.endTs); // the next one is tomorrow's
+  assert.ok(shinyHour(ws[2].endTs + 60e3).startTs > ws[2].endTs); // after the last one, the next is next week's
   assert.equal(shinyChance(0, 2), SHINY_BASE * 2);
   assert.equal(shinyChance(0), SHINY_BASE);
+});
+
+test('shiny hour windows match the website Chrome Hour schedule exactly', () => {
+  const html = fs.readFileSync(new URL('../../motordex/public/index.html', import.meta.url), 'utf8');
+  const grab = (name: string) => {
+    const i = html.indexOf('function ' + name);
+    assert.ok(i >= 0, name + ' is in the site');
+    let depth = 0, j = html.indexOf('{', i);
+    for (let k = j; k < html.length; k++) {
+      if (html[k] === '{') depth++;
+      else if (html[k] === '}' && --depth === 0) return html.slice(i, k + 1);
+    }
+    throw new Error('unbalanced ' + name);
+  };
+  const ctx: { chromeWindows?: (ts: number) => { start: number; end: number }[] } = {};
+  vm.runInNewContext(`${grab('weekStartUTC')}\n${'function weekKeyOf(ts){ return "W"+new Date(weekStartUTC(ts)).toISOString().slice(0,10); }'}\n${grab('chromeWindows')}\nthis.chromeWindows=chromeWindows;`, ctx);
+  for (let wk = 0; wk < 80; wk++) {
+    const ts = Date.parse('2026-01-05T09:00:00Z') + wk * 7 * 864e5 + 3 * 864e5;
+    assert.equal(JSON.stringify(shinyWindows(ts).map((w) => [w.startTs, w.endTs])), JSON.stringify(ctx.chromeWindows!(ts).map((w) => [w.start, w.end])));
+  }
 });
 
 import { brandChase } from '../src/engine/games';
