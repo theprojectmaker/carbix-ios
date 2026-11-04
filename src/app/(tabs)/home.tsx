@@ -11,7 +11,8 @@ import { cotd, evalChallenges, SPOT_HEX, spotlightColor } from '@/engine/daily';
 import { CATALOG, CATALOG_BY_N, catalogMatch } from '@/engine/data';
 import { currentSeason, SEASON_EVENT_NAMES } from '@/engine/quests';
 import { LiveBanner } from '@/components/live-banner';
-import { bingoState, brandChase, weekReview } from '@/engine/games';
+import { useNow } from '@/components/race-pill';
+import { bingoState, brandChase, starLeft, weekReview } from '@/engine/games';
 import { dateKeyET } from '@/engine/store';
 import { RANKS, TIER_COLOR, xpForLevel } from '@/engine/xp';
 import { loadFeed, visiblePosts, type FeedPost } from '@/lib/feed';
@@ -54,6 +55,7 @@ export default function Home() {
   const season = currentSeason();
   const today = dateKeyET();
   const [now] = useState(() => Date.now());
+  const nowTick = useNow(true);
   const [license, setLicense] = useState(false);
   const [friendPosts, setFriendPosts] = useState<FeedPost[]>([]);
   const daysLeft = Math.max(1, Math.ceil((season.end - now) / 864e5));
@@ -268,13 +270,13 @@ export default function Home() {
         ) : null}
 
         {wanted.length ? (
-          <Panel title="STARRED TARGETS">
+          <Panel title="STARRED TARGETS (1 HOUR EACH)">
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
               {wanted.map((e) => (
                 <Pressable key={e.n} onPress={() => { play('tab'); router.push({ pathname: '/car/[n]', params: { n: String(e.n) } }); }} accessibilityRole="button">
                   <View style={{ width: 96, backgroundColor: '#161c2c', borderWidth: 2, borderColor: '#10141f', borderTopWidth: 5, borderTopColor: TIER_COLOR[e.rarity], alignItems: 'center', padding: 4 }}>
                     <Sprite entry={e} caught={false} size={76} tint="#56658A" />
-                    <Text numberOfLines={1} style={{ fontFamily: fonts.display, fontSize: 12, color: palette.lcdDim }}>{e.rarity.toUpperCase()}</Text>
+                    <Text numberOfLines={1} style={{ fontFamily: fonts.display, fontSize: 12, color: palette.lcdDim }}>{(() => { const m = Math.ceil(starLeft(g.profile.starTimes as Record<string, number> | undefined, e.n, nowTick) / 60000); return m > 0 ? `${m} MIN LEFT` : 'RAN OUT'; })()}</Text>
                   </View>
                 </Pressable>
               ))}

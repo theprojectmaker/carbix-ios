@@ -9,7 +9,7 @@ import { catalogMatch, CATALOG, fixStats, GRAIL_NS } from '@/engine/data';
 import {
   dateKeyET as todayKey, KEYS, loadAll, markDay, normalizeGarage, newProfile, normalizeProfile, saveAll, shinyHour, shinyRollPity, SHINY_HOUR_BOOST, streak, totalXp,
 } from '@/engine/store';
-import { SET_ORBS, setComplete, streakReward } from '@/engine/games';
+import { SET_ORBS, setComplete, starActive, streakReward } from '@/engine/games';
 import type { Car, Catch, Profile } from '@/engine/types';
 import { googleSignInCode } from '@/lib/google-signin';
 import { addNotice } from '@/lib/inbox';
@@ -300,7 +300,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     const combo = nextCombo(np.combo as { ts: number; n: number } | undefined, now);
     np.combo = combo;
     const hitN = catalogMatch(car);
-    const starred = !!hitN && ((np.stars as number[]) || []).includes(hitN.n);
+    const starred = !!hitN && ((np.stars as number[]) || []).includes(hitN.n) && starActive(np.starTimes as Record<string, number> | undefined, hitN.n, now);
     if (starred) np.targets = ((np.targets as number) || 0) + 1;
     const bonuses = catchBonuses(CATALOG, car, { shiny: !!entry.shiny, firstToday, hit: hitN, comboN: combo.n, starred });
     for (const b of bonuses) {
@@ -425,9 +425,13 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
 
   const toggleStar = useCallback((n: number) => {
     const cur = ((latest.current.profile.stars as number[]) || []);
-    const on = !cur.includes(n);
-    const next = on ? [...cur, n] : cur.filter((x) => x !== n);
-    const withStars = { ...latest.current.profile, stars: next };
+    const now = Date.now();
+    const times = { ...((latest.current.profile.starTimes as Record<string, number> | undefined) || {}) };
+    // tapping a star whose hour ran out starts a fresh hour instead of removing it
+    const on = !cur.includes(n) || !starActive(times, n, now);
+    const next = on ? (cur.includes(n) ? cur : [...cur, n]) : cur.filter((x) => x !== n);
+    if (on) times[String(n)] = now; else delete times[String(n)];
+    const withStars = { ...latest.current.profile, stars: next, starTimes: times };
     latest.current = { ...latest.current, profile: withStars };
     setProfile(withStars);
     play(on ? 'star-on' : 'star-off');

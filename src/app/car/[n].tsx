@@ -3,10 +3,12 @@ import { router, useLocalSearchParams } from 'expo-router';
 import React from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
+import { useNow } from '@/components/race-pill';
 import { Screen } from '@/components/screen';
 import { Btn, Sprite } from '@/components/ui';
 import generations from '@/data/generations.json';
 import { CATALOG, CATALOG_BY_N, CLASS_STATS, catalogMatch, dexRank, similarCars } from '@/engine/data';
+import { starLeft } from '@/engine/games';
 import { limitedInfo } from '@/engine/limited';
 import { RTIER, TIER_COLOR, TIER_XP } from '@/engine/xp';
 import { play } from '@/lib/sfx';
@@ -85,11 +87,14 @@ function VsBar({ label, mine, avg, unit }: { label: string; mine: number; avg: n
 /** Everything the Bix knows about one car — more than the card. Unlocks as you catch it. */
 export default function CarDetail() {
   const g = useGame();
+  const nowTick = useNow(true);
   const { n } = useLocalSearchParams<{ n: string }>();
   const e = CATALOG_BY_N.get(Number(n));
   if (!e) return null;
   const caught = g.caughtNs.has(e.n);
-  const wantIt = ((g.profile.stars as number[] | undefined) || []).includes(e.n);
+  const starLeftMs = starLeft(g.profile.starTimes as Record<string, number> | undefined, e.n, nowTick);
+  const wantIt = starLeftMs > 0;
+  const starOld = ((g.profile.stars as number[] | undefined) || []).includes(e.n) && !wantIt;
   const toggleWant = () => { g.toggleStar(e.n); };
   const mine = g.garage.filter((c) => catalogMatch(c.car)?.n === e.n).sort((a, b) => b.ts - a.ts);
   const sameMake = CATALOG.filter((c) => c.make === e.make);
@@ -133,7 +138,7 @@ export default function CarDetail() {
               </Text>
             </View>
             <Text style={{ fontFamily: fonts.prose, fontSize: 21, color: '#C9D2E6' }}>{RARITY_TEXT[e.rarity]}</Text>
-            {!caught ? <Btn small tone={wantIt ? 'plain' : 'red'} label={wantIt ? 'STARRED - +25 XP IF YOU CATCH IT' : 'STAR THIS CAR (+25 XP IF CAUGHT)'} onPress={toggleWant} /> : null}
+            {!caught ? <Btn small tone={wantIt ? 'plain' : 'red'} label={wantIt ? `STARRED - CATCH IT IN ${Math.ceil(starLeftMs / 60000)} MIN FOR +25 XP` : starOld ? 'STAR RAN OUT - TAP TO RESTART THE HOUR' : 'STAR IT: CATCH IT IN 1 HOUR FOR +25 XP'} onPress={toggleWant} /> : null}
             {ltd ? (
               <View style={{ alignSelf: 'flex-start', backgroundColor: ltd.grail ? '#E4DDFF' : '#E8C547', borderWidth: 2, borderColor: INK, paddingHorizontal: 9, paddingVertical: 1, marginTop: 4 }}>
                 <Text style={{ fontFamily: fonts.display, fontSize: 19, letterSpacing: 1, color: ltd.grail ? '#1a1530' : INK }}>{ltd.grail ? 'GRAIL  ' : 'LIMITED  '}{ltd.label}</Text>

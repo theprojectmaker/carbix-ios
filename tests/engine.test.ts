@@ -267,3 +267,13 @@ test('records: best day, longest streak, and nothing for an empty garage', () =>
   assert.equal(r.bestDay, 2);
   assert.equal(r.longestStreak, 3);
 });
+
+import { starLeft, starActive, STAR_WINDOW_MS } from '../src/engine/games';
+test('a star pays for one hour only', () => {
+  const t0 = 1_000_000;
+  assert.equal(starLeft({ '7': t0 }, 7, t0), STAR_WINDOW_MS);
+  assert.equal(starActive({ '7': t0 }, 7, t0 + STAR_WINDOW_MS - 1), true);
+  assert.equal(starActive({ '7': t0 }, 7, t0 + STAR_WINDOW_MS), false);
+  assert.equal(starActive({}, 7, t0), false); // an old star with no clock does not pay
+  assert.equal(starActive(undefined, 7, t0), false);
+});

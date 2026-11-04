@@ -328,3 +328,13 @@ export function records(garage: readonly Catch[], days: readonly string[]): Reco
   const top = (a: number[]) => (Math.max(...a) > 0 ? a.indexOf(Math.max(...a)) : null);
   return { bestDay, bestDayKey, longestStreak: longest, busiestHour: top(hours), busiestWeekday: top(weekdays), shinyCount };
 }
+
+/* =====================  STARRED TARGETS: ONE HOUR  ===================== */
+export const STAR_WINDOW_MS = 3600e3;
+
+/** Milliseconds left on a star's +25 XP hour. Zero when it ran out, or was starred before stars had a clock. */
+export function starLeft(times: Record<string, number> | undefined, n: number, now: number): number {
+  const t = times?.[String(n)];
+  return typeof t === 'number' ? Math.max(0, t + STAR_WINDOW_MS - now) : 0;
+}
+export const starActive = (times: Record<string, number> | undefined, n: number, now: number) => starLeft(times, n, now) > 0;
