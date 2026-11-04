@@ -271,3 +271,15 @@ export function weekReview(garage: readonly Catch[], now: number, match: (c: Car
   r.days = days.size;
   return r;
 }
+
+/* =====================  STREAK MILESTONES  ===================== */
+export const STREAK_MILESTONES: readonly { days: number; orbs: number }[] = [
+  { days: 3, orbs: 2 }, { days: 7, orbs: 5 }, { days: 14, orbs: 10 }, { days: 30, orbs: 25 },
+  { days: 60, orbs: 40 }, { days: 100, orbs: 75 }, { days: 200, orbs: 150 }, { days: 365, orbs: 300 },
+];
+
+/** The milestone this streak has just reached, if it has not been paid yet. Each one pays once, ever. */
+export function streakReward(streakDays: number, paid: readonly number[] = []): { days: number; orbs: number } | null {
+  const hit = STREAK_MILESTONES.find((m) => m.days === streakDays);
+  return hit && !paid.includes(hit.days) ? hit : null;
+}

@@ -219,3 +219,11 @@ test('week review: counts the last seven days, new cars and the rarest catch', (
   assert.equal(w.shinies, 1);
   assert.equal(w.best?.n, 2);
 });
+
+import { streakReward } from '../src/engine/games';
+test('streak milestones pay once, only on the exact day', () => {
+  assert.equal(streakReward(2), null);
+  assert.equal(streakReward(7)?.orbs, 5);
+  assert.equal(streakReward(7, [7]), null);
+  assert.equal(streakReward(8), null);
+});

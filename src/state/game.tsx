@@ -9,6 +9,7 @@ import { catalogMatch, CATALOG, fixStats, GRAIL_NS } from '@/engine/data';
 import {
   dateKeyET as todayKey, KEYS, loadAll, markDay, normalizeGarage, newProfile, normalizeProfile, saveAll, shinyHour, shinyRollPity, SHINY_HOUR_BOOST, streak, totalXp,
 } from '@/engine/store';
+import { streakReward } from '@/engine/games';
 import type { Car, Catch, Profile } from '@/engine/types';
 import { googleSignInCode } from '@/lib/google-signin';
 import { addNotice } from '@/lib/inbox';
@@ -306,9 +307,15 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       np.bonusXP = (np.bonusXP || 0) + b.xp;
       if (b.orbs) np.orbs = ((np.orbs as number) || 0) + b.orbs;
     }
+    // a streak milestone pays its orbs once, ever
+    const sr = firstToday ? streakReward(streak(np), (np.streakPaid as number[]) || []) : null;
+    if (sr) {
+      np.streakPaid = [...((np.streakPaid as number[]) || []), sr.days];
+      np.orbs = ((np.orbs as number) || 0) + sr.orbs;
+    }
     const ch = evalChallenges(nextGarage, np);
     const r0 = advanceQuests(nextGarage, ch.profile);
-    if (r0.events.some((e) => e.type === 'complete') || bonuses.some((b) => b.orbs)) r0.profile.orbsAt = Date.now();
+    if (r0.events.some((e) => e.type === 'complete') || bonuses.some((b) => b.orbs) || sr) r0.profile.orbsAt = Date.now();
     const tr = trophyCheck(nextGarage, r0.profile);
     const r = { ...r0, profile: tr.profile };
     latest.current = { garage: nextGarage, profile: r.profile };
@@ -335,7 +342,10 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     if (tr.events.length) setTimeout(() => play('fanfare'), 900);
     for (const c of ch.won) addNotice({ kind: 'daily', title: `DAILY DONE: ${c.label}`, body: `+${c.xp} XP`, route: '/home' });
     if (lines.length) showToast({ kind: 'bonus', title: lines[0], body: lines.length > 1 ? lines.slice(1).join('  -  ') : undefined, route: '/home' });
-    if (firstToday && np.days.length >= 2) showToast({ kind: 'daily', title: `DAY ${streak(np)} OF YOUR STREAK`, body: 'FIRST CATCH TODAY. COME BACK TOMORROW TO KEEP IT GOING.', route: '/home' });
+    if (sr) {
+      addNotice({ kind: 'daily', title: `${sr.days}-DAY STREAK: +${sr.orbs} ORBS`, body: 'A STREAK MILESTONE. KEEP IT GOING FOR THE NEXT ONE.', route: '/home' });
+      showToast({ kind: 'bonus', title: `${sr.days}-DAY STREAK - +${sr.orbs} ORBS`, body: 'STREAK MILESTONE REACHED', route: '/home' });
+    } else if (firstToday && np.days.length >= 2) showToast({ kind: 'daily', title: `DAY ${streak(np)} OF YOUR STREAK`, body: 'FIRST CATCH TODAY. COME BACK TOMORROW TO KEEP IT GOING.', route: '/home' });
     say(r.events);
     return entry;
   }, [say]);
