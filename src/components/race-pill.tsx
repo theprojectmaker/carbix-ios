@@ -67,13 +67,12 @@ export function useNow(on: boolean) {
  */
 export function RacePill() {
   const { active, raceOn, liveOn, race, liveSession } = useRaceStatus();
-  const now = useNow(active);
   const pulse = usePulse(active, 700);
   const dot = useAnimatedStyle(() => ({ opacity: 0.35 + 0.65 * pulse.get(), transform: [{ scale: 0.8 + 0.4 * pulse.get() }] }));
   if (!active) return null;
   let text: string;
   if (raceOn && race) {
-    text = race.status === 'lobby' ? `LOBBY ${race.code}` : `${clock((race.endTs ?? now) - now)} LEFT`;
+    text = race.status === 'lobby' ? `LOBBY ${race.code}` : 'RACE LIVE';
   } else {
     text = `LIVE ${liveSession?.players.length ?? 1} HERE`;
   }

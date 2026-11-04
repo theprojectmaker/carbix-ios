@@ -48,7 +48,7 @@ export function LiveBanner() {
         color={RACE_GREEN}
         fg={INK}
         dot="#fff"
-        title={running ? `RACE LIVE  ${clock((race.endTs ?? now) - now)} LEFT` : `RACE LOBBY  ${race.code}`}
+        title={running ? 'RACE LIVE' : `RACE LOBBY  ${race.code}`}
         sub={running ? `${race.players.length} SPOTTERS  -  TAP FOR RACE CONTROL` : 'WAITING FOR THE HOST TO START'}
         onPress={() => router.push('/race-live')}
       />,
