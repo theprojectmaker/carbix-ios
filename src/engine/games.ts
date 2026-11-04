@@ -283,3 +283,14 @@ export function streakReward(streakDays: number, paid: readonly number[] = []): 
   const hit = STREAK_MILESTONES.find((m) => m.days === streakDays);
   return hit && !paid.includes(hit.days) ? hit : null;
 }
+
+/* =====================  BRAND SET COMPLETE  ===================== */
+export const SET_MIN = 3;
+export const SET_ORBS = 10;
+
+/** True when every car of a brand (at least SET_MIN of them) is caught and the set has not been paid yet. */
+export function setComplete(make: string, caught: ReadonlySet<number>, paid: readonly string[] = [], catalog: readonly CatalogEntry[] = CATALOG): boolean {
+  if (paid.includes(make)) return false;
+  const list = catalog.filter((e) => e.make === make);
+  return list.length >= SET_MIN && list.every((e) => caught.has(e.n));
+}

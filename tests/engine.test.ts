@@ -227,3 +227,12 @@ test('streak milestones pay once, only on the exact day', () => {
   assert.equal(streakReward(7, [7]), null);
   assert.equal(streakReward(8), null);
 });
+
+import { setComplete } from '../src/engine/games';
+test('brand set complete: needs every car, pays once', () => {
+  const cat = [1, 2, 3].map((n) => ({ n, make: 'A' })).concat([{ n: 4, make: 'B' }, { n: 5, make: 'B' }]) as never;
+  assert.equal(setComplete('A', new Set([1, 2]), [], cat), false);
+  assert.equal(setComplete('A', new Set([1, 2, 3]), [], cat), true);
+  assert.equal(setComplete('A', new Set([1, 2, 3]), ['A'], cat), false);
+  assert.equal(setComplete('B', new Set([4, 5]), [], cat), false); // too small to count as a set
+});

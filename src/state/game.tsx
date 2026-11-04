@@ -9,7 +9,7 @@ import { catalogMatch, CATALOG, fixStats, GRAIL_NS } from '@/engine/data';
 import {
   dateKeyET as todayKey, KEYS, loadAll, markDay, normalizeGarage, newProfile, normalizeProfile, saveAll, shinyHour, shinyRollPity, SHINY_HOUR_BOOST, streak, totalXp,
 } from '@/engine/store';
-import { streakReward } from '@/engine/games';
+import { SET_ORBS, setComplete, streakReward } from '@/engine/games';
 import type { Car, Catch, Profile } from '@/engine/types';
 import { googleSignInCode } from '@/lib/google-signin';
 import { addNotice } from '@/lib/inbox';
@@ -313,9 +313,20 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       np.streakPaid = [...((np.streakPaid as number[]) || []), sr.days];
       np.orbs = ((np.orbs as number) || 0) + sr.orbs;
     }
+    // finishing every car of a brand pays orbs once per brand
+    let setDone: string | null = null;
+    if (hitN) {
+      const have = new Set<number>();
+      for (const c of nextGarage) { const e = catalogMatch(c.car); if (e) have.add(e.n); }
+      if (setComplete(hitN.make, have, (np.setsPaid as string[]) || [])) {
+        setDone = hitN.make;
+        np.setsPaid = [...((np.setsPaid as string[]) || []), hitN.make];
+        np.orbs = ((np.orbs as number) || 0) + SET_ORBS;
+      }
+    }
     const ch = evalChallenges(nextGarage, np);
     const r0 = advanceQuests(nextGarage, ch.profile);
-    if (r0.events.some((e) => e.type === 'complete') || bonuses.some((b) => b.orbs) || sr) r0.profile.orbsAt = Date.now();
+    if (r0.events.some((e) => e.type === 'complete') || bonuses.some((b) => b.orbs) || sr || setDone) r0.profile.orbsAt = Date.now();
     const tr = trophyCheck(nextGarage, r0.profile);
     const r = { ...r0, profile: tr.profile };
     latest.current = { garage: nextGarage, profile: r.profile };
@@ -342,6 +353,11 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     if (tr.events.length) setTimeout(() => play('fanfare'), 900);
     for (const c of ch.won) addNotice({ kind: 'daily', title: `DAILY DONE: ${c.label}`, body: `+${c.xp} XP`, route: '/home' });
     if (lines.length) showToast({ kind: 'bonus', title: lines[0], body: lines.length > 1 ? lines.slice(1).join('  -  ') : undefined, route: '/home' });
+    if (setDone) {
+      addNotice({ kind: 'trophy', title: `${setDone.toUpperCase()} SET COMPLETE: +${SET_ORBS} ORBS`, body: 'YOU CAUGHT EVERY CAR OF THE BRAND.', route: '/bix' });
+      setTimeout(() => showToast({ kind: 'bonus', title: `${setDone.toUpperCase()} SET COMPLETE - +${SET_ORBS} ORBS`, body: 'EVERY CAR OF THE BRAND CAUGHT', route: '/bix' }), 1400);
+      setTimeout(() => play('fanfare'), 900);
+    }
     if (sr) {
       addNotice({ kind: 'daily', title: `${sr.days}-DAY STREAK: +${sr.orbs} ORBS`, body: 'A STREAK MILESTONE. KEEP IT GOING FOR THE NEXT ONE.', route: '/home' });
       showToast({ kind: 'bonus', title: `${sr.days}-DAY STREAK - +${sr.orbs} ORBS`, body: 'STREAK MILESTONE REACHED', route: '/home' });
