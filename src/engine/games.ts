@@ -244,3 +244,30 @@ export function brandChase(caught: ReadonlySet<number>, catalog: readonly Catalo
   }
   return best;
 }
+
+/* =====================  WEEK IN REVIEW  ===================== */
+export type WeekReview = { catches: number; fresh: number; shinies: number; best: CatalogEntry | null; days: number };
+
+/** The last seven days of catching: how many, how many were new to the Bix, the rarest, and how many days you played. */
+export function weekReview(garage: readonly Catch[], now: number, match: (c: Car) => CatalogEntry | null): WeekReview {
+  const from = now - 7 * 864e5;
+  const firstSeen = new Map<number, number>();
+  for (const c of garage) {
+    const e = match(c.car);
+    if (e) firstSeen.set(e.n, Math.min(firstSeen.get(e.n) ?? Infinity, c.ts));
+  }
+  const r: WeekReview = { catches: 0, fresh: 0, shinies: 0, best: null, days: 0 };
+  const days = new Set<string>();
+  for (const c of garage) {
+    if (c.ts < from || c.ts > now) continue;
+    r.catches++;
+    if (c.shiny) r.shinies++;
+    days.add(dateKeyET(new Date(c.ts)));
+    const e = match(c.car);
+    if (!e) continue;
+    if (firstSeen.get(e.n) === c.ts) r.fresh++;
+    if (!r.best || (RTIER[e.rarity] ?? 0) > (RTIER[r.best.rarity] ?? 0)) r.best = e;
+  }
+  r.days = days.size;
+  return r;
+}

@@ -206,3 +206,16 @@ test('brand chase: picks the brand closest to done and lists what is missing', (
   assert.deepEqual(r.missing.map((e) => e.n), [4]);
   assert.equal(brandChase(new Set([1, 2, 3, 4, 5, 6, 7]), cat), null); // nothing left to chase
 });
+
+import { weekReview } from '../src/engine/games';
+test('week review: counts the last seven days, new cars and the rarest catch', () => {
+  const now = Date.parse('2026-12-04T18:00:00Z');
+  const cat: Record<string, { n: number; rarity: string }> = { A: { n: 1, rarity: 'Common' }, B: { n: 2, rarity: 'Rare' } };
+  const match = ((c: { model: string }) => cat[c.model]) as never;
+  const mk = (model: string, daysAgo: number, shiny = false) => ({ id: Math.random(), ts: now - daysAgo * 864e5, shiny, car: { model } }) as never;
+  const w = weekReview([mk('A', 20), mk('A', 1), mk('B', 2, true), mk('B', 3), mk('A', 10)], now, match);
+  assert.equal(w.catches, 3);
+  assert.equal(w.fresh, 1); // B first seen 3 days ago; A was already in the Bix
+  assert.equal(w.shinies, 1);
+  assert.equal(w.best?.n, 2);
+});

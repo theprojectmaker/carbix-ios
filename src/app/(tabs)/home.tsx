@@ -11,7 +11,7 @@ import { cotd, evalChallenges, SPOT_HEX, spotlightColor } from '@/engine/daily';
 import { CATALOG, CATALOG_BY_N, catalogMatch } from '@/engine/data';
 import { currentSeason, SEASON_EVENT_NAMES } from '@/engine/quests';
 import { LiveBanner } from '@/components/live-banner';
-import { bingoState, brandChase } from '@/engine/games';
+import { bingoState, brandChase, weekReview } from '@/engine/games';
 import { dateKeyET } from '@/engine/store';
 import { RANKS, TIER_COLOR, xpForLevel } from '@/engine/xp';
 import { loadFeed, visiblePosts, type FeedPost } from '@/lib/feed';
@@ -87,6 +87,9 @@ export default function Home() {
   const shadowDone = g.profile.shadowDay === today;
   const bingo = bingoState(g.garage, today);
   const chase = useMemo(() => brandChase(g.caughtNs), [g.caughtNs]);
+  const wantedNs = ((g.profile.wanted as number[] | undefined) || []).filter((n) => !g.caughtNs.has(n));
+  const wanted = wantedNs.map((n) => CATALOG_BY_N.get(n)).filter((e): e is NonNullable<typeof e> => !!e).slice(0, 8);
+  const week = useMemo(() => weekReview(g.garage, now, catalogMatch), [g.garage, now]);
   const hiloBest = (g.profile.hiloBest as number) || 0;
 
   // what your friends caught lately
@@ -261,6 +264,37 @@ export default function Home() {
                 </View>
               ))}
             </ScrollView>
+          </Panel>
+        ) : null}
+
+        {wanted.length ? (
+          <Panel title="WANTED">
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
+              {wanted.map((e) => (
+                <Pressable key={e.n} onPress={() => { play('tab'); router.push({ pathname: '/car/[n]', params: { n: String(e.n) } }); }} accessibilityRole="button">
+                  <View style={{ width: 96, backgroundColor: '#161c2c', borderWidth: 2, borderColor: '#10141f', borderTopWidth: 5, borderTopColor: TIER_COLOR[e.rarity], alignItems: 'center', padding: 4 }}>
+                    <Sprite entry={e} caught={false} size={76} tint="#56658A" />
+                    <Text numberOfLines={1} style={{ fontFamily: fonts.display, fontSize: 12, color: palette.lcdDim }}>{e.rarity.toUpperCase()}</Text>
+                  </View>
+                </Pressable>
+              ))}
+            </ScrollView>
+          </Panel>
+        ) : null}
+
+        {week.catches > 0 ? (
+          <Panel title="THIS WEEK">
+            <View style={{ flexDirection: 'row', gap: 8 }}>
+              <Stat label="CATCHES" value={String(week.catches)} />
+              <Stat label="NEW CARS" value={String(week.fresh)} />
+              <Stat label="DAYS" value={String(week.days)} />
+              <Stat label="SHINY" value={String(week.shinies)} />
+            </View>
+            {week.best ? (
+              <Text style={{ fontFamily: fonts.utilityBold, fontSize: 14, color: palette.lcdDim }}>
+                BEST FIND: <Text style={{ color: TIER_COLOR[week.best.rarity] }}>{week.best.make} {week.best.model}</Text>
+              </Text>
+            ) : null}
           </Panel>
         ) : null}
 

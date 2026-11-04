@@ -89,6 +89,15 @@ export default function CarDetail() {
   const e = CATALOG_BY_N.get(Number(n));
   if (!e) return null;
   const caught = g.caughtNs.has(e.n);
+  const wantedList = (g.profile.wanted as number[] | undefined) || [];
+  const wantIt = wantedList.includes(e.n);
+  const toggleWant = () => {
+    play('click');
+    g.patchProfile((p) => {
+      const cur = (p.wanted as number[] | undefined) || [];
+      return { ...p, wanted: cur.includes(e.n) ? cur.filter((x) => x !== e.n) : [...cur, e.n].slice(-30) };
+    });
+  };
   const mine = g.garage.filter((c) => catalogMatch(c.car)?.n === e.n).sort((a, b) => b.ts - a.ts);
   const sameMake = CATALOG.filter((c) => c.make === e.make);
   const gotMake = sameMake.filter((c) => g.caughtNs.has(c.n));
@@ -131,6 +140,7 @@ export default function CarDetail() {
               </Text>
             </View>
             <Text style={{ fontFamily: fonts.prose, fontSize: 21, color: '#C9D2E6' }}>{RARITY_TEXT[e.rarity]}</Text>
+            {!caught ? <Btn small tone={wantIt ? 'plain' : 'red'} label={wantIt ? 'ON YOUR WANTED LIST' : 'ADD TO WANTED LIST'} onPress={toggleWant} /> : null}
             {ltd ? (
               <View style={{ alignSelf: 'flex-start', backgroundColor: ltd.grail ? '#E4DDFF' : '#E8C547', borderWidth: 2, borderColor: INK, paddingHorizontal: 9, paddingVertical: 1, marginTop: 4 }}>
                 <Text style={{ fontFamily: fonts.display, fontSize: 19, letterSpacing: 1, color: ltd.grail ? '#1a1530' : INK }}>{ltd.grail ? 'GRAIL  ' : 'LIMITED  '}{ltd.label}</Text>
