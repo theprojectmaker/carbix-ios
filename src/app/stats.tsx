@@ -5,6 +5,7 @@ import { ScrollView, Text, View } from 'react-native';
 import { Screen } from '@/components/screen';
 import { Btn, PText, Sprite } from '@/components/ui';
 import { CATALOG, catalogMatch } from '@/engine/data';
+import { records } from '@/engine/games';
 import { SHINY_HARD_PITY, SHINY_SOFT_PITY, dateKeyET, shinyChance } from '@/engine/store';
 import type { Rarity } from '@/engine/types';
 import { catchXP, TIER_COLOR } from '@/engine/xp';
@@ -36,6 +37,7 @@ export default function Stats() {
   const t = useTheme();
   const g = useGame();
   const [now] = useState(() => Date.now());
+  const rec = useMemo(() => records(g.garage, g.profile.days), [g.garage, g.profile.days]);
 
   const s = useMemo(() => {
     const garage = g.garage;
@@ -104,6 +106,17 @@ export default function Stats() {
             );
           })()}
         </Panel>
+
+        {rec.bestDay > 0 ? (
+          <Panel title="PERSONAL BESTS">
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+              <Big label="BEST DAY" value={String(rec.bestDay)} />
+              <Big label="LONGEST STREAK" value={String(rec.longestStreak)} />
+              <Big label="BUSIEST HOUR" value={rec.busiestHour === null ? '-' : `${rec.busiestHour % 12 || 12}${rec.busiestHour < 12 ? 'AM' : 'PM'}`} />
+              <Big label="FAVORITE DAY" value={rec.busiestWeekday === null ? '-' : ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'][rec.busiestWeekday]} />
+            </View>
+          </Panel>
+        ) : null}
 
         <Panel title="LAST 12 WEEKS">
           <View style={{ flexDirection: 'row', gap: 3, flexWrap: 'wrap' }}>

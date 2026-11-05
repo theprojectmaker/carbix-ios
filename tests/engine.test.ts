@@ -236,3 +236,14 @@ test('brand set complete: needs every car, pays once', () => {
   assert.equal(setComplete('A', new Set([1, 2, 3]), ['A'], cat), false);
   assert.equal(setComplete('B', new Set([4, 5]), [], cat), false); // too small to count as a set
 });
+
+import { records } from '../src/engine/games';
+test('records: best day, longest streak, and nothing for an empty garage', () => {
+  const empty = records([], []);
+  assert.equal(empty.bestDay, 0);
+  assert.equal(empty.busiestHour, null);
+  const at = (iso: string) => ({ id: 1, ts: Date.parse(iso), car: {}, shiny: false }) as never;
+  const r = records([at('2026-12-01T15:00:00Z'), at('2026-12-01T16:00:00Z'), at('2026-12-02T15:00:00Z')], ['2026-11-28', '2026-11-29', '2026-12-01', '2026-12-02', '2026-12-03']);
+  assert.equal(r.bestDay, 2);
+  assert.equal(r.longestStreak, 3);
+});

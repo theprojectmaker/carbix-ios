@@ -294,3 +294,37 @@ export function setComplete(make: string, caught: ReadonlySet<number>, paid: rea
   const list = catalog.filter((e) => e.make === make);
   return list.length >= SET_MIN && list.every((e) => caught.has(e.n));
 }
+
+/* =====================  PERSONAL RECORDS  ===================== */
+export type Records = { bestDay: number; bestDayKey: string; longestStreak: number; busiestHour: number | null; busiestWeekday: number | null; shinyCount: number };
+
+/** Personal bests from the garage and the days you played. Hours and weekdays use the phone's own clock. */
+export function records(garage: readonly Catch[], days: readonly string[]): Records {
+  const perDay = new Map<string, number>();
+  const hours = new Array<number>(24).fill(0);
+  const weekdays = new Array<number>(7).fill(0);
+  let shinyCount = 0;
+  for (const c of garage) {
+    const k = dateKeyET(new Date(c.ts));
+    perDay.set(k, (perDay.get(k) ?? 0) + 1);
+    const d = new Date(c.ts);
+    hours[d.getHours()]++;
+    weekdays[d.getDay()]++;
+    if (c.shiny) shinyCount++;
+  }
+  let bestDay = 0;
+  let bestDayKey = '';
+  for (const [k, n] of perDay) if (n > bestDay || (n === bestDay && k > bestDayKey)) { bestDay = n; bestDayKey = k; }
+  const sorted = [...new Set(days)].sort();
+  let longest = 0;
+  let run = 0;
+  let prev = 0;
+  for (const k of sorted) {
+    const t = Date.parse(k + 'T12:00:00Z');
+    run = prev && Math.round((t - prev) / 864e5) === 1 ? run + 1 : 1;
+    prev = t;
+    if (run > longest) longest = run;
+  }
+  const top = (a: number[]) => (Math.max(...a) > 0 ? a.indexOf(Math.max(...a)) : null);
+  return { bestDay, bestDayKey, longestStreak: longest, busiestHour: top(hours), busiestWeekday: top(weekdays), shinyCount };
+}
