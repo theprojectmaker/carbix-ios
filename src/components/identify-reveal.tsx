@@ -8,7 +8,7 @@ import Animated, {
 
 import type { Car, Rarity } from '@/engine/types';
 import { coverRect, padBox, type Box } from '@/lib/car-finder';
-import { play, playCaught } from '@/lib/sfx';
+import { play, playCaught, warmCaught } from '@/lib/sfx';
 import { fonts } from '@/theme/theme';
 
 /** [colour, shadow, ink readable on it] - the whole readout is drawn in the tier's colour. */
@@ -58,18 +58,21 @@ function Fade({ t, a, b, style, children }: { t: SharedValue<number>; a: number;
 
 /** A number that counts up: the timeline drives it on the UI thread and only this small Text re-renders (about 20 times). */
 function Count({ t, from, dur, value, unit, style, color }: { t: SharedValue<number>; from: number; dur: number; value: string; unit: string; style: object; color: string }) {
-  const num = parseFloat(value);
-  const tail = value.replace(/^[d.,-]+/, '');
-  const dec = (value.match(/.(d+)/)?.[1] ?? '').length;
+  const parts = value.match(/^(-?[d,]*.?d+)(.*)$/);
+  const num = parts ? parseFloat(parts[1].replace(/,/g, '')) : NaN;
+  const tail = parts ? parts[2] : '';
+  const dec = parts ? (parts[1].split('.')[1] ?? '').length : 0;
+  const big = parts ? parts[1].includes(',') : false;
   const [txt, setTxt] = useState('0' + unit);
   useAnimatedReaction(
-    () => Math.round(ease(seg(t.get(), from, from + dur)) * 12),
+    () => Math.round(ease(seg(t.get(), from, from + dur)) * 10),
     (step, prev) => {
       if (step === prev) return;
-      const p = step / 12;
-      const out = p >= 1 || !Number.isFinite(num) ? value + unit : (num * p).toFixed(dec) + tail + unit;
+      const p = step / 10;
+      const shown = (num * p).toFixed(dec);
+      const out = p >= 1 || !Number.isFinite(num) ? value + unit : (big ? Number(shown).toLocaleString('en-US', { minimumFractionDigits: dec, maximumFractionDigits: dec }) : shown) + tail + unit;
       runOnJS(setTxt)(out);
-      if (step % 3 === 1 && p < 1) runOnJS(play)('tick');
+      if (step % 2 === 1 && p < 1) runOnJS(play)('tick');
     },
   );
   return <Text style={[style, { color }]}>{txt}</Text>;
@@ -78,9 +81,12 @@ function Count({ t, from, dur, value, unit, style, color }: { t: SharedValue<num
 function Pct({ t, conf, style }: { t: SharedValue<number>; conf: number; style: object }) {
   const [n, setN] = useState(0);
   useAnimatedReaction(
-    () => Math.round(conf * ease(seg(t.get(), 50, 700))),
+    () => {
+      const p = ease(seg(t.get(), 50, 700));
+      return p >= 1 ? Math.round(conf) : Math.round((conf * p) / 4) * 4;
+    },
     (v, prev) => {
-      if (v !== prev) runOnJS(setN)(v);
+      if (v !== prev) runOnJS(setN)(Math.min(v, Math.round(conf)));
     },
   );
   return <Text style={style}>{n}%</Text>;
@@ -143,6 +149,7 @@ export function IdentifyReveal({ shot, car, onDone, haptics = true, startBox = n
   // start once measured
   useEffect(() => {
     if (!W || !H) return;
+    warmCaught(car.rarity);
     t.set(0);
     t.set(withTiming(T.total, { duration: T.total, easing: Easing.linear }));
     const timers: ReturnType<typeof setTimeout>[] = [];

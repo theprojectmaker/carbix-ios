@@ -42,7 +42,7 @@ export type SfxName = keyof typeof FILES;
 /* A small FIXED pool of players shared by every sound, used in turn. Making one player per sound (dozens of native
    audio objects) used up iOS audio resources: sounds silently stopped playing and the app could crash. Six players
    is enough for overlapping effects and never grows. */
-const POOL = 6;
+const POOL = 4;
 let players: AudioPlayer[] | null = null;
 let next = 0;
 let volume = 1;
@@ -74,37 +74,71 @@ function pool(): AudioPlayer[] {
 export function preloadSfx() {
   init();
   pool();
-  HOT.forEach((n) => hotPlayer(n));
+  (Object.keys(HOT) as SfxName[]).forEach((n) => hotOf(n));
   if (!loopPlayer) {
     loopPlayer = createAudioPlayer(FILES['scan-loop']);
     loopPlayer.loop = true;
   }
 }
 
-/* The sounds that fire many times in a row during a scan each get their OWN player loaded once. replace() on a pooled
-   player builds a new audio item every time, which stalls the app for a few frames: that was the stutter while scanning. */
-const HOT: SfxName[] = ['tick', 'click', 'lock', 'ping0', 'ping1', 'shutter'];
-const hot = new Map<SfxName, AudioPlayer>();
+/* Sounds used while scanning and revealing get their own pre-loaded players. Pooled players call replace() each time,
+   which builds a new audio item and made sounds start late. The rapid ones (tick, click) get TWO players that take
+   turns, so a new tap never chops the tail off the previous one. */
+const HOT: Partial<Record<SfxName, number>> = { tick: 2, click: 2, lock: 1, ping0: 1, ping2: 1, shutter: 1, tab: 1, swipe: 1, rev: 1 };
+type Hot = { ps: AudioPlayer[]; used: boolean[]; i: number };
+const hot = new Map<SfxName, Hot>();
 
-function hotPlayer(name: SfxName): AudioPlayer | null {
-  if (!HOT.includes(name)) return null;
-  let p = hot.get(name);
-  if (!p) {
-    p = createAudioPlayer(FILES[name]);
-    hot.set(name, p);
+function hotOf(name: SfxName): Hot | null {
+  const n = HOT[name];
+  if (!n) return null;
+  let h = hot.get(name);
+  if (!h) {
+    h = { ps: Array.from({ length: n }, () => createAudioPlayer(FILES[name])), used: Array(n).fill(false), i: 0 };
+    hot.set(name, h);
   }
-  return p;
+  return h;
+}
+
+/** Starts a player from the top. A player that has never played starts at once; a used one rewinds first. */
+function fire(p: AudioPlayer, used: boolean) {
+  if (!used) {
+    p.play();
+    return;
+  }
+  p.seekTo(0).then(() => p.play()).catch(() => { try { p.play(); } catch { /* ignore */ } });
+}
+
+/* The catch jingle differs per rarity, so one player is re-pointed at it the moment the result arrives (warmCaught),
+   about a second before the jingle is due: the slow load happens early, not on the beat. */
+let caughtPlayer: AudioPlayer | null = null;
+let caughtName: SfxName | null = null;
+let caughtUsed = false;
+
+export function warmCaught(r: Rarity) {
+  try {
+    init();
+    const name = `caught-${r.toLowerCase()}` as SfxName;
+    if (!caughtPlayer) caughtPlayer = createAudioPlayer(FILES[name]);
+    else if (caughtName !== name) caughtPlayer.replace(FILES[name]);
+    if (caughtName !== name) caughtUsed = false;
+    caughtName = name;
+  } catch {
+    /* ignore */
+  }
 }
 
 export function play(name: SfxName) {
   if (volume <= 0) return;
   try {
     init();
-    const h = hotPlayer(name);
+    const h = hotOf(name);
     if (h) {
-      h.volume = Math.min(1, volume);
-      h.seekTo(0).catch(() => {});
-      h.play();
+      const k = h.i % h.ps.length;
+      h.i++;
+      const p = h.ps[k];
+      p.volume = Math.min(1, volume);
+      fire(p, h.used[k]);
+      h.used[k] = true;
       return;
     }
     const ps = pool();
@@ -149,4 +183,15 @@ export function stopScanLoop() {
   }
 }
 
-export const playCaught = (r: Rarity) => play(`caught-${r.toLowerCase()}` as SfxName);
+export function playCaught(r: Rarity) {
+  if (volume <= 0) return;
+  try {
+    warmCaught(r);
+    const p = caughtPlayer!;
+    p.volume = Math.min(1, volume);
+    fire(p, caughtUsed);
+    caughtUsed = true;
+  } catch {
+    /* ignore */
+  }
+}
