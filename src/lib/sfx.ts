@@ -7,6 +7,7 @@ const FILES = {
   click: require('../../assets/sfx/click.wav'),
   tab: require('../../assets/sfx/tab.wav'),
   scan: require('../../assets/sfx/scan.wav'),
+  'scan-loop': require('../../assets/sfx/scan-loop.wav'),
   shutter: require('../../assets/sfx/shutter.wav'),
   shiny: require('../../assets/sfx/shiny.wav'),
   rev: require('../../assets/sfx/rev.wav'),
@@ -73,12 +74,39 @@ function pool(): AudioPlayer[] {
 export function preloadSfx() {
   init();
   pool();
+  HOT.forEach((n) => hotPlayer(n));
+  if (!loopPlayer) {
+    loopPlayer = createAudioPlayer(FILES['scan-loop']);
+    loopPlayer.loop = true;
+  }
+}
+
+/* The sounds that fire many times in a row during a scan each get their OWN player loaded once. replace() on a pooled
+   player builds a new audio item every time, which stalls the app for a few frames: that was the stutter while scanning. */
+const HOT: SfxName[] = ['tick', 'click', 'lock', 'ping0', 'ping1', 'shutter'];
+const hot = new Map<SfxName, AudioPlayer>();
+
+function hotPlayer(name: SfxName): AudioPlayer | null {
+  if (!HOT.includes(name)) return null;
+  let p = hot.get(name);
+  if (!p) {
+    p = createAudioPlayer(FILES[name]);
+    hot.set(name, p);
+  }
+  return p;
 }
 
 export function play(name: SfxName) {
   if (volume <= 0) return;
   try {
     init();
+    const h = hotPlayer(name);
+    if (h) {
+      h.volume = Math.min(1, volume);
+      h.seekTo(0).catch(() => {});
+      h.play();
+      return;
+    }
     const ps = pool();
     const p = ps[next % POOL];
     next++;
@@ -87,6 +115,37 @@ export function play(name: SfxName) {
     p.play();
   } catch {
     /* sound is never worth a crash */
+  }
+}
+
+let loopPlayer: AudioPlayer | null = null;
+let looping = false;
+
+/** The scanning hum: a seamless loop that runs from the moment the photo freezes until the result (or an error) arrives. */
+export function startScanLoop() {
+  if (volume <= 0 || looping) return;
+  try {
+    init();
+    if (!loopPlayer) {
+      loopPlayer = createAudioPlayer(FILES['scan-loop']);
+      loopPlayer.loop = true;
+    }
+    looping = true;
+    loopPlayer.volume = Math.min(1, volume) * 0.9;
+    loopPlayer.seekTo(0).catch(() => {});
+    loopPlayer.play();
+  } catch {
+    looping = false;
+  }
+}
+
+export function stopScanLoop() {
+  if (!looping) return;
+  looping = false;
+  try {
+    loopPlayer?.pause();
+  } catch {
+    /* ignore */
   }
 }
 

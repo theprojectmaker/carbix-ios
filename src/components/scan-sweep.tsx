@@ -1,4 +1,5 @@
 import * as Haptics from 'expo-haptics';
+import { useIsFocused } from 'expo-router';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { LayoutChangeEvent, StyleSheet, Text, View } from 'react-native';
 import Animated, {
@@ -6,7 +7,7 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { coverRect, padBox, type Box, type Rect } from '@/lib/car-finder';
-import { play } from '@/lib/sfx';
+import { play, startScanLoop, stopScanLoop } from '@/lib/sfx';
 import { fonts } from '@/theme/theme';
 
 const LOCK = '#5dff9b';
@@ -46,6 +47,9 @@ export function ScanSweep({ haptics = true, box = null, aspect = 0 }: { haptics?
   const lockP = useSharedValue(0);
   const breath = useSharedValue(0);
   const ringP = useSharedValue(0);
+  const prog = useSharedValue(0); // the moving segment of the progress bar
+  const dots = useSharedValue(0); // drives the three blinking squares
+  const focused = useIsFocused();
   const [stage, setStage] = useState(0); // how many readout chips have finished
   const fl = useSharedValue(0), ft = useSharedValue(0), fw = useSharedValue(0), fh = useSharedValue(0);
 
@@ -61,13 +65,20 @@ export function ScanSweep({ haptics = true, box = null, aspect = 0 }: { haptics?
     if (!W) return;
     fl.set(-W * 0.2); ft.set(-H * 0.12); fw.set(W * 1.4); fh.set(H * 1.24);
     sweep.set(withRepeat(withTiming(1, { duration: 1250, easing: Easing.inOut(Easing.sin) }), -1, true));
-    play('scan');
-    const ticks = [420, 840, 1260, 1680].map((ms, i) => setTimeout(() => play(i % 2 ? 'ping1' : 'ping0'), ms));
+    startScanLoop();
+    prog.set(withRepeat(withTiming(1, { duration: 1100, easing: Easing.inOut(Easing.cubic) }), -1, false));
+    dots.set(withRepeat(withTiming(1, { duration: 900, easing: Easing.linear }), -1, false));
     // the readout: one chip finishes every half second, each with a light tap
     const chips = CHIPS.map((_, i) => setTimeout(() => { setStage(i + 1); if (haptics) Haptics.selectionAsync().catch(() => {}); }, 500 + i * 520));
-    return () => { ticks.forEach(clearTimeout); chips.forEach(clearTimeout); };
+    return () => { stopScanLoop(); chips.forEach(clearTimeout); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [W, H]);
+
+  // the hum follows the tab: silent while you are on another screen
+  useEffect(() => {
+    if (!W) return;
+    if (focused) startScanLoop(); else stopScanLoop();
+  }, [focused, W]);
 
   // glide onto the target whenever it changes (generic frame first, the car's own box when found)
   useEffect(() => {
@@ -97,6 +108,10 @@ export function ScanSweep({ haptics = true, box = null, aspect = 0 }: { haptics?
     opacity: 0.9 * (1 - ringP.get()),
     transform: [{ translateX: fl.get() + fw.get() / 2 - 45 }, { translateY: ft.get() + fh.get() / 2 - 45 }, { scale: 0.5 + ringP.get() * 3.4 }],
   }));
+  const segStyle = useAnimatedStyle(() => ({ transform: [{ translateX: (prog.get() * 1.4 - 0.4) * Math.max(0, W - 24) }] }));
+  const d0 = useAnimatedStyle(() => ({ opacity: 0.25 + 0.75 * Math.max(0, Math.sin(Math.PI * ((dots.get() + 0.0) % 1))) }));
+  const d1 = useAnimatedStyle(() => ({ opacity: 0.25 + 0.75 * Math.max(0, Math.sin(Math.PI * ((dots.get() + 0.66) % 1))) }));
+  const d2 = useAnimatedStyle(() => ({ opacity: 0.25 + 0.75 * Math.max(0, Math.sin(Math.PI * ((dots.get() + 0.33) % 1))) }));
   const tag = useAnimatedStyle(() => ({ transform: [{ translateX: fl.get() }, { translateY: Math.max(2, ft.get() - 26) }] }));
 
   return (
@@ -114,6 +129,9 @@ export function ScanSweep({ haptics = true, box = null, aspect = 0 }: { haptics?
       {W ? (
         <>
           <Animated.View pointerEvents="none" style={[{ position: 'absolute', left: 0, top: 0, width: 90, height: 90, borderWidth: 4, borderColor: LOCK }, ring]} />
+          <View style={{ position: 'absolute', left: 12, right: 12, bottom: '7%', height: 8, backgroundColor: 'rgba(8,10,16,.72)', borderWidth: 2, borderColor: 'rgba(74,180,255,.5)', overflow: 'hidden' }}>
+            <Animated.View style={[{ position: 'absolute', left: 0, top: 0, bottom: 0, width: '40%', backgroundColor: locked ? LOCK : SCAN }, segStyle]} />
+          </View>
           <View style={{ position: 'absolute', left: 12, bottom: '14%', gap: 3 }}>
             {CHIPS.map((c, i) => {
               const ok = stage > i;
@@ -125,6 +143,14 @@ export function ScanSweep({ haptics = true, box = null, aspect = 0 }: { haptics?
                 </View>
               );
             })}
+            {stage >= CHIPS.length ? (
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: 'rgba(8,10,16,.72)', paddingHorizontal: 8, paddingVertical: 1 }}>
+                <View style={{ flexDirection: 'row', gap: 3 }}>
+                  {[d0, d1, d2].map((st, i) => <Animated.View key={i} style={[{ width: 6, height: 6, backgroundColor: LOCK }, st]} />)}
+                </View>
+                <Text style={{ fontFamily: fonts.display, fontSize: 15, letterSpacing: 1, color: LOCK }}>MATCHING AGAINST THE BIX</Text>
+              </View>
+            ) : null}
           </View>
           {(['tl', 'tr', 'bl', 'br'] as const).map((c) => <Corner key={c} c={c} l={fl} t={ft} w={fw} h={fh} lockP={lockP} breath={breath} />)}
           <Animated.View style={[{ position: 'absolute', left: 0, top: 0 }, tag]}>
