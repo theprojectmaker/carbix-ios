@@ -90,6 +90,9 @@ def('lock', (m) => { m.pix(91, 0, 0.07, 0.4, 0.5, 0.6); m.pix(91, 0.1, 0.1, 0.4,
 // the "whoosh" sounds, now stepped pixel glides (no noise): swipe falls in 5 steps, whoosh in 7
 def('swipe', (m) => [91, 88, 84, 81, 76].forEach((n, i) => m.pix(n, i * 0.03, 0.045, 0.3, 0.25, 0.6)), 0.3);
 def('whoosh', (m) => [84, 81, 79, 76, 72, 69, 64].forEach((n, i) => m.pix(n, i * 0.032, 0.05, 0.3, 0.25, 0.6)), 0.34);
+// the rarity engine rev and the pop: pixel too, no noise
+def('rev', (m) => { [36,40,43,48,52,55,60,64].forEach((n,i)=>m.pix(n,i*0.05,0.09,0.3,0.5,0.7)); [64,60,55,52,48].forEach((n,i)=>m.pix(n,0.45+i*0.06,0.09,0.25,0.25,0.7)); }, 0.5);
+def('pop', (m) => [76,88].forEach((n,i)=>m.pix(n,i*0.03,0.045,0.3,0.25,0.5)), 0.38);
 def('tick',(m) => m.pix(96, 0, 0.035, 0.3, 0.25, 0.5), 0.26);
 
 // the scanning loop: 2.5 s, seamless. 8-bit autofocus blips + a soft focus-motor click per beat + a quiet triangle under.
