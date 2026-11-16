@@ -1,6 +1,4 @@
-// The scanning loop, built ONLY from the app's own sounds (assets/sfx/ping0-2 and click), so the scan sounds like the app:
-// a simple 2 s pixel pattern, ping0 -> ping1 -> ping2 -> ping1 climbing every half second with a click on each eighth.
-// Run after make-sfx.mjs. Reads the three ping files and click, writes scan-loop.wav.
+// The scanning loop: one simple beep (the app's own ping0) twice a second. Run after make-sfx.mjs.
 import fs from 'node:fs';
 
 const SR = 44100;
@@ -10,12 +8,11 @@ const read = (n) => {
   for (let i = 0; i < o.length; i++) o[i] = b.readInt16LE(i * 2) / 32000;
   return o;
 };
-const T = 2.0, N = Math.round(SR * T);
+const T = 1.0, N = Math.round(SR * T);
 const out = new Float32Array(N);
 const put = (buf, t, g) => { const s0 = Math.round(t * SR); for (let i = 0; i < buf.length; i++) out[(s0 + i) % N] += buf[i] * g; };
 const [p0, p1, p2, click] = ['ping0', 'ping1', 'ping2', 'click'].map(read);
-[p0, p1, p2, p1].forEach((p, i) => put(p, i * 0.5, 0.5));
-for (let k = 0; k < 8; k++) put(click, k * 0.25 + 0.25 / 2, 0.35);
+[0, 0.5].forEach((t) => put(p0, t, 0.5));
 let peak = 0;
 for (const v of out) peak = Math.max(peak, Math.abs(v));
 const g = 0.4 / peak;
