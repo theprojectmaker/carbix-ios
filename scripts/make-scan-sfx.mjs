@@ -87,7 +87,10 @@ def('shutter', (m) => {
 }, 0.6);
 // autofocus confirmed: the classic camera double beep, then a small latch
 def('lock', (m) => { m.pix(91, 0, 0.07, 0.4, 0.5, 0.6); m.pix(91, 0.1, 0.1, 0.4, 0.5, 0.6); m.clickNoise(0.2, 0.012, 3000, 0.22, 1.1); }, 0.52);
-def('tick', (m) => m.pix(96, 0, 0.035, 0.3, 0.25, 0.5), 0.26);
+// the "whoosh" sounds, now stepped pixel glides (no noise): swipe falls in 5 steps, whoosh in 7
+def('swipe', (m) => [91, 88, 84, 81, 76].forEach((n, i) => m.pix(n, i * 0.03, 0.045, 0.3, 0.25, 0.6)), 0.3);
+def('whoosh', (m) => [84, 81, 79, 76, 72, 69, 64].forEach((n, i) => m.pix(n, i * 0.032, 0.05, 0.3, 0.25, 0.6)), 0.34);
+def('tick',(m) => m.pix(96, 0, 0.035, 0.3, 0.25, 0.5), 0.26);
 
 // the scanning loop: 2.5 s, seamless. 8-bit autofocus blips + a soft focus-motor click per beat + a quiet triangle under.
 {
